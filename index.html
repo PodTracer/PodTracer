@@ -147,6 +147,8 @@
   .dt-card{display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; flex:none;
     height:45px; padding:0 8px; background:var(--panel); border:3px solid #000; border-radius:8px;
     font-family:Arial,sans-serif; font-size:.62rem; color:var(--muted); line-height:1.15;}
+  button.dt-card{width:100%; margin:0; cursor:pointer;}
+  button.dt-card:active{background:var(--bg);}
   .dt-card b{font-family:Georgia,serif; font-size:.9rem; font-weight:600; color:var(--ink); max-width:100%;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .dt-card.error b{color:var(--red);}
@@ -251,7 +253,7 @@
 </div>
 <main id="app"></main>
 <div id="app-footer"></div>
-<input type="file" id="importFile" accept=".json,application/json,text/plain" hidden>
+<input type="file" id="importFile" hidden>
 <div class="rr-modal" id="bk-modal"><div class="rr-box">
   <div class="rr-title">Back up your podcasts?</div>
   <div class="rr-body" id="bk-modal-body">It's been a while since your last backup.</div>
@@ -618,13 +620,21 @@ function markAll(val){
 const DAY=86400000;
 function bk(){if(!S.backup)S.backup={every:'week',day:new Date().getDay(),last:0};return S.backup}
 function libraryJSON(){const {backup,...rest}=S;return JSON.stringify(rest,null,1)}
-function downloadJSON(){
-  const b=new Blob([libraryJSON()],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download=`pod-tracer-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+// saves the library as a file. Returns true once it's handed off (shared or downloaded), false if cancelled or it failed.
+async function downloadJSON(){
+  const name=`pod-tracer-backup-${new Date().toISOString().slice(0,10)}.json`, txt=libraryJSON();
+  // the share sheet first: an installed web app on a phone often can't download, but it can share a file to Files or Drive
+  try{
+    const file=new File([txt],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return true}
+  }catch(e){if(e&&e.name==='AbortError')return false}
+  try{
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));
+    a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);return true;
+  }catch(e){toast('Couldn’t save the file — use Export › Copy instead');return false}
 }
-function backUpNow(){downloadJSON();bk().last=Date.now();save();toast('Backup saved');if(view.name==='data')renderData()}
+async function backUpNow(){if(!await downloadJSON())return;bk().last=Date.now();save();toast('Backup saved');if(view.name==='data')renderData()}
 // when the next backup is due: the day after the last (Daily), or the picked weekday after it (Weekly)
 function nextBackup(){
   const b=bk();if(b.every==='never')return 0;
@@ -647,7 +657,11 @@ $('#bk-go').onclick=()=>{$('#bk-modal').classList.remove('open');backUpNow()};
 // import: check pasted / loaded JSON, then Merge or Replace
 function parseImport(txt){
   if(!txt.trim())return{state:'wait'};
-  let d;try{d=JSON.parse(txt)}catch(e){return{state:'error',msg:'Not valid JSON'}}
+  let d;txt=txt.replace(/^\uFEFF/,'').trim();
+  try{d=JSON.parse(txt)}catch(e){
+    const a=txt.indexOf('{'),b=txt.lastIndexOf('}');
+    try{d=JSON.parse(txt.slice(a,b+1))}catch(e2){return{state:'error',msg:'Not valid JSON'}}
+  }
   if(!d||typeof d.shows!=='object'||!Array.isArray(d.order))return{state:'error',msg:'Not a Pod Tracker backup'};
   const shows=d.order.map(id=>d.shows[id]).filter(Boolean);
   const played=shows.reduce((n,sh)=>n+Object.keys(sh.played||{}).length,0);
@@ -666,9 +680,12 @@ function mergeImport(d){
   return added;
 }
 $('#importFile').addEventListener('change',async e=>{
-  const f=e.target.files[0];if(!f)return;
-  const t=$('#dt-import-text');if(t){t.value=await f.text();updateImportStatus()}
-  e.target.value='';
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  let txt='';
+  try{txt=await f.text()}catch(err){toast('Couldn’t read that file');return}
+  const t=$('#dt-import-text');if(!t)return;
+  t.value=txt;updateImportStatus();
+  if(parseImport(txt).state!=='ok')toast(`${f.name} isn’t a Pod Tracer backup`);
 });
 
 /* ---------- layout: header/footer heights drive the page padding ---------- */
@@ -829,16 +846,20 @@ function dtExport(){
   $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#234a5e" id="dt-copy">Copy</button>
     <button class="cloth-btn" style="--cloth:#3a2f52" id="dt-download">Download</button></div>`;
   $('#dt-copy').onclick=async()=>{
-    const t=$('#dt-export-text');
-    try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand('copy')}
-    toast('Copied');
+    const t=$('#dt-export-text');let ok=false;
+    try{await navigator.clipboard.writeText(t.value);ok=true}catch(e){
+      try{t.removeAttribute('readonly');t.focus();t.select();t.setSelectionRange(0,t.value.length);ok=document.execCommand('copy')}catch(e2){}
+      t.setAttribute('readonly','');
+    }
+    toast(ok?'Copied':'Couldn’t copy — press and hold the text, Select all, then Copy');
   };
   $('#dt-download').onclick=downloadJSON;
 }
 function dtImport(){
-  $('#app').innerHTML=`<div class="dt-card" id="dt-status">Import<b>Waiting for JSON</b></div>
+  $('#app').innerHTML=`<button type="button" class="dt-card" id="dt-status">Import<b>Tap here to paste</b></button>
     <textarea class="dt-text" id="dt-import-text" spellcheck="false" placeholder="Paste exported JSON here, or load a file below"></textarea>`;
   $('#dt-import-text').oninput=updateImportStatus;
+  $('#dt-status').onclick=pasteImport;
   $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#2b5752" id="dt-load">Load File</button>
     <button class="cloth-btn" style="--cloth:#86452b" id="dt-merge">Merge</button>
     <button class="cloth-btn" style="--cloth:#7a2f2b" id="dt-replace">Replace</button></div>`;
@@ -856,7 +877,15 @@ function dtImport(){
 function updateImportStatus(){
   const r=parseImport($('#dt-import-text').value), c=$('#dt-status');
   c.classList.toggle('error',r.state==='error');
-  c.innerHTML=r.state==='wait'?'Import<b>Waiting for JSON</b>':r.state==='error'?`Import<b>${r.msg}</b>`:`Ready to import<b>${r.msg}</b>`;
+  c.innerHTML=r.state==='wait'?'Import<b>Tap here to paste</b>':r.state==='error'?`Import<b>${r.msg}</b>`:`Ready to import<b>${r.msg}</b>`;
+}
+async function pasteImport(){
+  const t=$('#dt-import-text');
+  try{
+    const txt=await navigator.clipboard.readText();
+    if(!txt.trim()){toast('The clipboard is empty');return}
+    t.value=txt;updateImportStatus();
+  }catch(e){t.focus();toast('Press and hold in the box below, then Paste')}
 }
 
 const FILTERS={all:'All',unplayed:'Unplayed',played:'Played'};
