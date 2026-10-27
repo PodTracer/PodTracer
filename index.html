@@ -148,6 +148,20 @@
     height:45px; padding:0 8px; background:var(--panel); border:3px solid #000; border-radius:8px;
     font-family:Arial,sans-serif; font-size:.62rem; color:var(--muted); line-height:1.15;}
   button.dt-card{width:100%; margin:0; cursor:pointer;}
+  .dt-card.bk-loc{flex-direction:row; align-items:stretch; padding:0; overflow:hidden;}
+  .dt-card.bk-loc button{margin:0; border:0; border-radius:0; background:transparent; cursor:pointer; font-family:Arial,sans-serif;}
+  .dt-card.bk-loc button:active{background:var(--bg);}
+  #bk-loc-pick{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 8px; font-size:.62rem; color:var(--muted); line-height:1.15;}
+  #bk-loc-pick b{max-width:100%;}
+  #bk-loc-clear{flex:0 0 39px; padding:0; border-left:3px solid #000 !important; color:var(--red); font-size:1rem; font-weight:700;}
+  #dt-restore{flex:none; display:flex; flex-direction:column; gap:4px; padding:4px; background:var(--bg); border:3px solid #000; border-radius:8px;}
+  #dt-restore:empty{display:none;}
+  .rs-card{display:flex; flex-direction:column; justify-content:center; gap:2px; width:100%; height:45px; margin:0; padding:0 8px; text-align:left;
+    background:var(--panel); border:3px solid #000; border-radius:8px; cursor:pointer; font:400 .62rem/1.15 Arial,sans-serif; text-transform:uppercase; color:var(--muted);}
+  .rs-card:active{background:var(--bg);}
+  .rs-card .rs-when{font:700 .66rem/1.1 Arial,sans-serif; color:var(--ink);}
+  .rs-card.on{background:var(--ink); color:#d6cfc2;}
+  .rs-card.on .rs-when{color:#fff;}
   button.dt-card:active{background:var(--bg);}
   .dt-card b{font-family:Georgia,serif; font-size:.9rem; font-weight:600; color:var(--ink); max-width:100%;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -595,21 +609,90 @@ function stripPlaceholders(d){
   const shows={};for(const id in d.shows)if(!isPlaceholder(d.shows[id]))shows[id]=d.shows[id];
   return{...d,shows,order:(d.order||[]).filter(id=>shows[id])};
 }
-// saves the library as a file. Returns true once it's handed off (shared or downloaded), false if cancelled or it failed.
-async function downloadJSON(){
-  const name=`pod-tracer-backup-${new Date().toISOString().slice(0,10)}.json`, txt=libraryJSON();
-  // the share sheet first: an installed web app on a phone often can't download, but it can share a file to Files or Drive
+/* ---------- backup location: a folder you pick once (where the browser allows it), kept for next time (same as Stack Tracker) ---------- */
+const FS_OK=typeof window.showDirectoryPicker==='function';
+const fsDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('pod-tracer-fs',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const fsGet=async k=>{const db=await fsDB();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
+const fsPut=async(k,v)=>{const db=await fsDB();return new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');
+  v===undefined?t.objectStore('kv').delete(k):t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})};
+let backupDir=null;
+const BACKUP_KEEP=10;                                   // backups kept in the chosen folder
+const BACKUP_FILE=/^pod-tracer-\d{4}-\d{2}-\d{2}\.json$/;
+const todayKey=()=>{const d=new Date();return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`};
+const fsReady=FS_OK?fsGet('backupDir').then(h=>{backupDir=h||null}).catch(()=>{}):Promise.resolve();
+async function pickBackupFolder(){
+  if(!FS_OK){toast('This browser can’t save to a chosen folder');return}
+  try{const h=await window.showDirectoryPicker({id:'pod-tracer-backups',mode:'readwrite'});backupDir=h;await fsPut('backupDir',h);toast(`Backups go to ${h.name}`)}
+  catch(e){if(!e||e.name!=='AbortError')toast('Couldn’t use that folder')}
+  if(view.name==='data')renderData();
+}
+async function clearBackupFolder(){backupDir=null;try{await fsPut('backupDir',undefined)}catch(e){}if(view.name==='data')renderData()}
+// writes the backup into the chosen folder; false if there isn't one or the browser won't allow it right now
+async function backupToFolder(name,txt,ask=true){
+  if(!backupDir)return false;
   try{
-    const file=new File([txt],name,{type:'application/json'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return true}
-  }catch(e){if(e&&e.name==='AbortError')return false}
+    let perm=await backupDir.queryPermission({mode:'readwrite'});
+    if(perm!=='granted'&&ask)perm=await backupDir.requestPermission({mode:'readwrite'});   // after a while away, one tap to allow it again
+    if(perm!=='granted')return false;
+    const fh=await backupDir.getFileHandle(name,{create:true}),w=await fh.createWritable();
+    await w.write(new Blob([txt],{type:'application/json'}));await w.close();
+    try{   // keep the newest 10, delete older ones (only this app's own dated backup files)
+      const ours=[];for await(const [n,e] of backupDir.entries())if(e.kind==='file'&&BACKUP_FILE.test(n))ours.push(n);
+      ours.sort().reverse().slice(BACKUP_KEEP).forEach(n=>backupDir.removeEntry(n).catch(()=>{}));
+    }catch(e){}
+    return true;
+  }catch(e){return false}
+}
+// saves a backup: the chosen folder, else the share sheet (Save to Files / Drive), else a download.
+// Returns how it went: 'folder' | 'shared' | 'downloaded' | false (cancelled or failed)
+async function saveBackup(){
+  const txt=libraryJSON(), name=`pod-tracer-${todayKey()}.json`;
+  await fsReady;
+  if(await backupToFolder(name,txt))return'folder';
+  // Android only shares certain file types, and .json isn't one: try it as .json, then as .txt (Import reads either)
+  for(const [n,type] of [[name,'application/json'],[name.replace(/\.json$/,'.txt'),'text/plain']]){
+    try{
+      const file=new File([txt],n,{type});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Pod Tracer backup'});return'shared'}
+    }catch(e){if(e&&e.name==='AbortError')return false;}
+  }
   try{
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));
     a.download=name;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href),4000);return true;
-  }catch(e){toast('Couldn’t save the file — use Export › Copy instead');return false}
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);return'downloaded';
+  }catch(e){return false}
 }
-async function backUpNow(){if(!await downloadJSON())return;bk().last=Date.now();save();toast('Backup saved');if(view.name==='data')renderData()}
+async function backUpNow(){
+  const how=await saveBackup();
+  if(!how){toast('Not saved — use Export › Copy to keep a copy');return}
+  bk().last=Date.now();save();
+  toast(how==='folder'?`Saved to ${backupDir.name}`:how==='shared'?'Backup handed to the share sheet':'Downloaded — check your Downloads folder');
+  if(view.name==='data')renderData();
+}
+const downloadJSON=backUpNow;   // Export › Download saves the same way
+// Daily/Weekly with a folder chosen: back up on its own when due (if the browser still allows it without asking)
+async function autoBackup(){
+  await fsReady;
+  if(!backupDir||!backupDue())return false;
+  try{if(await backupDir.queryPermission({mode:'readwrite'})!=='granted')return false}catch(e){return false}
+  if(!await backupToFolder(`pod-tracer-${todayKey()}.json`,libraryJSON(),false))return false;
+  bk().last=Date.now();save();if(view.name==='data')renderData();
+  return true;
+}
+// the newest three backups in the folder, for the Import tab
+async function folderBackups(){
+  await fsReady;if(!backupDir)return{state:'none'};
+  let perm='denied';try{perm=await backupDir.queryPermission({mode:'read'})}catch(e){}
+  if(perm!=='granted')return{state:'ask'};
+  const files=[];
+  try{for await(const [n,e] of backupDir.entries())if(e.kind==='file'&&BACKUP_FILE.test(n))files.push([n,e])}catch(e){return{state:'none'}}
+  files.sort((a,b)=>a[0]<b[0]?1:-1);
+  const out=[];
+  for(const [n,e] of files.slice(0,3)){try{const txt=await (await e.getFile()).text();const r=parseImport(txt);if(r.state==='ok')out.push({name:n,txt,msg:r.msg})}catch(err){}}
+  return{state:'ok',files:out};
+}
+
 // when the next backup is due: the day after the last (Daily), or the picked weekday after it (Weekly)
 function nextBackup(){
   const b=bk();if(b.every==='never')return 0;
@@ -620,7 +703,8 @@ function nextBackup(){
   return n.getTime();
 }
 function backupDue(){const n=nextBackup();return n&&S.order.length&&Date.now()>=n}
-function checkBackup(){
+async function checkBackup(){
+  if(await autoBackup())return;
   if(!backupDue())return;
   const b=bk();
   $('#bk-modal-body').textContent=b.last?`Your last backup was ${fmtDate(b.last)}.`:"You haven't backed up your podcasts yet.";
@@ -797,18 +881,22 @@ function renderData(){
   if(view.dt==='backup')dtBackup();else if(view.dt==='export')dtExport();else dtImport();
 }
 function dtBackup(){
+  if(FS_OK&&!dtBackup._ready){dtBackup._ready=true;fsReady.then(()=>{if(view.name==='data'&&view.dt==='backup')dtBackup()})}
   const b=bk(), n=nextBackup();
   const next=b.every==='never'?'Off':!S.order.length?'—':n<=Date.now()?'Due now':fmtDate(n);
   const days=['S','M','T','W','T','F','S'].map((d,i)=>`<i data-wd="${i}" class="${b.day===i?'on':''}">${d}</i>`).join('');
   $('#app').innerHTML=`
     <div class="dt-card when"><span>Last backup<b>${b.last?fmtDate(b.last):'Never'}</b></span><span>Next backup<b>${next}</b></span></div>
+    <div class="dt-card bk-loc"><button type="button" id="bk-loc-pick">Backup location<b>${esc(backupDir?backupDir.name:FS_OK?'Share sheet or Downloads · tap to pick a folder':'Share sheet or Downloads')}</b></button>${backupDir?'<button type="button" id="bk-loc-clear" aria-label="Stop using this folder">✕</button>':''}</div>
     <div class="dt-split" id="bk-every">
       <button data-every="day" class="${b.every==='day'?'on':''}">Daily</button>
       <button data-every="week" class="wk ${b.every==='week'?'on':''}"><span class="wk-label">Weekly</span><span class="wk-days">${days}</span></button>
       <button data-every="never" class="${b.every==='never'?'on':''}">Never</button>
     </div>
     <div class="dt-card how"><span>Your library saves on this device as you go.</span>
-      <span>${b.every==='never'?'Backups are off. Back Up Now still saves a file.':'When a backup is due, you’ll be asked to save a file.'}</span></div>`;
+      <span>${b.every==='never'?'Backups are off. Back Up Now still saves a file.':backupDir?'When a backup is due, it saves to your folder by itself.':'When a backup is due, you’ll be asked to save a file.'}</span></div>`;
+  $('#bk-loc-pick').onclick=pickBackupFolder;
+  if($('#bk-loc-clear'))$('#bk-loc-clear').onclick=clearBackupFolder;
   $('#bk-every').onclick=e=>{
     const wd=e.target.closest('i[data-wd]');const btn=e.target.closest('button');if(!btn)return;
     if(wd&&b.every==='week'){b.day=+wd.dataset.wd}else b.every=btn.dataset.every;
@@ -834,7 +922,9 @@ function dtExport(){
 }
 function dtImport(){
   $('#app').innerHTML=`<button type="button" class="dt-card" id="dt-status">Import<b>Tap here to paste</b></button>
-    <textarea class="dt-text" id="dt-import-text" spellcheck="false" placeholder="Paste exported JSON here, or load a file below"></textarea>`;
+    <textarea class="dt-text" id="dt-import-text" spellcheck="false" placeholder="Paste a backup here, load a file below, or tap a backup from your folder"></textarea>
+    <div id="dt-restore"></div>`;
+  paintRestore();
   $('#dt-import-text').oninput=updateImportStatus;
   $('#dt-status').onclick=pasteImport;
   $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#2b5752" id="dt-load">Load File</button>
@@ -855,6 +945,22 @@ function updateImportStatus(){
   const r=parseImport($('#dt-import-text').value), c=$('#dt-status');
   c.classList.toggle('error',r.state==='error');
   c.innerHTML=r.state==='wait'?'Import<b>Tap here to paste</b>':r.state==='error'?`Import<b>${r.msg}</b>`:`Ready to import<b>${r.msg}</b>`;
+}
+async function paintRestore(){
+  const box=$('#dt-restore');if(!box)return;
+  const r=await folderBackups();if(!$('#dt-restore'))return;
+  if(r.state==='ask'){
+    box.innerHTML=`<button type="button" class="rs-card"><span class="rs-when">Show backups</span><span>Tap to allow the ${esc(backupDir.name)} folder</span></button>`;
+    box.firstChild.onclick=async()=>{try{if(await backupDir.requestPermission({mode:'readwrite'})==='granted')paintRestore()}catch(e){}};
+    return;
+  }
+  if(r.state!=='ok'||!r.files.length){box.innerHTML='';return}
+  box.innerHTML=r.files.map((f,i)=>{const m=f.name.match(/(\d{4})-(\d{2})-(\d{2})/),d=new Date(+m[1],+m[2]-1,+m[3]);
+    return `<button type="button" class="rs-card" data-i="${i}"><span class="rs-when">${d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span><span>${esc(f.msg)}</span></button>`}).join('');
+  box.querySelectorAll('.rs-card').forEach(c=>c.onclick=()=>{
+    box.querySelectorAll('.rs-card').forEach(x=>x.classList.toggle('on',x===c));
+    $('#dt-import-text').value=r.files[+c.dataset.i].txt;updateImportStatus();
+  });
 }
 async function pasteImport(){
   const t=$('#dt-import-text');
