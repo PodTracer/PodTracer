@@ -341,42 +341,14 @@ function playedCount(sh){return sh.episodes.reduce((n,e)=>n+(sh.played[e.id]?1:0
 async function fetchTimeout(url,ms=12000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{return await fetch(url,{signal:c.signal})}finally{clearTimeout(t)}}
 const SEARCH_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="#2b2620" stroke-width="3.4" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>';
 
-/* ---------- placeholder podcasts: fill an empty library; remove them like any show ---------- */
-const DEMO_POOL=[
-  ['d1','The Long Middle','Placeholder Audio',64],['d2','Kitchen Table Physics','Demo Network',38],
-  ['d3','Night Shift Stories','Sample Studios',120],['d4','Small Town Ledger','Placeholder Audio',22],
-  ['d5','Folk Roots Hour','Demo Network',85],['d6','Retro Game Audit','Sample Studios',47],
-  ['d7','Quiet Engines','Placeholder Audio',15],['d8','Map & Margin','Demo Network',30]
-].map(([id,title,author,count])=>({id,title,author,art:'',feedUrl:'',count,demo:true}));
-const TOPICS=['What we got wrong about the long winter, and what comes after it','The first draft','A conversation with the people who still repair old radios by hand','Why it broke','Listener mail','A long walk','The archive','Behind the counter','Old maps','Low tide','The second take','Odds and ends','Season finale','Starting over'];
-// guests, written the different ways real feeds do it; every 4th episode of a show has one
-const GUEST_FORMS=[n=>` (with ${n})`,n=>` w/ ${n}`,n=>` feat. ${n}`,n=>` - with Guest ${n}`,n=>` (${n})`,n=>` with ${n}`];
-const GUEST_POOL=['Maria Garcia','Tom Lee & Sara Kim','Patti Smith','Dr. Jane Goodall','Mike Lee, Sara Kim & Tom Ford','José García','Ken Burns','Monty Don'];
-// first episodes, so guests show on Up Next straight away (one natural "with" title that must stay whole)
-const FIRST_EP={d1:'Starting out (with Maria Garcia)',d2:'Lunch with John',d3:'Pilot w/ Tom Lee & Sara Kim',d4:'Behind the counter',
-  d5:'What we got wrong about the long winter, and what comes after it',d6:'Press start feat. Patti Smith',d7:'Idle hands with Ken Burns',d8:'Getting lost - with Guest Monty Don'};
-function demoEpisodes(p){
-  const DAY=86400000, now=Date.now(), off=p.id.charCodeAt(1);
-  return Array.from({length:p.count},(_,i)=>{const n=p.count-i, seasons=p.id==='d3';
-    let title=n===1&&FIRST_EP[p.id]||TOPICS[(n*5+off*3)%TOPICS.length];
-    if(n>1&&(n+off)%4===0)title+=GUEST_FORMS[(n+off)%GUEST_FORMS.length](GUEST_POOL[(n*3+off)%GUEST_POOL.length]);
-    return {id:`${p.id}-e${n}`,title,date:now-(i*7+3)*DAY,dur:1500+(n*977)%3600,
-      ep:seasons?((n-1)%20)+1:n,season:seasons?Math.ceil(n/20):0};});
-}
-// placeholders all start at 0 played. Bumping PLACEHOLDER_VER swaps out old placeholder shows (your own shows are untouched)
-const PLACEHOLDER_VER=2;
-function seedDemo(){
-  if(S.phVer===PLACEHOLDER_VER)return;
-  const had=S.order.some(id=>S.shows[id]&&S.shows[id].demo);
-  if(had){S.order=S.order.filter(id=>!(S.shows[id]&&S.shows[id].demo));for(const id in S.shows)if(S.shows[id].demo)delete S.shows[id]}
-  if(had||!S.order.length){
-    ['d1','d2','d3','d4','d5'].forEach(id=>{
-      const p=DEMO_POOL.find(x=>x.id===id);
-      S.shows[id]={...p,episodes:demoEpisodes(p),played:{},source:'rss',addedAt:Date.now(),updatedAt:Date.now()};
-      S.order.push(id);
-    });
-  }
-  S.phVer=PLACEHOLDER_VER;save();
+/* ---------- old placeholder podcasts: earlier versions added sample shows (marked demo); remove any still saved ---------- */
+const isPlaceholder=sh=>!!(sh&&sh.demo);
+function removePlaceholders(){
+  const before=S.order.length;
+  S.order=S.order.filter(id=>S.shows[id]&&!isPlaceholder(S.shows[id]));
+  for(const id in S.shows)if(isPlaceholder(S.shows[id]))delete S.shows[id];
+  delete S.phVer;
+  if(S.order.length!==before)save();
 }
 
 /* ---------- podcast search (iTunes) ---------- */
@@ -416,7 +388,6 @@ async function itunesEpisodes(id){
   return (j.results||[]).filter(x=>x.wrapperType==='podcastEpisode').map(x=>({id:x.episodeGuid||String(x.trackId),title:x.trackName,date:Date.parse(x.releaseDate)||0,dur:Math.round((x.trackTimeMillis||0)/1000)}));
 }
 async function getEpisodes(show){
-  if(show.demo)return{eps:demoEpisodes(show),source:'rss'};
   if(show.feedUrl){const t=await fetchFeedText(show.feedUrl);if(t){const eps=parseFeed(t);if(eps&&eps.length)return{eps,source:'rss'}}}
   return{eps:await itunesEpisodes(show.id),source:'itunes'};
 }
@@ -584,7 +555,7 @@ async function autoRefresh(){
   if(autoBusy||Date.now()-(S.lastAuto||0)<AUTO_EVERY)return;
   autoBusy=true;
   for(const id of [...S.order]){
-    const sh=S.shows[id];if(!sh||sh.demo)continue;
+    const sh=S.shows[id];if(!sh)continue;
     try{const {eps,source}=await getEpisodes(sh);if(S.shows[id]&&eps.length){mergeEpisodes(S.shows[id],eps,source);save()}}catch(e){}
     if(view.name==='lib')renderLibList();else if(view.name==='show'&&view.id===id){updateProgress();renderEpisodes()}
   }
@@ -619,7 +590,11 @@ function markAll(val){
 /* ---------- backup ---------- */
 const DAY=86400000;
 function bk(){if(!S.backup)S.backup={every:'week',day:new Date().getDay(),last:0};return S.backup}
-function libraryJSON(){const {backup,...rest}=S;return JSON.stringify(rest,null,1)}
+function libraryJSON(){const {backup,phVer,...rest}=S;return JSON.stringify(stripPlaceholders(rest),null,1)}
+function stripPlaceholders(d){
+  const shows={};for(const id in d.shows)if(!isPlaceholder(d.shows[id]))shows[id]=d.shows[id];
+  return{...d,shows,order:(d.order||[]).filter(id=>shows[id])};
+}
 // saves the library as a file. Returns true once it's handed off (shared or downloaded), false if cancelled or it failed.
 async function downloadJSON(){
   const name=`pod-tracer-backup-${new Date().toISOString().slice(0,10)}.json`, txt=libraryJSON();
@@ -663,6 +638,8 @@ function parseImport(txt){
     try{d=JSON.parse(txt.slice(a,b+1))}catch(e2){return{state:'error',msg:'Not valid JSON'}}
   }
   if(!d||typeof d.shows!=='object'||!Array.isArray(d.order))return{state:'error',msg:'Not a Pod Tracker backup'};
+  d=stripPlaceholders(d);
+  if(!d.order.length)return{state:'error',msg:'Only sample podcasts in this backup'};
   const shows=d.order.map(id=>d.shows[id]).filter(Boolean);
   const played=shows.reduce((n,sh)=>n+Object.keys(sh.played||{}).length,0);
   return{state:'ok',data:d,msg:`${shows.length} podcast${shows.length===1?'':'s'} · ${played} played`};
@@ -946,7 +923,7 @@ $('#app').addEventListener('click',e=>{
   else toggleEp(row.dataset.id);
 });
 
-load();seedDemo();render();checkBackup();autoRefresh();
+load();removePlaceholders();render();checkBackup();autoRefresh();
 
 /* ---------- offline: the service worker keeps a copy of the app (only when served over http/https, e.g. GitHub Pages) ---------- */
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
