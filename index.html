@@ -197,6 +197,7 @@
     font:700 min(1rem, 4vw)/1 Georgia,'Times New Roman',serif; letter-spacing:.14em; text-transform:uppercase;}
   .dt-pair:has(> :nth-child(3)) > .cloth-btn{font-size:min(.86rem, 3vw); letter-spacing:.08em; white-space:nowrap;}
   .cloth-btn:active{filter:brightness(.92);}
+  .cloth-btn:disabled{filter:grayscale(.8) brightness(1.15); opacity:.6; cursor:default;}
   /* backup reminder */
   .rr-modal{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px;
     background:rgba(20,16,12,.45); opacity:0; pointer-events:none; transition:opacity .2s;}
@@ -374,13 +375,56 @@ async function searchPodcasts(term){
 }
 
 /* ---------- episodes ---------- */
-async function fetchFeedText(url){
-  const e=encodeURIComponent(url);
-  const tries=[url,`https://api.allorigins.win/raw?url=${e}`,`https://corsproxy.io/?url=${e}`,`https://api.codetabs.com/v1/proxy?quest=${e}`];
-  for(const u of tries){
-    try{const r=await fetchTimeout(u,15000);if(!r.ok)continue;const t=await r.text();if(/<item[\s>]/i.test(t))return t}catch(err){}
+// Most feeds don't let a web page read them directly, so the feed is fetched through relays.
+// All of them are tried at once and the first full feed wins (big feeds get up to 45s); your own relay, if set, is one of them.
+const PUBLIC_RELAYS=[
+  ['allorigins',e=>`https://api.allorigins.win/raw?url=${e}`,'text'],
+  ['allorigins (json)',e=>`https://api.allorigins.win/get?url=${e}`,'json'],
+  ['corsproxy.io',e=>`https://corsproxy.io/?url=${e}`,'text'],
+  ['codetabs',e=>`https://api.codetabs.com/v1/proxy?quest=${e}`,'text'],
+  ['cors.eu.org',e=>`https://cors.eu.org/${decodeURIComponent(e)}`,'text'],
+  ['cors.lol',e=>`https://api.cors.lol/?url=${e}`,'text'],
+  ['whateverorigin',e=>`https://whateverorigin.org/get?url=${e}`,'json'],
+  ['everyorigin',e=>`https://everyorigin.jwvbremen.nl/api/get?url=${e}`,'json'],
+  ['thingproxy',e=>`https://thingproxy.freeboard.io/fetch/${decodeURIComponent(e)}`,'text'],
+];
+function relayURL(relay,feed){return relay.includes('{url}')?relay.replace('{url}',encodeURIComponent(feed)):relay+encodeURIComponent(feed)}
+let lastFeedVia='';
+async function fetchFeedText(url,ms=45000){
+  const e=encodeURIComponent(url), ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),ms);
+  const tries=[['direct',url,'text']];
+  if(S.relay)tries.unshift(['your relay',relayURL(S.relay,url),'text']);
+  for(const [name,mk,kind] of PUBLIC_RELAYS)tries.push([name,mk(e),kind]);
+  const attempt=async([name,u,kind])=>{
+    const r=await fetch(u,{signal:ctl.signal});if(!r.ok)throw new Error(name+' '+r.status);
+    let t=await r.text();
+    if(kind==='json'||/^\s*\{/.test(t)){try{const j=JSON.parse(t);t=[j.contents,j.html,j.data,j.body].find(v=>typeof v==='string')||''}catch(e){}}
+    if(!/<item[\s>]/i.test(t))throw new Error(name+' gave no episodes');
+    return [name,t];
+  };
+  try{const [name,t]=await Promise.any(tries.map(attempt));lastFeedVia=name;return t}
+  catch(err){lastFeedVia='';return null}
+  finally{clearTimeout(timer);ctl.abort()}   // stop the slower ones once one has the feed
+}
+// reads a feed even when it isn't strictly valid XML (a bare "&" or an HTML "&nbsp;" makes the browser reject the whole file)
+function parseFeedLoose(xml){
+  const strict=parseFeed(xml);if(strict&&strict.length)return strict;
+  const fixed=xml.replace(/&nbsp;/gi,'&#160;').replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-f]+);)/gi,'&amp;');
+  const again=parseFeed(fixed);if(again&&again.length)return again;
+  // last resort: pull each <item> out by pattern
+  const dec=v=>v.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/<[^>]+>/g,'')
+    .replace(/&#(\d+);/g,(m,n)=>String.fromCodePoint(+n)).replace(/&#x([0-9a-f]+);/gi,(m,n)=>String.fromCodePoint(parseInt(n,16)))
+    .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').trim();
+  const tag=(blk,t)=>{const m=blk.match(new RegExp('<'+t+'(?:\\s[^>]*)?>([\\s\\S]*?)</'+t+'>','i'));return m?dec(m[1]):''};
+  const out=[],seen=new Set();
+  for(const m of xml.matchAll(/<item[\s>][\s\S]*?<\/item>/gi)){
+    const blk=m[0], title=tag(blk,'title')||'Untitled episode';
+    const enc=blk.match(/<enclosure[^>]*\surl=["']([^"']+)["']/i);
+    let id=tag(blk,'guid')||(enc&&dec(enc[1]))||tag(blk,'link')||title;
+    if(seen.has(id))id=id+'#'+out.length;seen.add(id);
+    out.push({id,title,date:Date.parse(tag(blk,'pubDate'))||0,dur:parseDur(tag(blk,'itunes:duration')),ep:parseInt(tag(blk,'itunes:episode'))||0,season:parseInt(tag(blk,'itunes:season'))||0});
   }
-  return null;
+  return out.length?out:null;
 }
 function parseFeed(xml){
   const doc=new DOMParser().parseFromString(xml,'text/xml');
@@ -401,8 +445,13 @@ async function itunesEpisodes(id){
   const j=await r.json();
   return (j.results||[]).filter(x=>x.wrapperType==='podcastEpisode').map(x=>({id:x.episodeGuid||String(x.trackId),title:x.trackName,date:Date.parse(x.releaseDate)||0,dur:Math.round((x.trackTimeMillis||0)/1000)}));
 }
+// show.feedIssue records why a show is on Apple's list: 'unreachable' (no relay got the feed) or 'unreadable' (got it, couldn't read it)
 async function getEpisodes(show){
-  if(show.feedUrl){const t=await fetchFeedText(show.feedUrl);if(t){const eps=parseFeed(t);if(eps&&eps.length)return{eps,source:'rss'}}}
+  if(show.feedUrl){
+    const t=await fetchFeedText(show.feedUrl);
+    if(t){const eps=parseFeedLoose(t);if(eps&&eps.length){delete show.feedIssue;return{eps,source:'rss'}}show.feedIssue='unreadable'}
+    else show.feedIssue='unreachable';
+  }
   return{eps:await itunesEpisodes(show.id),source:'itunes'};
 }
 
@@ -565,15 +614,20 @@ async function refreshShow(btn){
 // Quiet: only the counts change (and a caught-up show with something new moves back to Up Next).
 const AUTO_EVERY=3*3600000;
 let autoBusy=false;
+const STUCK_EVERY=15*60000;
 async function autoRefresh(){
-  if(autoBusy||Date.now()-(S.lastAuto||0)<AUTO_EVERY)return;
+  if(autoBusy)return;
+  const full=Date.now()-(S.lastAuto||0)>=AUTO_EVERY, stuckOnly=!full&&Date.now()-(S.lastStuck||0)>=STUCK_EVERY;
+  const ids=full?[...S.order]:stuckOnly?S.order.filter(id=>S.shows[id]&&S.shows[id].source==='itunes'&&S.shows[id].feedUrl):[];
+  if(!ids.length){if(stuckOnly){S.lastStuck=Date.now();save()}return}
   autoBusy=true;
-  for(const id of [...S.order]){
+  for(const id of ids){
     const sh=S.shows[id];if(!sh)continue;
     try{const {eps,source}=await getEpisodes(sh);if(S.shows[id]&&eps.length){mergeEpisodes(S.shows[id],eps,source);save()}}catch(e){}
     if(view.name==='lib')renderLibList();else if(view.name==='show'&&view.id===id){updateProgress();renderEpisodes()}
   }
-  S.lastAuto=Date.now();save();autoBusy=false;
+  if(full)S.lastAuto=Date.now();S.lastStuck=Date.now();save();autoBusy=false;
+  if(view.name==='data'&&view.dt==='feeds')dtFeeds();
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoRefresh()});
 function removeShow(){
@@ -873,12 +927,12 @@ function libCards(shows){
 }
 
 /* ---------- Data: Backup | Export | Import ---------- */
-const DT={backup:'Backup',export:'Export',import:'Import'};
+const DT={backup:'Backup',export:'Export',import:'Import',feeds:'Feeds'};
 function renderData(){
   view.dt=view.dt||'backup';
   $('#hdr-row').innerHTML=`<div class="tabs" id="dt-tabs">${Object.entries(DT).map(([k,v])=>`<div class="tab ${view.dt===k?'active':''}" data-dt="${k}">${v}</div>`).join('')}</div>`;
   $('#dt-tabs').onclick=e=>{const t=e.target.closest('.tab');if(!t)return;view.dt=t.dataset.dt;renderData();syncBars()};
-  if(view.dt==='backup')dtBackup();else if(view.dt==='export')dtExport();else dtImport();
+  if(view.dt==='backup')dtBackup();else if(view.dt==='export')dtExport();else if(view.dt==='feeds')dtFeeds();else dtImport();
 }
 function dtBackup(){
   if(FS_OK&&!dtBackup._ready){dtBackup._ready=true;fsReady.then(()=>{if(view.name==='data'&&view.dt==='backup')dtBackup()})}
@@ -905,6 +959,51 @@ function dtBackup(){
   $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#8a6a3f" id="bk-now">Back Up Now</button></div>`;
   $('#bk-now').onclick=backUpNow;
 }
+/* ---------- Data › Feeds: your own relay, and shows stuck at Apple's list ---------- */
+function dtFeeds(){
+  const stuck=S.order.map(id=>S.shows[id]).filter(sh=>sh&&sh.source==='itunes'&&sh.feedUrl);
+  $('#app').innerHTML=`
+    <div class="dt-card how"><span>Feeds are fetched through public relays. When none can reach a feed,</span>
+      <span>the show falls back to Apple’s list: the newest 200 episodes at most.</span></div>
+    <div class="field-card" style="flex:none">${'<svg viewBox="0 0 24 24" fill="none" stroke="#2b2620" stroke-width="3" stroke-linecap="round"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>'}
+      <input id="relay-url" placeholder="Your relay, e.g. https://feeds.you.workers.dev/?url=" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(S.relay||'')}"></div>
+    <div class="dt-card how"><span>${S.relay?'Your relay is tried alongside the public ones.':'Stuck shows are retried every time you open the app.'}</span></div>
+    <div class="list-divider"><span>${stuck.length?'Stuck at Apple’s 200':'Feeds'}</span></div>
+    ${stuck.length?stuck.map(sh=>`<div class="row has-art" style="${colorVars(sh.id)};cursor:default">${artSec(sh.art,sh.id,sh.title)}
+        <div class="main"><span class="t">${esc(sh.title)}</span><span class="a">${sh.episodes.length} from Apple · ${sh.feedIssue==='unreadable'?'feed loaded but couldn’t be read':sh.feedIssue==='unreachable'?'no relay could reach the feed':'not checked yet, tap Retry'}</span></div>
+        <button class="go" type="button" data-retry="${sh.id}">Retry</button></div>`).join('')
+      :'<div class="empty" style="padding:16px">Every show has its full episode list.</div>'}`;
+  $('#app').querySelectorAll('[data-retry]').forEach(btn=>btn.onclick=()=>retryFeeds([btn.dataset.retry],btn));
+  $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#234a5e" id="relay-save">Save Relay</button>
+    <button class="cloth-btn" style="--cloth:#2b5752" id="retry-all" ${stuck.length?'':'disabled'}>Retry All</button></div>`;
+  $('#relay-save').onclick=saveRelay;
+  $('#retry-all').onclick=e=>retryFeeds(stuck.map(sh=>sh.id),e.currentTarget);
+}
+async function saveRelay(){
+  const v=$('#relay-url').value.trim();
+  if(v&&!/^https:\/\//i.test(v)){toast('The relay needs to start with https://');return}
+  S.relay=v||undefined;save();
+  if(!v){toast('Relay removed');dtFeeds();return}
+  // test it on a real feed: one of yours if you have any
+  const sh=S.order.map(id=>S.shows[id]).find(x=>x&&x.feedUrl);
+  if(!sh){toast('Relay saved');dtFeeds();return}
+  toast('Testing your relay…',20000);
+  let ok=false;
+  try{const r=await fetchTimeout(relayURL(v,sh.feedUrl),30000);ok=r.ok&&/<item[\s>]/i.test(await r.text())}catch(e){}
+  toast(ok?`Relay works: it loaded ${sh.title}`:'Saved, but the relay didn’t return a feed. Check the address.',4000);
+  dtFeeds();
+}
+async function retryFeeds(ids,btn){
+  if(btn){btn.disabled=true;btn.textContent='Loading…'}
+  let fixed=0;
+  for(const id of ids){
+    const sh=S.shows[id];if(!sh)continue;
+    try{const {eps,source}=await getEpisodes(sh);if(eps.length){mergeEpisodes(sh,eps,source);save();if(source==='rss')fixed++}}catch(e){}
+  }
+  toast(fixed?`Full list loaded for ${fixed} show${fixed===1?'':'s'}`:'Still couldn’t reach '+(ids.length===1?'that feed':'those feeds'),3500);
+  if(view.name==='data'&&view.dt==='feeds')dtFeeds();
+}
+
 function dtExport(){
   $('#app').innerHTML=`<textarea class="dt-text" id="dt-export-text" readonly spellcheck="false"></textarea>`;
   $('#dt-export-text').value=libraryJSON();
@@ -992,7 +1091,7 @@ function renderShow(){
       <div class="main"><span class="t">${esc(sh.title)}</span><span class="a">${esc(sh.author)}</span></div></div>
     <div class="stats"><div class="sr"><span><b>${sh.episodes.length}</b> episodes</span><span>latest <b>${fmtDate(latest)}</b></span></div>
       <div class="sr"><span id="leftStat"></span><span>checked <b>${fmtDate(sh.updatedAt)}</b></span></div></div>
-    ${sh.source==='itunes'?'<div class="note warn">The feed couldn’t be reached, so this is Apple’s list (most recent 200 at most). Try Refresh later.</div>':''}
+    ${sh.source==='itunes'?'<div class="note warn">The feed couldn’t be reached, so this is Apple’s list (newest 200 at most). Try Refresh, or set your own relay in Data › Feeds.</div>':''}
     <div class="field-card">${SEARCH_ICON}<input id="epq" placeholder="Search episodes" autocomplete="off" value="${esc(view.q)}"></div>
     <div class="list-divider"><span>Episodes</span></div>
     <div id="eps" style="display:flex;flex-direction:column;gap:4px;${colorVars(sh.id)}"></div>`;
