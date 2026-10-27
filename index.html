@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Pod Tracer</title>
+<!-- installable, works offline: manifest + icons + service worker (sw.js) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Pod Tracer">
+<meta name="description" content="Track the podcast episodes you've listened to.">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root{
+    --bg:#efeadf; --wood:#8a6a4f; --ink:#2b2620; --muted:#8a8378;
+    --panel:#ffffff; --unread:#e3ddce; --red:#aa3333; --line:#000;
+    --lines:repeating-linear-gradient(90deg, rgba(0,0,0,.07) 0 1px, transparent 1px 4px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:Georgia,'Times New Roman',serif; background:var(--bg); color:var(--ink); min-height:100vh;
+    padding:calc(var(--header-h,50px) + 4px) 4px calc(var(--footer-h,0px) + 4px);}
+  button,input{font:inherit; color:inherit;}
+  button{cursor:pointer;}
+  #app{max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:4px;}
+
+  /* ---- frozen header: page tabs edge to edge, then a row of controls ---- */
+  #app-header{position:fixed; top:0; left:0; right:0; z-index:9; display:flex; flex-direction:column; gap:4px;
+    padding:0 0 4px; background:var(--bg); border-bottom:3px solid #000;}
+  #app-header.bare{padding-bottom:0;}
+  #tabs{display:flex; padding-top:env(safe-area-inset-top); border-bottom:3px solid #000;}
+  #app-header.bare #tabs{border-bottom:none;}
+  #tabs .tab{flex:1 1 0; height:42px; display:flex; align-items:center; justify-content:center; background:var(--bg);
+    font-family:Arial,sans-serif; font-size:.85rem; font-weight:600; letter-spacing:.3px; cursor:pointer; user-select:none;}
+  #tabs .tab + .tab{border-left:3px solid #000;}
+  #tabs .tab.active{background:var(--ink); color:#fff;}
+  .hdr-row{display:flex; align-items:stretch; gap:4px; margin:0 4px; height:45px;}
+  .hdr-row > *{min-width:0;}
+  .hdr-row:empty{display:none;}
+
+  /* ---- frozen footer ---- */
+  #app-footer{position:fixed; left:0; right:0; bottom:0; z-index:9; display:flex; flex-direction:column; gap:4px;
+    padding:4px 4px calc(4px + env(safe-area-inset-bottom)); background:var(--bg); border-top:3px solid #000;}
+  #app-footer:empty{display:none;}
+
+  /* ---- shared GT50 card pieces ---- */
+  .card{background:var(--panel); border:3px solid #000; border-radius:8px;}
+  .seg, .acts{display:flex; height:45px; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--panel);}
+  .seg button, .acts button{flex:1; min-width:0; margin:0; padding:0 4px; border:none; border-radius:0; background:var(--panel);
+    color:var(--ink); font-family:Arial,sans-serif; font-size:.78rem; font-weight:600; letter-spacing:.3px; white-space:nowrap;}
+  .seg button + button, .acts button + button{border-left:3px solid #000;}
+  .seg button.on{background:var(--ink); color:#fff;}
+  .acts button:active, .seg button:active{background:var(--bg);}
+  .acts .del{color:var(--red);}
+  .acts button:disabled{color:var(--muted);}
+  .ink-btn{flex:0 0 auto; height:45px; padding:0 16px; border:3px solid #000; border-radius:8px; background:var(--ink); color:#fff;
+    font-family:Arial,sans-serif; font-size:.8rem; font-weight:600; letter-spacing:.3px;}
+  .plain-btn{flex:0 0 auto; height:45px; padding:0 12px; border:3px solid #000; border-radius:8px; background:var(--panel);
+    font-family:Arial,sans-serif; font-size:.78rem; font-weight:600;}
+  .field-card{flex:1; display:flex; align-items:center; height:45px; padding:0 10px; background:var(--panel); border:3px solid #000; border-radius:8px;}
+  #app .field-card{flex:none;}
+  .field-card input{width:100%; border:none; outline:none; background:none; font-family:Georgia,serif; font-size:.9rem;}
+  .field-card svg{width:18px; height:18px; flex:none; margin-right:8px;}
+  .sort-card{flex:0 0 27%; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.15;
+    background:var(--panel); border:3px solid #000; border-radius:8px; padding:0 8px; font-family:Arial,sans-serif;
+    font-size:.78rem; cursor:pointer; user-select:none; white-space:nowrap;}
+  .sort-card .k{color:var(--muted); font-size:.62rem; letter-spacing:.5px;}
+
+  /* GT50 divider: no card, just a centered line split around the title */
+  .list-divider{display:flex; align-items:center; gap:10px; height:45px; padding:0 4px;}
+  .list-divider::before, .list-divider::after{content:''; flex:1; height:3px; background:#000; border-radius:2px;}
+  .list-divider span{font-family:Georgia,serif; font-size:.9rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px;
+    max-width:75%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+  /* ---- a row card: 45px, progress fill behind ---- */
+  .row{position:relative; display:flex; align-items:center; gap:8px; height:45px; padding:0 8px; background:var(--panel);
+    border:3px solid #000; border-radius:8px; overflow:hidden; cursor:pointer; user-select:none;}
+  .row:active{filter:brightness(.96);}
+  .fill{position:absolute; left:-3px; top:-3px; bottom:-3px; pointer-events:none; background-color:var(--page);
+    background-image:var(--lines); transition:width .3s ease;}
+  .row > :not(.fill){position:relative;}
+  /* cover art: a square section flush to the card's left edge, split off by a black line */
+  /* cover art: runs right out to the card's edge; the border is drawn over it (::after), so the art's edges hide beneath it */
+  .row.has-art, .card.show-head{position:relative; border:none; padding-left:0; padding-right:11px;}
+  .row.has-art::after, .card.show-head::after{content:''; position:absolute; inset:0; z-index:2; pointer-events:none;
+    border:3px solid #000; border-radius:8px;}
+  .art-sec{align-self:stretch; width:45px; flex:none; border-right:3px solid #000;
+    background-color:var(--unread); background-size:cover; background-position:center;}
+  .row.has-art .fill{left:0; top:0; bottom:0;}
+  .main{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; line-height:1.15;}
+  .t{font-family:Georgia,serif; font-size:.9rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .a{font-family:Arial,sans-serif; font-size:.66rem; color:rgba(43,38,32,.7); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .prog{flex:none; text-align:right; display:flex; flex-direction:column; justify-content:center; line-height:1.15;
+    font-family:Georgia,serif; font-size:.82rem; font-weight:600;}
+  /* finished: dark fill, white text */
+  .row.done .fill{background-color:var(--cloth);}
+  .row.done .t, .row.done .prog{color:#fff;}
+  .row.done .a{color:rgba(255,255,255,.75);}
+  .row .go{flex:none; height:31px; padding:0 12px; border:3px solid #000; border-radius:6px; background:var(--ink); color:#fff;
+    font-family:Arial,sans-serif; font-size:.72rem; font-weight:600;}
+  .row .go.open{background:var(--panel); color:var(--ink);}
+
+  /* episode rows */
+  .ep .t{font-size:.84rem;}
+  .ep .thru{flex:none; width:33px; height:31px; padding:0; border:3px solid #000; border-radius:6px; background:var(--panel);
+    font-family:Arial,sans-serif; font-size:.7rem; font-weight:700; color:var(--ink);}
+  .ep.done{background:var(--cloth);}
+  .ep.done .t{color:#fff; font-weight:400;}
+  .ep.done .a{color:rgba(255,255,255,.7);}
+  .ep.done .thru{background:rgba(255,255,255,.18); color:#fff;}
+
+  /* show heading */
+  .show-head{display:flex; align-items:stretch; gap:10px; padding:0 10px 0 0; height:96px; overflow:hidden;}
+  .show-head .art-sec{width:96px;}
+  .show-head .main{padding:6px 0;}
+  .show-head .t{font-size:1.05rem; white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+  .show-head .a{font-size:.72rem; margin-top:2px;}
+  /* stats card: every stat in capitals */
+  .stats{display:flex; flex-direction:column; justify-content:center; gap:2px; height:45px; padding:0 10px; background:var(--panel);
+    border:3px solid #000; border-radius:8px; font-family:Arial,sans-serif; font-size:.58rem; line-height:1.15; color:var(--muted);
+    text-transform:uppercase;}
+  .stats .sr{display:flex; justify-content:space-between; gap:8px; white-space:nowrap;}
+  .stats b{color:var(--ink);}
+  .note{font-family:Arial,sans-serif; font-size:.66rem; color:var(--muted); line-height:1.4; padding:2px 4px;}
+  .note.warn{color:var(--red);}
+
+  /* footer: unified progress card */
+  .pcard{position:relative; height:45px; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--panel);}
+  .pcard .fill{left:0; top:0; bottom:0;}
+  .pcard .ov{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:Georgia,serif; font-size:.82rem; font-weight:600; line-height:1.2;}
+  .pcard.done .fill{background-color:var(--cloth);}
+  .pcard.done .ov{color:#fff;}
+  .add-card{display:flex; align-items:center; justify-content:center; gap:8px; height:45px; background:var(--panel);
+    border:3px solid #000; border-radius:8px; font-family:Arial,sans-serif; font-size:.82rem; color:var(--muted); letter-spacing:.5px; cursor:pointer;}
+  .add-card b{font-size:1.1rem; color:var(--ink);}
+
+  /* ---- Data: Backup | Export | Import, laid out like Stack Tracker's Data page ---- */
+  .tabs{display:flex; flex:1; min-width:0; gap:3px; background:#000; border:3px solid #000; border-radius:8px; overflow:hidden;}
+  .tabs .tab{flex:1; display:flex; align-items:center; justify-content:center; background:#d9d0be; color:var(--ink); cursor:pointer;
+    font-family:Arial,sans-serif; font-size:min(.74rem, 2.95vw); font-weight:700; user-select:none;}
+  .tabs .tab.active{background:var(--ink); color:#fff;}
+  #app.fit{height:calc(100dvh - var(--header-h,50px) - var(--footer-h,0px) - 8px);}
+  .dt-card{display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; flex:none;
+    height:45px; padding:0 8px; background:var(--panel); border:3px solid #000; border-radius:8px;
+    font-family:Arial,sans-serif; font-size:.62rem; color:var(--muted); line-height:1.15;}
+  .dt-card b{font-family:Georgia,serif; font-size:.9rem; font-weight:600; color:var(--ink); max-width:100%;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .dt-card.error b{color:var(--red);}
+  .dt-card.when{flex-direction:row; align-items:stretch; padding:0;}
+  .dt-card.when > span{flex:1 1 0; min-width:0; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 8px;}
+  .dt-card.when > span + span{border-left:3px solid #000;}
+  .dt-card.how{gap:3px; font-size:min(.62rem, 2.55vw); color:var(--ink);}
+  .dt-card.how > span{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .dt-text{flex:1; min-height:0; width:100%; resize:none; margin:0; padding:8px; background:var(--panel); color:var(--ink);
+    border:3px solid #000; border-radius:8px; outline:none; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.7rem;
+    line-height:1.4; white-space:pre; overflow:auto;}
+  .dt-split{display:flex; height:45px; flex:none; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--panel);}
+  .dt-split button{flex:1; margin:0; padding:0; border:none; border-radius:0; background:var(--panel); color:var(--ink);
+    font-family:Arial,sans-serif; font-size:.78rem; font-weight:600; letter-spacing:.3px;}
+  .dt-split button + button{border-left:3px solid #000;}
+  .dt-split button.on{background:var(--ink); color:#fff;}
+  /* Weekly, when picked: label on top, the day to back up on below it */
+  .dt-split .wk{display:flex; flex-direction:column; align-items:stretch; justify-content:center;}
+  .dt-split .wk-days{display:none;}
+  .dt-split .wk.on .wk-label{flex:1; display:flex; align-items:center; justify-content:center; font-size:.72rem;}
+  .dt-split .wk.on .wk-days{display:flex; flex:1; border-top:1.5px solid rgba(255,255,255,.28);}
+  .dt-split .wk-days i{flex:1; display:flex; align-items:center; justify-content:center; font-style:normal; font-size:.6rem; font-weight:700;}
+  .dt-split .wk-days i + i{border-left:1.5px solid rgba(255,255,255,.28);}
+  .dt-split .wk-days i.on{background:#5a4c40;}
+  /* bookcloth buttons: the cloth color with a woven texture, label in spaced serif capitals */
+  .dt-pair{display:flex; gap:4px;}
+  .cloth-btn{position:relative; overflow:hidden; flex:1 1 0; min-width:0; height:45px; margin:0; padding:0; border:3px solid #000;
+    border-radius:8px; color:#fff; cursor:pointer; background-color:var(--cloth);
+    background-image:repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.12));
+    font:700 min(1rem, 4vw)/1 Georgia,'Times New Roman',serif; letter-spacing:.14em; text-transform:uppercase;}
+  .dt-pair:has(> :nth-child(3)) > .cloth-btn{font-size:min(.86rem, 3vw); letter-spacing:.08em; white-space:nowrap;}
+  .cloth-btn:active{filter:brightness(.92);}
+  /* backup reminder */
+  .rr-modal{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px;
+    background:rgba(20,16,12,.45); opacity:0; pointer-events:none; transition:opacity .2s;}
+  .rr-modal.open{opacity:1; pointer-events:auto;}
+  .rr-box{width:100%; max-width:340px; background:var(--panel); border:3px solid #000; border-radius:10px; padding:16px;}
+  .rr-title{font-family:Georgia,serif; font-size:1.05rem; margin-bottom:6px;}
+  .rr-body{font-family:Arial,sans-serif; font-size:.78rem; color:var(--muted); line-height:1.4; margin-bottom:14px;}
+  .rr-note{margin-top:10px; font-family:Arial,sans-serif; font-size:.64rem; color:var(--muted);}
+
+  /* up-next cards: the border is drawn over the card (::after) so art and fills run under it */
+  .oc{position:relative; display:flex; flex-direction:column; background:var(--panel); border-radius:8px; overflow:hidden; cursor:pointer; flex:none;}
+  .oc::after{content:''; position:absolute; inset:0; z-index:3; pointer-events:none; border:3px solid #000; border-radius:8px;}
+  .oc .sec{position:relative; display:flex; align-items:stretch; min-width:0;}
+  .oc .sec > :not(.fill){position:relative;}
+  .oc .fill{left:0; top:0; bottom:0;}
+  .pill{flex:none; padding:1px 5px; background:#d9d0be; border:2px solid #000; border-radius:5px; font:700 .64rem/1.2 Arial,sans-serif; color:var(--ink); white-space:nowrap;}
+  .ell{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .k{font:700 .56rem/1.1 Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase; color:var(--muted);}
+  .ck{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round;}
+  button:disabled{cursor:default;}
+
+  .v4{height:66px; flex-direction:row;}
+  .v4 .art-sec{width:66px;}
+  /* podcast name pinned to the top, episode details to the bottom, episode title centered between them */
+  .v4 .bd{flex:1; min-width:0; display:grid; grid-template-rows:auto 1fr auto; padding:7px 6px 7px 10px;}
+  .v4 .bd > .k{align-self:start;}
+  .v4 .bd > .mid{align-self:center; min-width:0; display:flex; flex-direction:column;}
+  /* with a guest: the title keeps to one line so the guest line fits under it */
+  .v4 .et.one{-webkit-line-clamp:1;}
+  .v4 .gu{font:italic .68rem/1.2 Georgia,serif; color:rgba(43,38,32,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .v4 .bd > .mt{align-self:end;}
+  .v4 .et{font:700 .95rem/1.15 Georgia,serif;}
+  .v4 .mt{font:.62rem Arial,sans-serif; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  /* the check: its own square section on the right, mirroring the art on the left */
+  .v4 .cks{flex:none; width:66px; margin:0; padding:0 3px 0 0; border:none; border-left:3px solid #000; border-radius:0;
+    display:grid; place-items:center;
+    /* progress fills the square from the bottom up; measured over the part you can see (the card's border covers 3px top and bottom) */
+    background:linear-gradient(to top, var(--cloth) calc(3px + (100% - 6px) * var(--f,0)), var(--unread) 0);
+    background-origin:border-box; background-clip:border-box;}
+  .v4 .rnd{width:38px; height:38px; display:grid; place-items:center; border:3px solid #000; border-radius:50%;
+    background:var(--panel); color:var(--ink);}
+  .v4 .cks:active .rnd{background:var(--cloth); color:#fff;}
+  .cu-row{height:45px;}
+
+  .v4 .et, .cu-row .t{white-space:normal; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; text-overflow:clip;}
+  .v4 .art-sec, .cu-row .art-sec{background-position:center;}
+  /* fixed heights: a wrapped title tightens its lines instead of growing the card */
+  .v4 .et{font-size:.8rem; line-height:1.12;}
+  .cu-row .t{font-size:.84rem; line-height:1.1;}
+  .empty{padding:40px 12px; text-align:center; font-family:Arial,sans-serif; font-size:.8rem; color:var(--muted);}
+  .spin{display:inline-block; width:14px; height:14px; border:3px solid var(--unread); border-top-color:var(--ink); border-radius:50%;
+    animation:sp 1s linear infinite; vertical-align:-2px; margin-right:6px;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .toast{position:fixed; left:50%; top:calc(var(--header-h,50px) + 8px); transform:translate(-50%,-20px); opacity:0; z-index:50;
+    background:var(--ink); color:#fff; border:3px solid #000; border-radius:8px; padding:10px 16px; font-family:Arial,sans-serif;
+    font-size:.8rem; pointer-events:none; transition:opacity .2s, transform .2s; max-width:90vw; text-align:center;}
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+
+</style>
+</head>
+<body>
+<div id="app-header">
+  <div id="tabs">
+    <div class="tab" data-v="lib">Library</div>
+    <div class="tab" data-v="data">Data</div>
+  </div>
+  <div class="hdr-row" id="hdr-row"></div>
+</div>
+<main id="app"></main>
+<div id="app-footer"></div>
+<input type="file" id="importFile" accept=".json,application/json,text/plain" hidden>
+<div class="rr-modal" id="bk-modal"><div class="rr-box">
+  <div class="rr-title">Back up your podcasts?</div>
+  <div class="rr-body" id="bk-modal-body">It's been a while since your last backup.</div>
+  <div class="dt-split"><button id="bk-later">Later</button><button id="bk-go" class="on">Back Up</button></div>
+  <div class="rr-note">Turn off in Data, Backup.</div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='gt50-podtracker-v1';   // same storage as v1/v2
+// Stack Tracker's cloth colors: each show gets one
+const CLOTHS=['#7a2f2b','#2b5752','#66304c','#303d66','#8a6a3f','#4f5b2e','#5a3d2b'];
+let S={shows:{},order:[]};
+let view={name:'lib',id:null,filter:'all',sort:'new',q:'',results:[],searching:false,lastTerm:'',libSort:'recent'};
+
+/* ---------- storage ---------- */
+function load(){try{const r=localStorage.getItem(KEY);if(r)S=JSON.parse(r)}catch(e){}if(!S.shows)S={shows:{},order:[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Could not save — storage full or blocked')}}
+
+/* ---------- utils ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m,ms=2400){const t=$('#toast');t.classList.remove('act');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),ms)}
+function fmtDate(ms){if(!ms)return'—';return new Date(ms).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}
+function parseDur(v){if(v==null||v==='')return 0;v=String(v).trim();if(/^\d+$/.test(v))return+v;const p=v.split(':').map(Number);if(p.some(isNaN))return 0;return p.reduce((a,b)=>a*60+b,0)}
+function fmtDur(s){if(!s)return'';const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h?`${h}h ${m}m`:`${m}m`}
+// a podcast's color comes from its name (and author), the same way Stack Tracker colors wishlist books:
+// a hash picks one of fourteen color families, then a shade within it, darkened until white text reads on it
+function wishColor(title, author){
+  const s = (String(title || '').trim() + '|' + String(author || '').trim()).toLowerCase().replace(/\s+/g, ' ');
+  let h1 = 2166136261, h2 = 5381;
+  for(const ch of s){ const c = ch.codePointAt(0); h1 = Math.imul(h1 ^ c, 16777619); h2 = (Math.imul(h2, 33) + c) | 0; }
+  // mixed well, so near-identical words still land far apart
+  const mix = h => { h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; };
+  h1 = mix(h1); h2 = mix(h2 ^ 0x9e3779b9);
+  // the hue: first one of fourteen colour families, each as likely as the next (greens are only olive, green
+  // and teal — 3 in 14 — rather than the third of the wheel they'd otherwise take), then a spot within it
+  const FAM = [[350, 12], [12, 26], [26, 40], [40, 54], [58, 85], [95, 145], [160, 188], [192, 212], [212, 228], [228, 246], [246, 262], [262, 285], [285, 315], [315, 350]];
+  const [f0, f1] = FAM[h1 % FAM.length], hue = Math.round(f0 + ((h1 >>> 8) % 1000) / 1000 * ((f1 - f0 + 360) % 360)) % 360;
+  const pick = (h1 >>> 20) % 14;
+  let sat = 34 + (h2 % 35);                        // 34–68%: clearly a colour (the greys come only from the 1 in 14 below)
+  let lit = 22 + ((h2 >>> 8) % 21);                // 22–42% (the contrast check below darkens any that are too light)
+  if(pick === 0){ sat = 8 + (h2 >>> 16) % 14; lit = 20 + (h2 >>> 4) % 14; }   // 1 in 14: a near-grey — slate, ash, charcoal
+  else if(pick === 1) lit = 13 + (h2 >>> 4) % 7;   // 1 in 14: very deep — oxblood, ink, bottle green
+  if(pick > 1 && hue >= 10 && hue < 60) sat = Math.max(sat, 50);   // oranges and ochres: rich rust and amber, not mud brown
+  if(hue >= 70 && hue < 160) sat = Math.min(sat, 50);    // greens: never neon
+  if(hue >= 40 && hue < 70){ sat = Math.min(sat, 55); lit = Math.min(lit, 32); }   // yellows: mustard and ochre, never khaki
+  if(hue >= 170 && hue < 200) sat = Math.min(sat, 52);   // cyans: teal, not aqua
+  if(hue >= 255 && hue < 345){ sat = Math.min(sat, 46); lit = Math.min(lit, 34); }   // violets and magentas: plum and berry, not hot pink
+  const rgbOf = L => { const S = sat / 100, l = L / 100, k = n => (n + hue / 30) % 12, a = S * Math.min(l, 1 - l);
+    return [0, 8, 4].map(n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))))); };
+  const lum = c => { const v = c.map(x => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
+  let rgb = rgbOf(lit);
+  while(lum(rgb) > .18 && lit > 12){ lit -= 1; rgb = rgbOf(lit); }   // white on it: 1.05 / (L + .05) ≥ 4.5
+  return '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('');
+}
+const _colorCache={};
+function cloth(id){
+  const sh=S.shows[id]||(view.results||[]).find(r=>r.id===id);
+  if(!sh){let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;return CLOTHS[h%CLOTHS.length]}
+  const k=sh.title+'|'+(sh.author||'');
+  return _colorCache[k]||(_colorCache[k]=wishColor(sh.title,sh.author));
+}
+// in-progress fill: the cloth softened toward the page, so dark text still reads on it
+function page(c){return `color-mix(in srgb, ${c} 38%, #e3ddce)`}
+function colorVars(id){const c=cloth(id);return `--cloth:${c};--page:${page(c)}`}
+// placeholder cover: the show's cloth, a faint grid, its initials and a small mic
+function placeholderArt(id,title){
+  const c=cloth(id), ini=esc(String(title||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${c}"/>`+
+    `<g stroke="rgba(255,255,255,.08)" stroke-width="1">${[10,20,30,40,50,60,70,80,90].map(v=>`<path d="M${v} 0V100M0 ${v}H100"/>`).join('')}</g>`+
+    `<text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="34" fill="#efeadf">${ini}</text>`+
+    `<g fill="none" stroke="#efeadf" stroke-width="3" stroke-linecap="round"><rect x="45" y="68" width="10" height="16" rx="5"/><path d="M40 78a10 10 0 0 0 20 0M50 88v4"/></g></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+function artSec(src,id,title){
+  // two layers: the real cover on top, the placeholder under it, so a cover that fails to load still shows the placeholder
+  const ph=placeholderArt(id,title);
+  const layers=(src?`url("${esc(src)}"), `:'')+`url("${ph}")`;
+  return `<div class="art-sec" style='background-image:${layers}'></div>`;
+}
+// progress fill for an art card: starts after the art section, so 0% shows no fill
+function artFill(f){return f?`calc(45px + (100% - 45px) * ${f})`:'0'}   // under the art, then across the rest of the card
+function playedCount(sh){return sh.episodes.reduce((n,e)=>n+(sh.played[e.id]?1:0),0)}
+async function fetchTimeout(url,ms=12000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{return await fetch(url,{signal:c.signal})}finally{clearTimeout(t)}}
+const SEARCH_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="#2b2620" stroke-width="3.4" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>';
+
+/* ---------- placeholder podcasts: fill an empty library; remove them like any show ---------- */
+const DEMO_POOL=[
+  ['d1','The Long Middle','Placeholder Audio',64],['d2','Kitchen Table Physics','Demo Network',38],
+  ['d3','Night Shift Stories','Sample Studios',120],['d4','Small Town Ledger','Placeholder Audio',22],
+  ['d5','Folk Roots Hour','Demo Network',85],['d6','Retro Game Audit','Sample Studios',47],
+  ['d7','Quiet Engines','Placeholder Audio',15],['d8','Map & Margin','Demo Network',30]
+].map(([id,title,author,count])=>({id,title,author,art:'',feedUrl:'',count,demo:true}));
+const TOPICS=['What we got wrong about the long winter, and what comes after it','The first draft','A conversation with the people who still repair old radios by hand','Why it broke','Listener mail','A long walk','The archive','Behind the counter','Old maps','Low tide','The second take','Odds and ends','Season finale','Starting over'];
+// guests, written the different ways real feeds do it; every 4th episode of a show has one
+const GUEST_FORMS=[n=>` (with ${n})`,n=>` w/ ${n}`,n=>` feat. ${n}`,n=>` - with Guest ${n}`,n=>` (${n})`,n=>` with ${n}`];
+const GUEST_POOL=['Maria Garcia','Tom Lee & Sara Kim','Patti Smith','Dr. Jane Goodall','Mike Lee, Sara Kim & Tom Ford','José García','Ken Burns','Monty Don'];
+// first episodes, so guests show on Up Next straight away (one natural "with" title that must stay whole)
+const FIRST_EP={d1:'Starting out (with Maria Garcia)',d2:'Lunch with John',d3:'Pilot w/ Tom Lee & Sara Kim',d4:'Behind the counter',
+  d5:'What we got wrong about the long winter, and what comes after it',d6:'Press start feat. Patti Smith',d7:'Idle hands with Ken Burns',d8:'Getting lost - with Guest Monty Don'};
+function demoEpisodes(p){
+  const DAY=86400000, now=Date.now(), off=p.id.charCodeAt(1);
+  return Array.from({length:p.count},(_,i)=>{const n=p.count-i, seasons=p.id==='d3';
+    let title=n===1&&FIRST_EP[p.id]||TOPICS[(n*5+off*3)%TOPICS.length];
+    if(n>1&&(n+off)%4===0)title+=GUEST_FORMS[(n+off)%GUEST_FORMS.length](GUEST_POOL[(n*3+off)%GUEST_POOL.length]);
+    return {id:`${p.id}-e${n}`,title,date:now-(i*7+3)*DAY,dur:1500+(n*977)%3600,
+      ep:seasons?((n-1)%20)+1:n,season:seasons?Math.ceil(n/20):0};});
+}
+// placeholders all start at 0 played. Bumping PLACEHOLDER_VER swaps out old placeholder shows (your own shows are untouched)
+const PLACEHOLDER_VER=2;
+function seedDemo(){
+  if(S.phVer===PLACEHOLDER_VER)return;
+  const had=S.order.some(id=>S.shows[id]&&S.shows[id].demo);
+  if(had){S.order=S.order.filter(id=>!(S.shows[id]&&S.shows[id].demo));for(const id in S.shows)if(S.shows[id].demo)delete S.shows[id]}
+  if(had||!S.order.length){
+    ['d1','d2','d3','d4','d5'].forEach(id=>{
+      const p=DEMO_POOL.find(x=>x.id===id);
+      S.shows[id]={...p,episodes:demoEpisodes(p),played:{},source:'rss',addedAt:Date.now(),updatedAt:Date.now()};
+      S.order.push(id);
+    });
+  }
+  S.phVer=PLACEHOLDER_VER;save();
+}
+
+/* ---------- podcast search (iTunes) ---------- */
+async function searchPodcasts(term){
+  const r=await fetchTimeout(`https://itunes.apple.com/search?media=podcast&entity=podcast&limit=30&term=${encodeURIComponent(term)}`);
+  if(!r.ok)throw new Error('Search failed');
+  const j=await r.json();
+  return (j.results||[]).map(p=>({id:String(p.collectionId),title:p.collectionName,author:p.artistName,art:p.artworkUrl600||p.artworkUrl100,feedUrl:p.feedUrl||'',count:p.trackCount||0}));
+}
+
+/* ---------- episodes ---------- */
+async function fetchFeedText(url){
+  const e=encodeURIComponent(url);
+  const tries=[url,`https://api.allorigins.win/raw?url=${e}`,`https://corsproxy.io/?url=${e}`,`https://api.codetabs.com/v1/proxy?quest=${e}`];
+  for(const u of tries){
+    try{const r=await fetchTimeout(u,15000);if(!r.ok)continue;const t=await r.text();if(/<item[\s>]/i.test(t))return t}catch(err){}
+  }
+  return null;
+}
+function parseFeed(xml){
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  if(doc.querySelector('parsererror'))return null;
+  const out=[],seen=new Set();
+  doc.querySelectorAll('item').forEach(it=>{
+    const g=k=>{const n=it.getElementsByTagName(k)[0];return n?n.textContent.trim():''};
+    const title=g('title')||'Untitled episode';
+    const enc=it.getElementsByTagName('enclosure')[0];
+    let id=g('guid')||(enc&&enc.getAttribute('url'))||g('link')||title;
+    if(seen.has(id))id=id+'#'+out.length;seen.add(id);
+    out.push({id,title,date:Date.parse(g('pubDate'))||0,dur:parseDur(g('itunes:duration')),ep:parseInt(g('itunes:episode'))||0,season:parseInt(g('itunes:season'))||0});
+  });
+  return out;
+}
+async function itunesEpisodes(id){
+  const r=await fetchTimeout(`https://itunes.apple.com/lookup?id=${id}&media=podcast&entity=podcastEpisode&limit=200`);
+  const j=await r.json();
+  return (j.results||[]).filter(x=>x.wrapperType==='podcastEpisode').map(x=>({id:x.episodeGuid||String(x.trackId),title:x.trackName,date:Date.parse(x.releaseDate)||0,dur:Math.round((x.trackTimeMillis||0)/1000)}));
+}
+async function getEpisodes(show){
+  if(show.demo)return{eps:demoEpisodes(show),source:'rss'};
+  if(show.feedUrl){const t=await fetchFeedText(show.feedUrl);if(t){const eps=parseFeed(t);if(eps&&eps.length)return{eps,source:'rss'}}}
+  return{eps:await itunesEpisodes(show.id),source:'itunes'};
+}
+
+/* ---------- guests: pull "with Jane Doe" style guest names out of episode titles ---------- */
+// common first names: a plain "with" only counts as a guest when the name starts with one of these
+const FIRST_NAMES=new Set(`aaron abby abigail adam adrian aidan aisha alan albert alex alexa alexander alexandra alexis alfred ali alice alicia alison allison amanda amber amelia amir amy ana andre andrea andrew andy angela angie anita ann anna anne annie anthony antonio april arthur ashley audrey austin ava barbara barry ben benjamin beth betty beverly bill billy blake bob bobby bonnie brad bradley brandon brenda brendan brian bridget brittany brooke bruce bryan caleb cameron camila candace carl carla carlos carmen carol caroline carrie casey catherine cathy chad charles charlie charlotte chelsea cheryl chloe chris christian christina christine christopher cindy claire clara claudia clint cody colin connie connor courtney craig crystal curtis cynthia dale dan dana daniel danielle danny darren dave david dawn dean debbie deborah debra denise dennis derek diana diane dolly dominic don donald donna doris dorothy doug douglas drew dustin dylan earl ed eddie edward eileen elaine eleanor elena eli elijah elizabeth ella ellen elliot emily emma eric erica erin ethan eugene eva evan evelyn faith felix fiona frances francis frank fred gabriel gail gary gavin gene george georgia gerald gina glen glenn gloria gordon grace graham grant greg gregory hailey haley hannah harold harry heather heidi helen henry holly howard hugh ian isaac isabel isabella ivan jack jackie jacob jade jake james jamie jan jane janet janice jared jason jay jean jeff jeffrey jen jenna jennifer jenny jeremy jerry jesse jessica jill jim jimmy jo joan joanne joe joel john johnny jon jonathan jordan jose joseph josh joshua joy joyce juan judith judy julia julian julie justin kai karen karl kate katherine kathleen kathryn kathy katie kay keith kelly ken kendra kenneth kevin kim kimberly kirk kristen kristin kyle lance larry laura lauren leah lee leo leon leslie liam lily linda lindsay lisa liz logan lori louis louise lucas lucy luis luke lydia lynn madison maggie malcolm marc marcus margaret maria marie marilyn mario marisa mark marsha martha martin marvin mary mason matt matthew maureen max maya megan melanie melissa mia michael michelle mike miles mindy molly monica morgan nancy naomi natalie nathan neil nicholas nick nicole nina noah noel nora norman olivia omar oscar owen pam pamela pat patricia patrick patti paul paula peggy penny pete peter phil philip phillip rachel ralph ray raymond rebecca regina renee rhonda ricardo rich richard rick ricky rita rob robert roberta robin rod roger ron ronald rosa rose ross roy ruby russell ruth ryan sally sam samantha samuel sandra sandy sara sarah scott sean seth shane shannon sharon shawn sheila shelby sherry shirley simon sofia sophia sophie spencer stacy stan stanley stephanie stephen steve steven stuart sue susan suzanne sydney tammy tanya tara taylor ted teresa terry theresa thomas tiffany tim timothy tina todd tom tommy tony tracy travis trevor troy tyler valerie vanessa veronica vicki victor victoria vincent virginia walter wanda warren wayne wendy wesley whitney william willie wyatt yolanda yvonne zach zachary zoe`.split(/\s+/));
+// words that are never part of a guest's name (they show up capitalized in Title Case titles)
+const NOT_NAME=new Set(`a about after again all an and any at back bad before best big bonus but by can chat cut day days death dead director's dinosaurs do down edition end ep episode every everyone extended family final finale first flags for friends from fun future god good great grief guest guests her here his home how i in into is it its kids last life listener listeners live love me mix mom dad more most my new news next night no not now of old on one or our out over part people power q&a re-release recap robots season so special stars strangers that the their them these they this time to today together trailer two under up us we what when who why will win without world you your`.split(/\s+/));
+const PARTICLES=new Set('de da di del der van von bin al la le du dos das st st.'.split(' '));
+const HONORIFICS=new Set('dr dr. prof prof. professor sir dame rev rev. mr mr. mrs mrs. ms ms.'.split(' '));
+const SUFFIXES=new Set('jr jr. sr sr. ii iii iv phd md'.split(' '));
+
+// one name: 1-4 capitalized words (plus particles, initials, Dr., Jr.); strict: 2+ words and a known first name
+function parseName(str,strict){
+  const toks=str.trim().split(/\s+/).filter(Boolean);
+  if(!toks.length||toks.length>6)return null;
+  let core=[];
+  for(const t of toks){
+    const lw=t.toLowerCase();
+    if(HONORIFICS.has(lw)&&!core.length)continue;
+    if(SUFFIXES.has(lw)&&core.length)continue;
+    if(PARTICLES.has(lw)&&core.length)continue;
+    if(/\d/.test(t))return null;
+    if(!/^\p{Lu}[\p{L}'’\-.]*$/u.test(t))return null;   // must start with a capital
+    if(NOT_NAME.has(lw)||NOT_GUEST.has(lw))return null;
+    core.push(t);
+  }
+  if(!core.length||core.length>4)return null;
+  if(strict&&(core.length<2||!FIRST_NAMES.has(core[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f.'’]/g,''))))return null;
+  return toks.join(' ');
+}
+// one or more names: "A B", "A B and C D", "A B, C D & E F"
+function parseNames(str,strict){
+  str=str.replace(/[!?]+$/,'').trim();
+  if(!str)return null;
+  const parts=str.split(/\s*,\s*(?:and\s+|&\s*)?|\s+and\s+|\s*&\s*|\s+\+\s+/).filter(Boolean);
+  const out=[];
+  for(const p of parts){const n=parseName(p,strict);if(!n)return null;out.push(n)}
+  return out.length?out:null;
+}
+const MARK_STRONG=/^(?:w\/|feat\.?|featuring|ft\.?|(?:with\s+)?(?:special\s+)?guests?:?)\s*/i;   // always means a guest
+const tidy=t=>t.replace(/[\s\-–—|:•·,]+$/,'').trim();
+// inside an explicit bracket like "[with …]" the marker already says it's a guest, so names are taken as written:
+// bands ("The Mountain Goats"), lowercase names ("bell hooks"), "Will Smith". Only things that clearly aren't people are refused.
+const NOT_GUEST=new Set(`lyrics commentary bonus subtitles captions transcript transcripts video audio music sound ads notes extras director's cut`.split(/\s+/));
+function looseNames(str){
+  str=str.replace(/[!?.]+$/,'').trim();
+  if(!str)return null;
+  const parts=str.split(/\s*,\s*(?:and\s+|&\s*)?|\s+and\s+|\s*&\s*|\s+\+\s+/).map(x=>x.trim()).filter(Boolean);
+  if(!parts.length)return null;
+  for(const p of parts){
+    const w=p.split(/\s+/);
+    if(w.length>8)return null;
+    if(w.every(x=>{const l=x.toLowerCase().replace(/[.,'’]/g,'');return NOT_NAME.has(l)||NOT_GUEST.has(l)}))return null;   // "Friends", "Lyrics", "the Kids"
+  }
+  return parts;
+}
+// returns {title, guests} — guests is [] when the title has none
+function splitGuest(title){
+  const raw=String(title||'').trim();
+  const none={title:raw,guests:[]};
+  if(!raw)return none;
+  // 0. a marked bracket anywhere in the title: "[with Jane Doe]", "(w/ X)", "[feat. X]", "(Guest: X)" — start, middle or end
+  const bm=raw.match(/[(\[]\s*(?:w\/|with\s+(?:special\s+)?guests?:?|with|feat\.?|featuring|ft\.?|(?:special\s+)?guests?:?)\s*([^()\[\]]+?)\s*[)\]]/i);
+  if(bm){
+    const g=looseNames(bm[1]);
+    const rest=tidy(raw.slice(0,bm.index).concat(' ',raw.slice(bm.index+bm[0].length)).replace(/\s{2,}/g,' ').replace(/\s([\-–—|•·])(?:\s+[\-–—|•·])+\s/g,' $1 ').replace(/^[\s\-–—|:•·,]+/,''));
+    if(g&&/[\p{L}\d]/u.test(rest))return{title:rest,guests:g};
+  }
+  // 1. a trailing bracket: "(with Jane Doe)", "[feat. X]", or a bare "(Jane Doe)"
+  let m=raw.match(/^(.*\S)\s*[(\[]\s*([^()\[\]]+?)\s*[)\]]\s*$/);
+  if(m){
+    const inner=m[2];let g=null;
+    if(MARK_STRONG.test(inner)&&inner.replace(MARK_STRONG,''))g=parseNames(inner.replace(MARK_STRONG,''),false);
+    else if(/^with\s+/i.test(inner))g=parseNames(inner.replace(/^with\s+/i,''),false);
+    else g=parseNames(inner,true);
+    const rest=tidy(m[1]);
+    if(g&&/[\p{L}\d]/u.test(rest))return{title:rest,guests:g};
+  }
+  // 2. after a separator: "Episode 12 - with Jane Doe", "Ep 5: w/ Jane", "#212 | with Guest Ken Burns"
+  m=raw.match(/^(.*\S)\s*(?:\s[-–—|•·]\s|:\s)\s*((?:w\/|with|feat\.?|featuring|ft\.?|(?:special\s+)?guests?)\b.*)$/i);
+  if(m){
+    let clause=m[2],g=null;
+    if(MARK_STRONG.test(clause))g=parseNames(clause.replace(MARK_STRONG,''),false);
+    else{clause=clause.replace(/^with\s+/i,'');g=parseNames(clause,false)}
+    const rest=tidy(m[1]);
+    if(g&&/[\p{L}\d]/u.test(rest))return{title:rest,guests:g};
+  }
+  // 3. trailing, no separator: "Big Night feat. DJ Shadow", "Lunch w/ John", "Lunch with John Smith"
+  m=raw.match(/^(.*\S)\s+(w\/|feat\.?|featuring|ft\.?|with\s+(?:special\s+)?guests?:?|with)\s+(\S.*)$/i);
+  if(m){
+    const plain=/^with$/i.test(m[2]);
+    const g=parseNames(m[3],plain);   // plain "with": two-part name starting with a known first name
+    const rest=tidy(m[1]);
+    if(g&&/[\p{L}\d]/u.test(rest))return{title:rest,guests:g};
+  }
+  return none;
+}
+// "(with JANE DOE)", "(with JANE DOE & JOHN ROE)", "(with A, B & C)"
+const guestText=g=>{if(!g.length)return'';const n=g.length===1?g[0]:`${g.slice(0,-1).join(', ')} & ${g[g.length-1]}`;return `(with ${n.toLocaleUpperCase()})`};
+
+/* ---------- up next ---------- */
+const pad2=n=>String(n).padStart(2,'0');
+// the next episode: the first unplayed one after the newest you've played; if there's none, the oldest unplayed
+function upNext(sh){
+  const asc=[...sh.episodes].sort((a,b)=>a.date-b.date);
+  let last=-1;asc.forEach((e,i)=>{if(sh.played[e.id])last=i});
+  const nx=asc.slice(last+1).find(e=>!sh.played[e.id])||asc.find(e=>!sh.played[e.id]);
+  if(!nx)return null;
+  const label=nx.ep?(nx.season?`S${pad2(nx.season)} E${pad2(nx.ep)}`:`Ep. ${nx.ep}`):`#${asc.indexOf(nx)+1}`;
+  return {...nx,label};
+}
+function lastPlayed(sh){let m=0;for(const k in sh.played)if(sh.played[k]>m)m=sh.played[k];return m}
+function ago(ms){if(!ms)return'';const m=Math.round((Date.now()-ms)/60000);
+  if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.round(m/60);if(h<24)return h+'h ago';const d=Math.round(h/24);return d<7?d+'d ago':fmtDate(ms)}
+function listenNext(id,ev){
+  if(ev)ev.stopPropagation();
+  const sh=S.shows[id];const nx=upNext(sh);if(!nx)return;
+  sh.played[nx.id]=Date.now();save();
+  renderLibList();   // straight to the next episode: no fade, no message
+}
+
+/* ---------- actions ---------- */
+async function trackShow(i,btn){
+  const p=view.results[i];
+  if(S.shows[p.id]){openShow(p.id);return}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Loading';
+  try{
+    const {eps,source}=await getEpisodes(p);
+    if(!eps.length)throw new Error('No episodes found');
+    S.shows[p.id]={...p,episodes:eps,played:{},source,addedAt:Date.now(),updatedAt:Date.now()};
+    S.order.unshift(p.id);save();
+    toast(`Added — ${eps.length} episodes`);
+    openShow(p.id);
+  }catch(e){toast(e.message||'Could not load episodes');btn.disabled=false;btn.textContent='Track'}
+}
+// adds new episodes to a show; played marks are untouched, so Up Next stays where you are in the series
+function mergeEpisodes(sh,eps,source){
+  const wasCaughtUp=sh.episodes.length>0&&!upNext(sh);
+  const before=new Set(sh.episodes.map(e=>e.id));
+  const added=eps.filter(e=>!before.has(e.id)).length;
+  if(added&&wasCaughtUp)sh.newAt=Date.now();   // caught up and something new dropped: it goes to the top
+  const now=new Set(eps.map(e=>e.id));   // keep episodes that dropped out of the feed, so history isn't lost
+  sh.episodes=eps.concat(sh.episodes.filter(e=>!now.has(e.id)));
+  if(!(source==='itunes'&&sh.source==='rss'))sh.source=source;   // a failed feed check doesn't downgrade a full list
+  sh.updatedAt=Date.now();
+  return added;
+}
+async function refreshShow(btn){
+  const sh=S.shows[view.id];if(!sh)return;
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Refreshing';
+  try{
+    const {eps,source}=await getEpisodes(sh);
+    const added=mergeEpisodes(sh,eps,source);save();
+    toast(added?`${added} new episode${added>1?'s':''}`:'Up to date');
+  }catch(e){toast('Refresh failed')}
+  render();
+}
+// background check for new episodes: on open and when the app comes back to the front, at most every 3 hours.
+// Quiet: only the counts change (and a caught-up show with something new moves back to Up Next).
+const AUTO_EVERY=3*3600000;
+let autoBusy=false;
+async function autoRefresh(){
+  if(autoBusy||Date.now()-(S.lastAuto||0)<AUTO_EVERY)return;
+  autoBusy=true;
+  for(const id of [...S.order]){
+    const sh=S.shows[id];if(!sh||sh.demo)continue;
+    try{const {eps,source}=await getEpisodes(sh);if(S.shows[id]&&eps.length){mergeEpisodes(S.shows[id],eps,source);save()}}catch(e){}
+    if(view.name==='lib')renderLibList();else if(view.name==='show'&&view.id===id){updateProgress();renderEpisodes()}
+  }
+  S.lastAuto=Date.now();save();autoBusy=false;
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoRefresh()});
+function removeShow(){
+  const sh=S.shows[view.id];if(!sh)return;
+  if(!confirm(`Remove "${sh.title}" and its played history?`))return;
+  delete S.shows[view.id];S.order=S.order.filter(x=>x!==view.id);save();go('lib');
+}
+function toggleEp(epId){
+  const sh=S.shows[view.id];
+  if(sh.played[epId])delete sh.played[epId];else sh.played[epId]=Date.now();
+  save();
+  const row=document.querySelector(`.ep[data-id="${CSS.escape(epId)}"]`);
+  if(row){row.classList.toggle('done',!!sh.played[epId]);if(view.filter!=='all')row.remove()}
+  updateProgress();
+}
+function playedThrough(epId){
+  const sh=S.shows[view.id];const target=sh.episodes.find(e=>e.id===epId);if(!target)return;
+  let n=0;sh.episodes.forEach(e=>{if(e.date<=target.date&&!sh.played[e.id]){sh.played[e.id]=Date.now();n++}});
+  save();toast(`Marked ${n} episode${n===1?'':'s'} played`);renderEpisodes();updateProgress();
+}
+function markAll(val){
+  const sh=S.shows[view.id];
+  if(!confirm(val?'Mark every episode played?':'Clear all played marks?'))return;
+  sh.played={};if(val)sh.episodes.forEach(e=>sh.played[e.id]=Date.now());
+  save();renderEpisodes();updateProgress();
+}
+
+/* ---------- backup ---------- */
+const DAY=86400000;
+function bk(){if(!S.backup)S.backup={every:'week',day:new Date().getDay(),last:0};return S.backup}
+function libraryJSON(){const {backup,...rest}=S;return JSON.stringify(rest,null,1)}
+function downloadJSON(){
+  const b=new Blob([libraryJSON()],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=`pod-tracer-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function backUpNow(){downloadJSON();bk().last=Date.now();save();toast('Backup saved');if(view.name==='data')renderData()}
+// when the next backup is due: the day after the last (Daily), or the picked weekday after it (Weekly)
+function nextBackup(){
+  const b=bk();if(b.every==='never')return 0;
+  if(!b.last)return Date.now();
+  const d=new Date(b.last);d.setHours(0,0,0,0);
+  if(b.every==='day')return d.getTime()+DAY;
+  let n=new Date(d.getTime()+DAY);while(n.getDay()!==b.day)n=new Date(n.getTime()+DAY);
+  return n.getTime();
+}
+function backupDue(){const n=nextBackup();return n&&S.order.length&&Date.now()>=n}
+function checkBackup(){
+  if(!backupDue())return;
+  const b=bk();
+  $('#bk-modal-body').textContent=b.last?`Your last backup was ${fmtDate(b.last)}.`:"You haven't backed up your podcasts yet.";
+  $('#bk-modal').classList.add('open');
+}
+$('#bk-later').onclick=()=>$('#bk-modal').classList.remove('open');
+$('#bk-go').onclick=()=>{$('#bk-modal').classList.remove('open');backUpNow()};
+
+// import: check pasted / loaded JSON, then Merge or Replace
+function parseImport(txt){
+  if(!txt.trim())return{state:'wait'};
+  let d;try{d=JSON.parse(txt)}catch(e){return{state:'error',msg:'Not valid JSON'}}
+  if(!d||typeof d.shows!=='object'||!Array.isArray(d.order))return{state:'error',msg:'Not a Pod Tracker backup'};
+  const shows=d.order.map(id=>d.shows[id]).filter(Boolean);
+  const played=shows.reduce((n,sh)=>n+Object.keys(sh.played||{}).length,0);
+  return{state:'ok',data:d,msg:`${shows.length} podcast${shows.length===1?'':'s'} · ${played} played`};
+}
+function mergeImport(d){
+  let added=0;
+  d.order.forEach(id=>{
+    const inc=d.shows[id];if(!inc)return;
+    const cur=S.shows[id];
+    if(!cur){S.shows[id]=inc;S.order.push(id);added++;return}
+    const have=new Set(cur.episodes.map(e=>e.id));
+    cur.episodes=cur.episodes.concat((inc.episodes||[]).filter(e=>!have.has(e.id)));
+    cur.played={...(inc.played||{}),...cur.played};
+  });
+  return added;
+}
+$('#importFile').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  const t=$('#dt-import-text');if(t){t.value=await f.text();updateImportStatus()}
+  e.target.value='';
+});
+
+/* ---------- layout: header/footer heights drive the page padding ---------- */
+function syncBars(){
+  const h=$('#app-header').offsetHeight, f=$('#app-footer').children.length?$('#app-footer').offsetHeight:0;
+  document.body.style.setProperty('--header-h',h+'px');document.body.style.setProperty('--footer-h',f+'px');
+}
+new ResizeObserver(syncBars).observe($('#app-header'));
+new ResizeObserver(syncBars).observe($('#app-footer'));
+
+/* ---------- rendering ---------- */
+function go(name,id=null){view.name=name;view.id=id;render();window.scrollTo(0,0)}
+function openShow(id){view.filter='all';view.q='';go('show',id)}
+
+$('#tabs').onclick=e=>{const t=e.target.closest('.tab');if(t)go(t.dataset.v)};
+function render(){
+  document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.v===(view.name==='data'?'data':'lib')));
+  $('#app').classList.toggle('fit',view.name==='data');
+  if(view.name==='lib')renderLib();
+  else if(view.name==='search')renderSearch();
+  else if(view.name==='data')renderData();
+  else renderShow();
+  $('#app-header').classList.toggle('bare',!$('#hdr-row').children.length);
+  syncBars();
+}
+
+const LIB_SORTS={recent:'Recently played',added:'Date added',title:'Title',progress:'Progress',updated:'New episodes'};
+function renderLib(){
+  const keys=Object.keys(LIB_SORTS);
+  $('#hdr-row').innerHTML=S.order.length?`<div class="field-card">${SEARCH_ICON}<input id="libq" placeholder="Search library" autocomplete="off" value="${esc(view.libQ||'')}"></div>
+    <div class="sort-card" id="libsort"><span class="k">Sort by:</span><span>${LIB_SORTS[view.libSort]}</span></div>`:'';
+  if(S.order.length){
+    $('#libq').oninput=e=>{view.libQ=e.target.value;renderLibList()};
+    $('#libsort').onclick=()=>{view.libSort=keys[(keys.indexOf(view.libSort)+1)%keys.length];renderLib();syncBars()};
+  }
+  $('#app-footer').innerHTML=`<div class="add-card" id="addPod"><b>+</b>Add New Podcast</div>`;
+  $('#addPod').onclick=()=>go('search');
+  $('#app').innerHTML='<div id="liblist" style="display:flex;flex-direction:column;gap:4px"></div>';
+  renderLibList();
+}
+function renderLibList(){
+  let shows=S.order.map(id=>S.shows[id]).filter(Boolean);
+  const q=(view.libQ||'').trim().toLowerCase();
+  if(q)shows=shows.filter(s=>(s.title+' '+s.author).toLowerCase().includes(q));
+  const pct=s=>s.episodes.length?playedCount(s)/s.episodes.length:0;
+  const recency=sh=>Math.max(lastPlayed(sh),sh.newAt||0);   // last played, or when a new episode woke a caught-up show
+  if(view.libSort==='recent')shows.sort((a,b)=>recency(b)-recency(a));
+  if(view.libSort==='title')shows.sort((a,b)=>a.title.localeCompare(b.title));
+  if(view.libSort==='progress')shows.sort((a,b)=>pct(b)-pct(a));
+  if(view.libSort==='updated')shows.sort((a,b)=>Math.max(...b.episodes.map(e=>e.date),0)-Math.max(...a.episodes.map(e=>e.date),0));
+  let h='';
+  if(!S.order.length)h='<div class="empty">No podcasts tracked yet.<br>Tap “Add New Podcast” to find one.</div>';
+  else{
+    if(!shows.length)h+='<div class="empty">No matches.</div>';
+    else h+=libCards(shows);
+  }
+  $('#liblist').innerHTML=h;
+}
+
+function renderSearch(){
+  $('#hdr-row').innerHTML=`<button class="plain-btn" id="sback">‹ Back</button><form class="field-card" id="sform">${SEARCH_ICON}<input id="q" placeholder="Podcast name" autocomplete="off" enterkeyhint="search" value="${esc(view.lastTerm)}"></form>
+    <button class="ink-btn" id="sgo">Search</button>`;
+  $('#sback').onclick=()=>go('lib');
+  $('#sform').onsubmit=doSearch;$('#sgo').onclick=doSearch;
+  $('#app-footer').innerHTML='';
+  $('#app').innerHTML='<div id="results" style="display:flex;flex-direction:column;gap:4px"></div>';
+  renderResults();
+  if(!view.lastTerm)setTimeout(()=>$('#q').focus(),50);
+}
+function renderResults(){
+  const el=$('#results');if(!el)return;
+  if(view.searching){el.innerHTML='<div class="empty"><span class="spin"></span>Searching…</div>';return}
+  if(!view.lastTerm){el.innerHTML='<div class="empty">Look up a podcast by name to start tracking it.</div>';return}
+  if(!view.results.length){el.innerHTML='<div class="empty">No podcasts found.</div>';return}
+  el.innerHTML='<div class="list-divider"><span>Results</span></div>'+view.results.map((p,i)=>{
+    const tracked=!!S.shows[p.id];
+    return `<div class="row has-art" style="cursor:default">${artSec(p.art,p.id,p.title)}
+      <div class="main"><span class="t">${esc(p.title)}</span><span class="a">${esc(p.author)}${p.count?' · '+p.count+' episodes':''}</span></div>
+      <button class="go ${tracked?'open':''}" onclick="trackShow(${i},this)">${tracked?'Open':'Track'}</button></div>`;
+  }).join('');
+}
+async function doSearch(e){
+  e.preventDefault();const term=$('#q').value.trim();if(!term)return;
+  $('#q').blur();view.lastTerm=term;view.searching=true;renderResults();
+  try{view.results=await searchPodcasts(term)}catch(err){view.results=[];toast('Search failed — check connection')}
+  view.searching=false;renderResults();
+}
+
+/* ---------- library cards ---------- */
+// how high the check square fills: the first 1% of a show takes 3% of the height (so starting is visible),
+// the last 5% takes the top 10% (so the end is visible), and 1–95% spreads over the rest
+function fillHeight(f){
+  if(f<=0)return 0;
+  if(f>=1)return 1;
+  if(f<=.01)return f/.01*.03;
+  if(f>=.95)return .9+(f-.95)/.05*.1;
+  return .03+(f-.01)/.94*.87;
+}
+const CHK='<svg class="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function info(sh){const p=playedCount(sh),t=sh.episodes.length,f=t?p/t:0;return{p,t,f,left:t-p,done:t>0&&p===t,nx:upNext(sh)}}
+const onCard=id=>`data-show="${id}" style="${colorVars(id)}" onclick="openShow('${id}')"`;
+const onChk=id=>`onclick="listenNext('${id}',event)"`;
+
+function libCards(shows){
+  const go=shows.filter(sh=>upNext(sh)), done=shows.filter(sh=>!upNext(sh));
+  let h='';
+  if(go.length)h+='<div class="list-divider"><span>Up Next</span></div>'+go.map(sh=>{
+    const {p,t,f,left,nx}=info(sh);
+    return `<div class="oc v4" ${onCard(sh.id)}>${artSec(sh.art,sh.id,sh.title)}
+      <div class="bd"><span class="k ell">${esc(sh.title)}</span>${(()=>{const sg=splitGuest(nx.title);return sg.guests.length
+          ?`<span class="mid"><span class="et one">${esc(sg.title)}</span><span class="gu">${esc(guestText(sg.guests))}</span></span>`
+          :`<span class="mid"><span class="et">${esc(sg.title)}</span></span>`})()}
+        <span class="mt">${nx.label} · ${fmtDate(nx.date)}${nx.dur?' · '+fmtDur(nx.dur):''} · ${p}/${t} (${left})</span></div>
+      <button class="cks" type="button" style="--f:${fillHeight(f)}" ${onChk(sh.id)} aria-label="Mark listened"><span class="rnd">${CHK}</span></button></div>`;
+  }).join('');
+  if(done.length)h+='<div class="list-divider"><span>Caught Up</span></div>'+done.map(sh=>{
+    const {t}=info(sh);
+    return `<div class="row has-art done cu-row" style="${colorVars(sh.id)}" onclick="openShow('${sh.id}')">
+      <div class="fill" style="width:100%"></div>${artSec(sh.art,sh.id,sh.title)}
+      <div class="main"><span class="t">${esc(sh.title)}</span><span class="a">${esc(sh.author)}</span></div>
+      <div class="prog"><span>${t} / ${t}</span><span>${lastPlayed(sh)?ago(lastPlayed(sh)):''}</span></div></div>`;
+  }).join('');
+  return h;
+}
+
+/* ---------- Data: Backup | Export | Import ---------- */
+const DT={backup:'Backup',export:'Export',import:'Import'};
+function renderData(){
+  view.dt=view.dt||'backup';
+  $('#hdr-row').innerHTML=`<div class="tabs" id="dt-tabs">${Object.entries(DT).map(([k,v])=>`<div class="tab ${view.dt===k?'active':''}" data-dt="${k}">${v}</div>`).join('')}</div>`;
+  $('#dt-tabs').onclick=e=>{const t=e.target.closest('.tab');if(!t)return;view.dt=t.dataset.dt;renderData();syncBars()};
+  if(view.dt==='backup')dtBackup();else if(view.dt==='export')dtExport();else dtImport();
+}
+function dtBackup(){
+  const b=bk(), n=nextBackup();
+  const next=b.every==='never'?'Off':!S.order.length?'—':n<=Date.now()?'Due now':fmtDate(n);
+  const days=['S','M','T','W','T','F','S'].map((d,i)=>`<i data-wd="${i}" class="${b.day===i?'on':''}">${d}</i>`).join('');
+  $('#app').innerHTML=`
+    <div class="dt-card when"><span>Last backup<b>${b.last?fmtDate(b.last):'Never'}</b></span><span>Next backup<b>${next}</b></span></div>
+    <div class="dt-split" id="bk-every">
+      <button data-every="day" class="${b.every==='day'?'on':''}">Daily</button>
+      <button data-every="week" class="wk ${b.every==='week'?'on':''}"><span class="wk-label">Weekly</span><span class="wk-days">${days}</span></button>
+      <button data-every="never" class="${b.every==='never'?'on':''}">Never</button>
+    </div>
+    <div class="dt-card how"><span>Your library saves on this device as you go.</span>
+      <span>${b.every==='never'?'Backups are off. Back Up Now still saves a file.':'When a backup is due, you’ll be asked to save a file.'}</span></div>`;
+  $('#bk-every').onclick=e=>{
+    const wd=e.target.closest('i[data-wd]');const btn=e.target.closest('button');if(!btn)return;
+    if(wd&&b.every==='week'){b.day=+wd.dataset.wd}else b.every=btn.dataset.every;
+    save();dtBackup();
+  };
+  $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#8a6a3f" id="bk-now">Back Up Now</button></div>`;
+  $('#bk-now').onclick=backUpNow;
+}
+function dtExport(){
+  $('#app').innerHTML=`<textarea class="dt-text" id="dt-export-text" readonly spellcheck="false"></textarea>`;
+  $('#dt-export-text').value=libraryJSON();
+  $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#234a5e" id="dt-copy">Copy</button>
+    <button class="cloth-btn" style="--cloth:#3a2f52" id="dt-download">Download</button></div>`;
+  $('#dt-copy').onclick=async()=>{
+    const t=$('#dt-export-text');
+    try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand('copy')}
+    toast('Copied');
+  };
+  $('#dt-download').onclick=downloadJSON;
+}
+function dtImport(){
+  $('#app').innerHTML=`<div class="dt-card" id="dt-status">Import<b>Waiting for JSON</b></div>
+    <textarea class="dt-text" id="dt-import-text" spellcheck="false" placeholder="Paste exported JSON here, or load a file below"></textarea>`;
+  $('#dt-import-text').oninput=updateImportStatus;
+  $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#2b5752" id="dt-load">Load File</button>
+    <button class="cloth-btn" style="--cloth:#86452b" id="dt-merge">Merge</button>
+    <button class="cloth-btn" style="--cloth:#7a2f2b" id="dt-replace">Replace</button></div>`;
+  $('#dt-load').onclick=()=>$('#importFile').click();
+  $('#dt-merge').onclick=()=>{
+    const r=parseImport($('#dt-import-text').value);if(r.state!=='ok'){toast(r.msg||'Paste or load a backup first');return}
+    const n=mergeImport(r.data);save();toast(`Merged — ${n} new podcast${n===1?'':'s'}`);$('#dt-import-text').value='';updateImportStatus();
+  };
+  $('#dt-replace').onclick=()=>{
+    const r=parseImport($('#dt-import-text').value);if(r.state!=='ok'){toast(r.msg||'Paste or load a backup first');return}
+    if(!confirm('Replace your whole library with this backup?'))return;
+    const keep=bk();S={shows:r.data.shows,order:r.data.order,backup:keep};save();toast('Library replaced');go('lib');
+  };
+}
+function updateImportStatus(){
+  const r=parseImport($('#dt-import-text').value), c=$('#dt-status');
+  c.classList.toggle('error',r.state==='error');
+  c.innerHTML=r.state==='wait'?'Import<b>Waiting for JSON</b>':r.state==='error'?`Import<b>${r.msg}</b>`:`Ready to import<b>${r.msg}</b>`;
+}
+
+const FILTERS={all:'All',unplayed:'Unplayed',played:'Played'};
+function renderShow(){
+  const sh=S.shows[view.id];if(!sh){go('lib');return}
+  $('#hdr-row').innerHTML=`<button class="plain-btn" id="back">‹ Back</button>
+    <div class="seg" id="filt" style="flex:1">${Object.entries(FILTERS).map(([k,v])=>`<button data-f="${k}" class="${view.filter===k?'on':''}">${v}</button>`).join('')}</div>
+    <div class="sort-card" id="sortBtn" style="flex:0 0 22%"><span class="k">Sort by:</span><span id="sortName">${view.sort==='new'?'Newest':'Oldest'}</span></div>`;
+  $('#back').onclick=()=>go('lib');
+  $('#filt').onclick=e=>{const f=e.target.dataset.f;if(!f)return;view.filter=f;$('#filt').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===f));renderEpisodes()};
+  $('#sortBtn').onclick=()=>{view.sort=view.sort==='new'?'old':'new';$('#sortName').textContent=view.sort==='new'?'Newest':'Oldest';renderEpisodes()};
+
+  $('#app-footer').innerHTML=`<div class="pcard" id="pcard" style="${colorVars(sh.id)}"><div class="fill" id="pfill"></div>
+      <div class="ov"><span id="pcount"></span><span id="ppct"></span></div></div>
+    <div class="acts"><button id="refBtn">Refresh</button><button onclick="markAll(true)">All Played</button>
+      <button onclick="markAll(false)">Clear</button><button class="del" onclick="removeShow()">Remove</button></div>`;
+  $('#refBtn').onclick=e=>refreshShow(e.currentTarget);
+
+  const latest=Math.max(0,...sh.episodes.map(e=>e.date));
+  $('#app').innerHTML=`<div class="card show-head">${artSec(sh.art,sh.id,sh.title)}
+      <div class="main"><span class="t">${esc(sh.title)}</span><span class="a">${esc(sh.author)}</span></div></div>
+    <div class="stats"><div class="sr"><span><b>${sh.episodes.length}</b> episodes</span><span>latest <b>${fmtDate(latest)}</b></span></div>
+      <div class="sr"><span id="leftStat"></span><span>checked <b>${fmtDate(sh.updatedAt)}</b></span></div></div>
+    ${sh.source==='itunes'?'<div class="note warn">The feed couldn’t be reached, so this is Apple’s list (most recent 200 at most). Try Refresh later.</div>':''}
+    <div class="field-card">${SEARCH_ICON}<input id="epq" placeholder="Search episodes" autocomplete="off" value="${esc(view.q)}"></div>
+    <div class="list-divider"><span>Episodes</span></div>
+    <div id="eps" style="display:flex;flex-direction:column;gap:4px;${colorVars(sh.id)}"></div>`;
+  $('#epq').oninput=e=>{view.q=e.target.value;renderEpisodes()};
+  updateProgress();renderEpisodes();
+}
+function updateProgress(){
+  const sh=S.shows[view.id];if(!sh||!$('#pcard'))return;
+  const p=playedCount(sh),t=sh.episodes.length,f=t?p/t:0;
+  $('#pfill').style.width=f*100+'%';
+  $('#pcard').classList.toggle('done',t>0&&p===t);
+  $('#pcount').textContent=`${p} / ${t} played`;
+  $('#ppct').textContent=Math.round(f*100)+'%';
+  const left=sh.episodes.filter(e=>!sh.played[e.id]).reduce((s,e)=>s+e.dur,0);
+  const ls=$('#leftStat');if(ls)ls.innerHTML=`<b>${t-p}</b> unplayed${left?` · <b>${fmtDur(left)}</b> left`:''}`;
+}
+function renderEpisodes(){
+  const sh=S.shows[view.id];const el=$('#eps');if(!sh||!el)return;
+  const q=view.q.trim().toLowerCase();
+  const list=sh.episodes.filter(e=>{
+    const d=!!sh.played[e.id];
+    if(view.filter==='played'&&!d)return false;
+    if(view.filter==='unplayed'&&d)return false;
+    return !q||e.title.toLowerCase().includes(q);
+  }).sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
+  if(!list.length){el.innerHTML='<div class="empty">Nothing here.</div>';return}
+  el.innerHTML=list.map(e=>`<div class="row ep ${sh.played[e.id]?'done':''}" data-id="${esc(e.id)}">
+    ${(()=>{const sg=splitGuest(e.title);return `<div class="main"><span class="t">${esc(sg.title)}</span><span class="a">${sg.guests.length?esc(guestText(sg.guests))+' · ':''}${fmtDate(e.date)}${e.dur?' · '+fmtDur(e.dur):''}</span></div>`})()}
+    <button class="thru" title="Mark this and every older episode played">≤</button></div>`).join('');
+}
+$('#app').addEventListener('click',e=>{
+  const row=e.target.closest('.ep');if(!row||view.name!=='show')return;
+  if(e.target.closest('.thru'))playedThrough(row.dataset.id);
+  else toggleEp(row.dataset.id);
+});
+
+load();seedDemo();render();checkBackup();autoRefresh();
+
+/* ---------- offline: the service worker keeps a copy of the app (only when served over http/https, e.g. GitHub Pages) ---------- */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  const reg=()=>navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if(document.readyState==='complete')reg();else window.addEventListener('load',reg);
+}
+</script>
+</body>
+</html>
