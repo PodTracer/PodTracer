@@ -1,6 +1,6 @@
 // Pod Tracer service worker: keeps the app's files so it opens fully offline.
 // Bump VERSION whenever you upload a new index.html so phones pick up the update.
-const VERSION = 'pod-tracer-v6';
+const VERSION = 'pod-tracer-v36';
 const FILES = ['./', './index.html', './manifest.webmanifest',
                './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 

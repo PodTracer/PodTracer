@@ -37,6 +37,106 @@
     font-family:Arial,sans-serif; font-size:.85rem; font-weight:600; letter-spacing:.3px; cursor:pointer; user-select:none;}
   #tabs .tab + .tab{border-left:3px solid #000;}
   #tabs .tab.active{background:var(--ink); color:#fff;}
+  #tabs[hidden]{display:none;}
+  /* a show's own window: Back | name | Edit, like Stack Tracker's page headers */
+  #ttl-bar{display:flex; padding-top:env(safe-area-inset-top); border-bottom:3px solid #000;}
+  #ttl-bar[hidden]{display:none;}
+  #app-header.bare #ttl-bar{border-bottom:none;}   /* nothing under the bar (edit mode): one line, not two */
+  #ttl-bar button{flex:0 0 25%; height:42px; margin:0; padding:0 2px; border:0; border-radius:0; background:var(--ink); color:#fff;
+    font:600 .85rem Arial,sans-serif; letter-spacing:.3px; cursor:pointer;}
+  #ttl-bar button:active{filter:brightness(1.3);}
+  #ttl-bar #tb-edit.on{background:#5b6633;}
+  #ttl-bar #tb-back.cancel{background:var(--red);}
+  #ttl-bar #tb-edit.blank{display:none;}           /* Add Podcast: no right-hand button */
+  #ttl-bar:has(#tb-edit.blank) h2{border-right:none; padding-right:calc(25% + 11px);}   /* no right button: pad by Back's width so the title centers on the whole window */
+  /* header text in capitals: the Library/Data tabs and the Back | title | Edit bar */
+  #tabs .tab, #ttl-bar button, #ttl-bar h2{text-transform:uppercase; letter-spacing:.6px;}
+  #ttl-bar h2{flex:1; min-width:0; margin:0; height:42px; padding:0 8px; background:#d9d0be; text-align:center;
+    border-left:3px solid #000; border-right:3px solid #000; font:600 .95rem/42px Georgia,serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  /* tag tabs in a show: All, then each tag in use */
+  .tabs.tagtabs{height:45px; flex:none;}
+  /* search + sort/filter card (second header row of a show's window), like Stack Tracker's */
+  #sf-card{flex:1; position:relative; display:flex; align-items:center; justify-content:center; gap:5px; height:45px; padding:0 40px;
+    border:3px solid #000; border-radius:8px; cursor:pointer; user-select:none; white-space:nowrap; overflow:hidden;
+    --l:var(--panel); --r:var(--panel);
+    background:linear-gradient(to right, var(--l) 0 39px, var(--panel) 39px calc(100% - 39px), var(--r) calc(100% - 39px)) border-box;
+    font:700 min(.74rem,2.95vw) Arial,sans-serif; text-transform:uppercase;}
+  #sf-card .sk{color:var(--muted);} #sf-card .sv{color:var(--ink); overflow:hidden; text-overflow:ellipsis;}
+  #sf-card .sl{display:flex; gap:5px; min-width:0;}
+  /* a show's second header row: still 45px. A 45px photo square on the left; beside it two thin 21px cards, stacked
+     (name and publisher on top, search + sort/filter below), like Stack Tracker's two-row header */
+  .hdr-row.show-row{height:45px;}
+  .photo-card{flex:none; width:45px; height:45px; position:relative; border-radius:8px; overflow:hidden; background:var(--unread);}
+  .photo-card::after{content:''; position:absolute; inset:0; border:3px solid #000; border-radius:8px; pointer-events:none;}   /* border drawn over the art */
+  .photo-card .art-sec{width:100%; height:100%; border-right:0;}
+  .show-col{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
+  .title-card{height:21px; display:flex; align-items:center; justify-content:center; gap:5px; padding:0 8px; background:var(--panel); border:3px solid #000; border-radius:6px;
+    white-space:nowrap; overflow:hidden;}
+  .title-card .t{min-width:0; max-width:100%; font:700 .72rem/1 Georgia,serif; letter-spacing:.5px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis;}   /* just the name, centered, in capitals */
+  .title-card .a{min-width:0; font:.6rem/1 Arial,sans-serif; color:rgba(43,38,32,.7); overflow:hidden; text-overflow:ellipsis;}
+  #sf-card.compact{flex:none; height:21px; border-radius:6px; padding:0 30px; gap:4px; font-size:min(.6rem,2.5vw); line-height:1;
+    background:linear-gradient(to right, var(--l) 0 27px, var(--panel) 27px calc(100% - 27px), var(--r) calc(100% - 27px)) border-box;}
+  #sf-card.compact .sl{gap:4px;}
+  #sf-card.compact #sf-search, #sf-card.compact #sf-close{width:24px;}
+  #sf-card.compact #sf-search svg, #sf-card.compact #sf-close svg{width:11px; height:11px;}
+  #sf-card.compact #sfq{left:24px; right:24px; padding:0 6px; font-size:.74rem;}
+  #sf-search, #sf-close{position:absolute; top:0; bottom:0; width:36px; display:flex; align-items:center; justify-content:center;}
+  #sf-search{left:0; border-right:3px solid #000;} #sf-close{right:0; border-left:3px solid #000; display:none;}
+  #sf-search svg, #sf-close svg{width:16px; height:16px; display:block;}
+  #sfq{position:absolute; left:36px; right:36px; top:0; bottom:0; display:none; margin:0; padding:0 8px; border:0; outline:0; background:transparent;
+    font:600 .9rem Georgia,serif; text-transform:none;}
+  #sf-card.searching{--l:var(--ink); --r:#7a2f2b; cursor:text;}
+  #sf-card.searching .sk, #sf-card.searching .sv{visibility:hidden;}
+  #sf-card.searching #sf-search svg{stroke:#fff;}
+  #sf-card.searching #sf-close{display:flex;}
+  #sf-card.searching #sfq{display:block;}
+  /* the Sort and Filter page */
+  #so-page{position:fixed; inset:0; z-index:40; background:var(--bg); overflow-y:auto;}
+  #so-page[hidden]{display:none;}
+  .so-head{position:sticky; top:0; z-index:1; display:flex; padding-top:env(safe-area-inset-top); background:var(--bg); border-bottom:3px solid #000;}
+  .so-head button{flex:0 0 25%; height:42px; margin:0; border:0; border-radius:0; background:var(--ink); color:#fff; cursor:pointer;
+    font:600 .85rem Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase;}
+  .so-head h2{flex:1; min-width:0; margin:0; height:42px; padding:0 calc(25% + 11px) 0 8px; background:#d9d0be; border-left:3px solid #000;
+    text-align:center; font:600 .95rem/42px Georgia,serif; letter-spacing:.6px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #so-body{display:flex; flex-direction:column; gap:4px; padding:4px 4px calc(16px + env(safe-area-inset-bottom)); max-width:760px; margin:0 auto;}
+  .so-opt{display:flex; flex-direction:column; justify-content:center; gap:2px; height:45px; margin:0; padding:0 10px; text-align:left;
+    background:var(--panel); border:3px solid #000; border-radius:8px; cursor:pointer; line-height:1.15;}
+  .so-opt b{font:600 .9rem Georgia,serif; color:var(--ink);} .so-opt span{font:.62rem Arial,sans-serif; color:var(--muted);}
+  .so-opt.on{background:var(--ink);} .so-opt.on b{color:#fff;} .so-opt.on span{color:#cfc8ba;}
+  /* the show window's episodes sit in one wrapper card; tag tabs, when there are any, are its top strip */
+  .ep-wrap{display:flex; flex-direction:column; flex:none; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--unread);}
+  .ep-wrap .tabs.tagtabs{height:24px; border:0; border-bottom:3px solid #000; border-radius:0;}   /* a thin strip: half the old height */
+  .ep-wrap .tagtabs .tab{font-size:min(.66rem,2.7vw); line-height:1;}
+  .ep-list{display:flex; flex-direction:column; gap:4px; padding:4px;}
+  .ep-list .empty{padding:24px 12px;}
+  .tagtabs .tab b{font-weight:400; opacity:.7; margin-left:5px;}
+  .tagpill{display:inline-block; padding:0 5px; margin-right:5px; border:1.5px solid currentColor; border-radius:4px; font:700 .54rem/1.5 Arial,sans-serif;
+    letter-spacing:.4px; text-transform:uppercase; vertical-align:1px;}
+  .ep.done .tagpill{color:rgba(255,255,255,.85);}
+  /* edit mode: each episode becomes a small form */
+  .ep-ed{display:flex; flex-direction:column; gap:4px; padding:6px; background:var(--panel); border:3px solid #000; border-radius:8px;}
+  .ep-ed.edited{background:#f6f2e8;}
+  .ee-top, .ee-bot{display:flex; gap:4px; height:34px;}
+  .ee-title{flex:1; min-width:0; border:3px solid #000; border-radius:6px; padding:0 8px; background:#fff; font:600 .84rem Georgia,serif; outline:none;}
+  .ee-date{flex:0 0 136px; min-width:0; border:3px solid #000; border-radius:6px; padding:0 6px; background:#fff; font:.78rem Arial,sans-serif; outline:none;}
+  .ep-ed .ee-tag{flex:1; min-width:0; height:34px; border-width:3px; border-radius:6px;}
+  .ep-ed .ee-tag button{font-size:.72rem; padding:0 2px;}
+  .ep-ed .ee-tag button + button{border-left-width:3px;}
+  .ee-reset{flex:0 0 34px; margin:0; padding:0; border:3px solid #000; border-radius:6px; background:#fff; color:var(--red); font:700 1rem Arial,sans-serif; cursor:pointer;}
+  .ee-reset[hidden]{display:none;}
+  .cp-row{display:flex; height:45px; flex:none; border:3px solid #000; border-radius:8px; overflow:hidden; background:#000; gap:3px;}
+  .cp-row button{flex:1; min-width:0; margin:0; padding:0; border:0; border-radius:0; cursor:pointer; position:relative;}
+  .cp-row button.on::after{content:''; position:absolute; left:50%; top:50%; width:16px; height:16px; margin:-11px 0 0 -11px;
+    border:3px solid #fff; border-radius:50%; box-shadow:0 0 0 2px rgba(0,0,0,.5);}
+  .cp-auto{cursor:pointer; align-items:center; text-align:center;}
+  .rm-show{cursor:pointer; margin-top:8px !important;} .dt-card.rm-show b{color:var(--red);}
+  .show-ed{height:auto !important; align-items:center; padding-right:8px !important;}
+  .show-ed.edited{background:#f6f2e8;}
+  .show-ed .main{display:flex; flex-direction:column; gap:6px; padding:8px 0;}
+  .show-ed input{width:100%; height:34px; border:3px solid #000; border-radius:6px; padding:0 8px; background:#fff; outline:none;}
+  .show-ed .se-title{font:700 .95rem Georgia,serif;}
+  .show-ed .se-author{font:.8rem Arial,sans-serif;}
+  .show-ed .se-reset{align-self:center; height:34px;}
   .hdr-row{display:flex; align-items:stretch; gap:4px; margin:0 4px; height:45px;}
   .hdr-row > *{min-width:0;}
   .hdr-row:empty{display:none;}
@@ -105,6 +205,12 @@
 
   /* episode rows */
   .ep .t{font-size:.84rem;}
+  /* the episode number: a section on the card's left, always the same width (room for four digits), sans-serif, equal-width digits */
+  .row.ep{padding-left:0;}
+  .ep-num{flex:none; align-self:stretch; width:52px; display:flex; align-items:center; justify-content:center; border-right:3px solid #000;
+    background:#d9d0be; color:var(--ink); font:700 .92rem/1 Arial,Helvetica,sans-serif; font-variant-numeric:tabular-nums; letter-spacing:-.2px;}
+  .ep.done .ep-num{background:rgba(0,0,0,.22); color:#fff;}
+  .ep-num.long{font-size:.76rem;} .ep-num.xlong{font-size:.62rem; letter-spacing:-.4px;}   /* 123.12 and longer still fit the same width */
   .ep .thru{flex:none; width:33px; height:31px; padding:0; border:3px solid #000; border-radius:6px; background:var(--panel);
     font-family:Arial,sans-serif; font-size:.7rem; font-weight:700; color:var(--ink);}
   .ep.done{background:var(--cloth);}
@@ -219,33 +325,36 @@
   .ck{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round;}
   button:disabled{cursor:default;}
 
-  .v4{height:66px; flex-direction:row;}
-  .v4 .art-sec{width:66px;}
+  /* 100px tall; the art is the card's height wide, so the part you see (inside the border) is square */
+  .v4{height:100px; flex-direction:row;}
+  .v4 .art-sec{width:100px;}
   /* podcast name pinned to the top, episode details to the bottom, episode title centered between them */
-  .v4 .bd{flex:1; min-width:0; display:grid; grid-template-rows:auto 1fr auto; padding:7px 6px 7px 10px;}
+  .v4 .bd{flex:1; min-width:0; display:grid; grid-template-rows:auto 1fr auto; padding:9px 8px 9px 10px;}
   .v4 .bd > .k{align-self:start;}
   .v4 .bd > .mid{align-self:center; min-width:0; display:flex; flex-direction:column;}
   /* with a guest: the title keeps to one line so the guest line fits under it */
-  .v4 .et.one{-webkit-line-clamp:1;}
-  .v4 .gu{font:italic .68rem/1.2 Georgia,serif; color:rgba(43,38,32,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .v4 .et{-webkit-line-clamp:3 !important;}     /* Up Next title: up to three lines… */
+  .v4 .et.one{-webkit-line-clamp:2 !important;} /* …or two when a guest line sits under it */
+  .v4 .gu{font:italic .68rem/1.2 Georgia,serif; color:rgba(43,38,32,.75); overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:var(--gl,1);}
   .v4 .bd > .mt{align-self:end;}
   .v4 .et{font:700 .95rem/1.15 Georgia,serif;}
   .v4 .mt{font:.62rem Arial,sans-serif; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  /* the check: its own square section on the right, mirroring the art on the left */
-  .v4 .cks{flex:none; width:66px; margin:0; padding:0 3px 0 0; border:none; border-left:3px solid #000; border-radius:0;
+  /* the check: a narrow strip on the right */
+  .v4 .cks{flex:none; width:49px; margin:0; padding:0 3px 0 0; border:none; border-left:3px solid #000; border-radius:0;
     display:grid; place-items:center;
     /* progress fills the square from the bottom up; measured over the part you can see (the card's border covers 3px top and bottom) */
     background:linear-gradient(to top, var(--cloth) calc(3px + (100% - 6px) * var(--f,0)), var(--unread) 0);
     background-origin:border-box; background-clip:border-box;}
-  .v4 .rnd{width:38px; height:38px; display:grid; place-items:center; border:3px solid #000; border-radius:50%;
+  .v4 .rnd{width:30px; height:30px; display:grid; place-items:center; border:3px solid #000; border-radius:50%;
     background:var(--panel); color:var(--ink);}
   .v4 .cks:active .rnd{background:var(--cloth); color:#fff;}
+  .v4 .rnd .ck{width:16px; height:16px; stroke-width:3.4;}
   .cu-row{height:45px;}
 
   .v4 .et, .cu-row .t{white-space:normal; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; text-overflow:clip;}
   .v4 .art-sec, .cu-row .art-sec{background-position:center;}
   /* fixed heights: a wrapped title tightens its lines instead of growing the card */
-  .v4 .et{font-size:.8rem; line-height:1.12;}
+  .v4 .et{font-size:.88rem; line-height:1.14;}
   .cu-row .t{font-size:.84rem; line-height:1.1;}
   .empty{padding:40px 12px; text-align:center; font-family:Arial,sans-serif; font-size:.8rem; color:var(--muted);}
   .spin{display:inline-block; width:14px; height:14px; border:3px solid var(--unread); border-top-color:var(--ink); border-radius:50%;
@@ -264,10 +373,12 @@
     <div class="tab" data-v="lib">Library</div>
     <div class="tab" data-v="data">Data</div>
   </div>
+  <div id="ttl-bar" hidden><button type="button" id="tb-back">Back</button><h2 id="tb-title"></h2><button type="button" id="tb-edit">Edit</button></div>
   <div class="hdr-row" id="hdr-row"></div>
 </div>
 <main id="app"></main>
 <div id="app-footer"></div>
+<div id="so-page" hidden><div class="so-head"><button type="button" id="so-back">Back</button><h2>Sort and Filter</h2></div><div id="so-body"></div></div>
 <input type="file" id="importFile" hidden>
 <div class="rr-modal" id="bk-modal"><div class="rr-box">
   <div class="rr-title">Back up your podcasts?</div>
@@ -278,6 +389,20 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* startup check: if anything stops the app from starting, say what on the screen (and in the console) instead of leaving it blank */
+window.__ptStarted=false;
+window.addEventListener('error',function(e){
+  if(window.__ptStarted)return;
+  var app=document.getElementById('app');if(!app)return;
+  app.innerHTML='<div style="margin:12px 4px;padding:12px;border:3px solid #000;border-radius:8px;background:#fff;font:13px/1.4 Arial,sans-serif">'+
+    '<b style="font:700 15px Georgia,serif">Pod Tracer couldn\u2019t start</b><br>'+String(e.message||e).replace(/</g,'&lt;')+
+    (e.lineno?'<br><span style="color:#8a8378">line '+e.lineno+'</span>':'')+'</div>';
+});
+</script>
+<script>
+/* ======== PLACEHOLDERS: sample podcasts to look at. true = show them, false = remove them ======== */
+const PLACEHOLDERS = true;
+
 const KEY='gt50-podtracker-v1';   // same storage as v1/v2
 // Stack Tracker's cloth colors: each show gets one
 const CLOTHS=['#7a2f2b','#2b5752','#66304c','#303d66','#8a6a3f','#4f5b2e','#5a3d2b'];
@@ -290,7 +415,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('
 
 /* ---------- utils ---------- */
 const $=s=>document.querySelector(s);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(m,ms=2400){const t=$('#toast');t.classList.remove('act');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),ms)}
 function fmtDate(ms){if(!ms)return'—';return new Date(ms).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}
 function parseDur(v){if(v==null||v==='')return 0;v=String(v).trim();if(/^\d+$/.test(v))return+v;const p=v.split(':').map(Number);if(p.some(isNaN))return 0;return p.reduce((a,b)=>a*60+b,0)}
@@ -329,8 +454,44 @@ const _colorCache={};
 function cloth(id){
   const sh=S.shows[id]||(view.results||[]).find(r=>r.id===id);
   if(!sh){let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;return CLOTHS[h%CLOTHS.length]}
+  if(sh.color)return sh.color;                       // a color you picked in Edit
   const k=sh.title+'|'+(sh.author||'');
   return _colorCache[k]||(_colorCache[k]=wishColor(sh.title,sh.author));
+}
+/* ---------- picking a show's color (Edit) ---------- */
+// the app's own cloth colors, in rainbow order
+const HUES=[['Oxblood','#7a2f2b'],['Rust','#86452b'],['Ochre','#8a6a3f'],['Olive','#5b6633'],['Green','#2f5a3a'],
+  ['Teal','#2b5752'],['Slate','#234a5e'],['Navy','#303d66'],['Indigo','#3a2f52'],['Plum','#66304c']];
+function hexToHsl(hex){
+  const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}
+  return[h,s*100,l*100];
+}
+function hslToHex(h,s,l){
+  s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1))));
+  return'#'+[f(0),f(8),f(4)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+const lumOf=hex=>{const n=parseInt(hex.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255].map(x=>{x/=255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)})
+  .reduce((t,v,i)=>t+v*[.2126,.7152,.0722][i],0)};
+// ten tones of one color, lightest to darkest. The lightest stops where white text would stop reading.
+// The row stays put while you pick from it (it's built from the color family, kept in sh.colorHS), and the ring shows where you are.
+function tonesFor(h,s){
+  let top=8;while(top<90&&lumOf(hslToHex(h,s,top+.5))<=.18)top+=.5;
+  return Array.from({length:10},(_,i)=>hslToHex(h,s,top-i*(top-8)/9));
+}
+function toneIndex(tones,hex){
+  const l=hexToHsl(hex)[2];let best=0,bd=999;
+  tones.forEach((t,i)=>{const d=Math.abs(hexToHsl(t)[2]-l);if(d<bd){bd=d;best=i}});
+  return best;
+}
+// which of the ten the current color is closest to
+function nearestHue(hex){
+  const [h]=hexToHsl(hex);let best=0,bd=999;
+  HUES.forEach(([,c],i)=>{const [hh]=hexToHsl(c);const d=Math.min(Math.abs(hh-h),360-Math.abs(hh-h));if(d<bd){bd=d;best=i}});
+  return best;
 }
 // in-progress fill: the cloth softened toward the page, so dark text still reads on it
 function page(c){return `color-mix(in srgb, ${c} 38%, #e3ddce)`}
@@ -356,14 +517,46 @@ function playedCount(sh){return sh.episodes.reduce((n,e)=>n+(sh.played[e.id]?1:0
 async function fetchTimeout(url,ms=12000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{return await fetch(url,{signal:c.signal})}finally{clearTimeout(t)}}
 const SEARCH_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="#2b2620" stroke-width="3.4" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>';
 
-/* ---------- old placeholder podcasts: earlier versions added sample shows (marked demo); remove any still saved ---------- */
+/* ---------- placeholder podcasts (switch at the top of the script) ----------
+   Marked demo:true. They never fetch anything, and they're left out of every export, backup and import. */
 const isPlaceholder=sh=>!!(sh&&sh.demo);
-function removePlaceholders(){
-  const before=S.order.length;
-  S.order=S.order.filter(id=>S.shows[id]&&!isPlaceholder(S.shows[id]));
-  for(const id in S.shows)if(isPlaceholder(S.shows[id]))delete S.shows[id];
+const DEMO_POOL=[
+  ['d1','The Long Middle','Placeholder Audio',64],['d2','Kitchen Table Physics','Demo Network',38],
+  ['d3','Night Shift Stories','Sample Studios',120],['d4','Small Town Ledger','Placeholder Audio',22],
+  ['d5','Folk Roots Hour','Demo Network',85],
+].map(([id,title,author,count])=>({id,title,author,art:'',feedUrl:'',count,demo:true}));
+const TOPICS=['What we got wrong about the long winter, and what comes after it','The first draft','A conversation with the people who still repair old radios by hand','Why it broke','Listener mail','A long walk','The archive','Behind the counter','Old maps','Low tide','The second take','Odds and ends','Season finale','Starting over'];
+// guests written the ways real feeds do it (every 4th episode), so the guest line shows up
+const GUEST_FORMS=[n=>` (with ${n})`,n=>` w/ ${n}`,n=>` feat. ${n}`,n=>` - with Guest ${n}`,n=>` (${n})`,n=>` with ${n}`];
+const GUEST_POOL=['Maria Garcia','Tom Lee & Sara Kim','Patti Smith','Dr. Jane Goodall','Mike Lee, Sara Kim & Tom Ford','José García','Ken Burns','Monty Don'];
+const FIRST_EP={d1:'Starting out (with Maria Garcia)',d2:'Lunch with John',d3:'Pilot w/ Tom Lee & Sara Kim',d4:'Behind the counter',
+  d5:'What we got wrong about the long winter, and what comes after it'};
+function demoEpisodes(p){
+  const DAY=86400000, now=Date.now(), off=p.id.charCodeAt(1);
+  return Array.from({length:p.count},(_,i)=>{const n=p.count-i, seasons=p.id==='d3';
+    let title=n===1&&FIRST_EP[p.id]||TOPICS[(n*5+off*3)%TOPICS.length], type='full';
+    if(n>1&&(n+off)%4===0)title+=GUEST_FORMS[(n+off)%GUEST_FORMS.length](GUEST_POOL[(n*3+off)%GUEST_POOL.length]);
+    if(n>1&&n%9===0){type='bonus';title='Bonus: '+title}                                // some bonus episodes
+    if((p.id==='d1'||p.id==='d3')&&n===20){type='trailer';title='Coming up next season'} // and a promo, so tag tabs show
+    return {id:`${p.id}-e${n}`,title,date:now-(i*7+3)*DAY,dur:1500+(n*977)%3600,
+      ep:seasons?((n-1)%20)+1:n,season:seasons?Math.ceil(n/20):0,type};});
+}
+// on: add any placeholder that's missing (0 played). Off: remove them. Your own shows are never touched.
+function syncPlaceholders(){
+  let changed=false;
+  if(PLACEHOLDERS){
+    for(const p of DEMO_POOL)if(!S.shows[p.id]){
+      S.shows[p.id]={...p,episodes:demoEpisodes(p),played:{},source:'rss',addedAt:Date.now(),updatedAt:Date.now()};
+      S.order.push(p.id);changed=true;
+    }
+  }else{
+    const before=S.order.length;
+    S.order=S.order.filter(id=>S.shows[id]&&!isPlaceholder(S.shows[id]));
+    for(const id in S.shows)if(isPlaceholder(S.shows[id])){delete S.shows[id];changed=true}
+    if(S.order.length!==before)changed=true;
+  }
   delete S.phVer;
-  if(S.order.length!==before)save();
+  if(changed)save();
 }
 
 /* ---------- podcast search (iTunes) ---------- */
@@ -422,7 +615,7 @@ function parseFeedLoose(xml){
     const enc=blk.match(/<enclosure[^>]*\surl=["']([^"']+)["']/i);
     let id=tag(blk,'guid')||(enc&&dec(enc[1]))||tag(blk,'link')||title;
     if(seen.has(id))id=id+'#'+out.length;seen.add(id);
-    out.push({id,title,date:Date.parse(tag(blk,'pubDate'))||0,dur:parseDur(tag(blk,'itunes:duration')),ep:parseInt(tag(blk,'itunes:episode'))||0,season:parseInt(tag(blk,'itunes:season'))||0});
+    out.push({id,title,date:Date.parse(tag(blk,'pubDate'))||0,dur:parseDur(tag(blk,'itunes:duration')),ep:parseInt(tag(blk,'itunes:episode'))||0,season:parseInt(tag(blk,'itunes:season'))||0,type:tag(blk,'itunes:episodeType').toLowerCase()});
   }
   return out.length?out:null;
 }
@@ -436,7 +629,7 @@ function parseFeed(xml){
     const enc=it.getElementsByTagName('enclosure')[0];
     let id=g('guid')||(enc&&enc.getAttribute('url'))||g('link')||title;
     if(seen.has(id))id=id+'#'+out.length;seen.add(id);
-    out.push({id,title,date:Date.parse(g('pubDate'))||0,dur:parseDur(g('itunes:duration')),ep:parseInt(g('itunes:episode'))||0,season:parseInt(g('itunes:season'))||0});
+    out.push({id,title,date:Date.parse(g('pubDate'))||0,dur:parseDur(g('itunes:duration')),ep:parseInt(g('itunes:episode'))||0,season:parseInt(g('itunes:season'))||0,type:g('itunes:episodeType').toLowerCase()});
   });
   return out;
 }
@@ -447,6 +640,7 @@ async function itunesEpisodes(id){
 }
 // show.feedIssue records why a show is on Apple's list: 'unreachable' (no relay got the feed) or 'unreadable' (got it, couldn't read it)
 async function getEpisodes(show){
+  if(show.demo)return{eps:demoEpisodes(show),source:'rss'};
   if(show.feedUrl){
     const t=await fetchFeedText(show.feedUrl);
     if(t){const eps=parseFeedLoose(t);if(eps&&eps.length){delete show.feedIssue;return{eps,source:'rss'}}show.feedIssue='unreadable'}
@@ -556,8 +750,37 @@ const guestText=g=>{if(!g.length)return'';const n=g.length===1?g[0]:`${g.slice(0
 /* ---------- up next ---------- */
 const pad2=n=>String(n).padStart(2,'0');
 // the next episode: the first unplayed one after the newest you've played; if there's none, the oldest unplayed
+/* ---------- episode tags and your edits ---------- */
+// every episode is Main, Bonus or Promo. The feed's own type sets it (bonus -> Bonus, trailer -> Promo); your edits win.
+const TAGS={main:'Main',bonus:'Bonus',promo:'Promo'};
+const feedTag=e=>e.type==='bonus'?'bonus':(e.type==='trailer'||e.type==='promo')?'promo':'main';
+// the episodes as you see them: your title, date and tag over the feed's. Edits live in sh.edits, so a feed refresh never undoes them
+function eps(sh){
+  const ed=sh.edits||{};
+  return sh.episodes.map(e=>{const x=ed[e.id];
+    const or=(v,d)=>v==null?d:v;
+    return x?{...e,title:or(x.title,e.title),date:or(x.date,e.date),tag:or(x.tag,feedTag(e)),edited:true}:{...e,tag:feedTag(e)}});
+}
+const nm=sh=>(sh.rename&&sh.rename.title)||sh.title;      // the show's name as you see it
+const au=sh=>(sh.rename&&sh.rename.author!=null)?sh.rename.author:(sh.author||'');
+function setShowName(sh,field,val){
+  const base=field==='title'?sh.title:(sh.author||'');
+  const r={...(sh.rename||{})};
+  if(val===''||val===base)delete r[field];else r[field]=val;
+  if(Object.keys(r).length)sh.rename=r;else delete sh.rename;
+  save();
+}
+function setEdit(sh,id,field,val){
+  const orig=sh.episodes.find(e=>e.id===id);if(!orig)return;
+  const base={title:orig.title,date:orig.date,tag:feedTag(orig)}[field];
+  sh.edits=sh.edits||{};const x={...(sh.edits[id]||{})};
+  if(val===base||val===''||val==null)delete x[field];else x[field]=val;
+  if(Object.keys(x).length)sh.edits[id]=x;else delete sh.edits[id];
+  if(!Object.keys(sh.edits).length)delete sh.edits;
+  save();
+}
 function upNext(sh){
-  const asc=[...sh.episodes].sort((a,b)=>a.date-b.date);
+  const asc=eps(sh).sort((a,b)=>a.date-b.date);
   let last=-1;asc.forEach((e,i)=>{if(sh.played[e.id])last=i});
   const nx=asc.slice(last+1).find(e=>!sh.played[e.id])||asc.find(e=>!sh.played[e.id]);
   if(!nx)return null;
@@ -632,7 +855,7 @@ async function autoRefresh(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoRefresh()});
 function removeShow(){
   const sh=S.shows[view.id];if(!sh)return;
-  if(!confirm(`Remove "${sh.title}" and its played history?`))return;
+  if(!confirm(`Remove "${nm(sh)}" and its played history?`))return;
   delete S.shows[view.id];S.order=S.order.filter(x=>x!==view.id);save();go('lib');
 }
 function toggleEp(epId){
@@ -644,8 +867,8 @@ function toggleEp(epId){
   updateProgress();
 }
 function playedThrough(epId){
-  const sh=S.shows[view.id];const target=sh.episodes.find(e=>e.id===epId);if(!target)return;
-  let n=0;sh.episodes.forEach(e=>{if(e.date<=target.date&&!sh.played[e.id]){sh.played[e.id]=Date.now();n++}});
+  const sh=S.shows[view.id];const all=eps(sh);const target=all.find(e=>e.id===epId);if(!target)return;
+  let n=0;all.forEach(e=>{if(e.date<=target.date&&!sh.played[e.id]){sh.played[e.id]=Date.now();n++}});
   save();toast(`Marked ${n} episode${n===1?'':'s'} played`);renderEpisodes();updateProgress();
 }
 function markAll(val){
@@ -756,7 +979,7 @@ function nextBackup(){
   let n=new Date(d.getTime()+DAY);while(n.getDay()!==b.day)n=new Date(n.getTime()+DAY);
   return n.getTime();
 }
-function backupDue(){const n=nextBackup();return n&&S.order.length&&Date.now()>=n}
+function backupDue(){const n=nextBackup();return n&&S.order.some(id=>!isPlaceholder(S.shows[id]))&&Date.now()>=n}   // only your own shows need backing up
 async function checkBackup(){
   if(await autoBackup())return;
   if(!backupDue())return;
@@ -791,6 +1014,9 @@ function mergeImport(d){
     const have=new Set(cur.episodes.map(e=>e.id));
     cur.episodes=cur.episodes.concat((inc.episodes||[]).filter(e=>!have.has(e.id)));
     cur.played={...(inc.played||{}),...cur.played};
+    if(inc.edits||cur.edits)cur.edits={...(inc.edits||{}),...(cur.edits||{})};
+    if(inc.rename&&!cur.rename)cur.rename=inc.rename;
+    if(inc.color&&!cur.color)cur.color=inc.color;
   });
   return added;
 }
@@ -813,11 +1039,15 @@ new ResizeObserver(syncBars).observe($('#app-footer'));
 
 /* ---------- rendering ---------- */
 function go(name,id=null){view.name=name;view.id=id;render();window.scrollTo(0,0)}
-function openShow(id){view.filter='all';view.q='';go('show',id)}
+function openShow(id){view.filter='all';view.q='';view.tag='all';view.edit=false;go('show',id)}
 
 $('#tabs').onclick=e=>{const t=e.target.closest('.tab');if(t)go(t.dataset.v)};
 function render(){
+  $('#hdr-row').className='hdr-row';
   document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.v===(view.name==='data'?'data':'lib')));
+  const inShow=view.name==='show', bar=inShow||view.name==='search';   // a show's window and Add Podcast get the Back | title bar
+  $('#tabs').hidden=bar;$('#ttl-bar').hidden=!bar;
+  $('#tb-edit').classList.toggle('blank',!inShow);
   $('#app').classList.toggle('fit',view.name==='data');
   if(view.name==='lib')renderLib();
   else if(view.name==='search')renderSearch();
@@ -827,28 +1057,35 @@ function render(){
   syncBars();
 }
 
-const LIB_SORTS={recent:'Recently played',added:'Date added',title:'Title',progress:'Progress',updated:'New episodes'};
 function renderLib(){
-  const keys=Object.keys(LIB_SORTS);
-  $('#hdr-row').innerHTML=S.order.length?`<div class="field-card">${SEARCH_ICON}<input id="libq" placeholder="Search library" autocomplete="off" value="${esc(view.libQ||'')}"></div>
-    <div class="sort-card" id="libsort"><span class="k">Sort by:</span><span>${LIB_SORTS[view.libSort]}</span></div>`:'';
-  if(S.order.length){
-    $('#libq').oninput=e=>{view.libQ=e.target.value;renderLibList()};
-    $('#libsort').onclick=()=>{view.libSort=keys[(keys.indexOf(view.libSort)+1)%keys.length];renderLib();syncBars()};
-  }
+  $('#hdr-row').innerHTML=S.order.length?sfCard():'';
+  wireSfCard();
   $('#app-footer').innerHTML=`<div class="add-card" id="addPod"><b>+</b>Add New Podcast</div>`;
-  $('#addPod').onclick=()=>go('search');
+  $('#addPod').onclick=()=>{view.lastTerm='';view.results=[];go('search')};
   $('#app').innerHTML='<div id="liblist" style="display:flex;flex-direction:column;gap:4px"></div>';
   renderLibList();
 }
+// title and guest share three lines: a one-line title leaves the guests two lines, a two-line title leaves them one
+function fitGuests(){
+  document.querySelectorAll('.v4 .gu').forEach(gu=>{
+    const et=gu.previousElementSibling;if(!et)return;
+    const lh=parseFloat(getComputedStyle(et).lineHeight)||16;
+    const lines=Math.round(et.getBoundingClientRect().height/lh);
+    gu.style.setProperty('--gl',lines<=1?2:1);
+  });
+}
+addEventListener('resize',()=>{if(view.name==='lib')fitGuests()});
 function renderLibList(){
   let shows=S.order.map(id=>S.shows[id]).filter(Boolean);
   const q=(view.libQ||'').trim().toLowerCase();
-  if(q)shows=shows.filter(s=>(s.title+' '+s.author).toLowerCase().includes(q));
+  if(q)shows=shows.filter(s=>(nm(s)+' '+au(s)).toLowerCase().includes(q));
+  const lf=view.libFilter||'all';
+  if(lf!=='all')shows=shows.filter(s=>{const p=playedCount(s),t=s.episodes.length;
+    return lf==='caught'?(t>0&&p===t):lf==='notstarted'?p===0:(p>0&&p<t)});
   const pct=s=>s.episodes.length?playedCount(s)/s.episodes.length:0;
   const recency=sh=>Math.max(lastPlayed(sh),sh.newAt||0);   // last played, or when a new episode woke a caught-up show
   if(view.libSort==='recent')shows.sort((a,b)=>recency(b)-recency(a));
-  if(view.libSort==='title')shows.sort((a,b)=>a.title.localeCompare(b.title));
+  if(view.libSort==='title')shows.sort((a,b)=>nm(a).localeCompare(nm(b)));
   if(view.libSort==='progress')shows.sort((a,b)=>pct(b)-pct(a));
   if(view.libSort==='updated')shows.sort((a,b)=>Math.max(...b.episodes.map(e=>e.date),0)-Math.max(...a.episodes.map(e=>e.date),0));
   let h='';
@@ -858,12 +1095,15 @@ function renderLibList(){
     else h+=libCards(shows);
   }
   $('#liblist').innerHTML=h;
+  fitGuests();
 }
 
 function renderSearch(){
-  $('#hdr-row').innerHTML=`<button class="plain-btn" id="sback">‹ Back</button><form class="field-card" id="sform">${SEARCH_ICON}<input id="q" placeholder="Podcast name" autocomplete="off" enterkeyhint="search" value="${esc(view.lastTerm)}"></form>
+  $('#tb-title').textContent='Add Podcast';
+  $('#tb-back').onclick=()=>go('lib');
+  $('#tb-edit').textContent='';$('#tb-edit').onclick=null;
+  $('#hdr-row').innerHTML=`<form class="field-card" id="sform">${SEARCH_ICON}<input id="q" placeholder="Podcast name" autocomplete="off" enterkeyhint="search" value="${esc(view.lastTerm)}"></form>
     <button class="ink-btn" id="sgo">Search</button>`;
-  $('#sback').onclick=()=>go('lib');
   $('#sform').onsubmit=doSearch;$('#sgo').onclick=doSearch;
   $('#app-footer').innerHTML='';
   $('#app').innerHTML='<div id="results" style="display:flex;flex-direction:column;gap:4px"></div>';
@@ -873,7 +1113,7 @@ function renderSearch(){
 function renderResults(){
   const el=$('#results');if(!el)return;
   if(view.searching){el.innerHTML='<div class="empty"><span class="spin"></span>Searching…</div>';return}
-  if(!view.lastTerm){el.innerHTML='<div class="empty">Look up a podcast by name to start tracking it.</div>';return}
+  if(!view.lastTerm){el.innerHTML='<div class="dt-card how"><span>Search for the podcast you want to track.</span><span>Type its name above, then tap Search.</span></div>';return}
   if(!view.results.length){el.innerHTML='<div class="empty">No podcasts found.</div>';return}
   el.innerHTML='<div class="list-divider"><span>Results</span></div>'+view.results.map((p,i)=>{
     const tracked=!!S.shows[p.id];
@@ -909,8 +1149,8 @@ function libCards(shows){
   let h='';
   if(go.length)h+='<div class="list-divider"><span>Up Next</span></div>'+go.map(sh=>{
     const {p,t,f,left,nx}=info(sh);
-    return `<div class="oc v4" ${onCard(sh.id)}>${artSec(sh.art,sh.id,sh.title)}
-      <div class="bd"><span class="k ell">${esc(sh.title)}</span>${(()=>{const sg=splitGuest(nx.title);return sg.guests.length
+    return `<div class="oc v4" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
+      <div class="bd"><span class="k ell">${esc(nm(sh))}</span>${(()=>{const sg=splitGuest(nx.title);return sg.guests.length
           ?`<span class="mid"><span class="et one">${esc(sg.title)}</span><span class="gu">${esc(guestText(sg.guests))}</span></span>`
           :`<span class="mid"><span class="et">${esc(sg.title)}</span></span>`})()}
         <span class="mt">${nx.label} · ${fmtDate(nx.date)}${nx.dur?' · '+fmtDur(nx.dur):''} · ${p}/${t} (${left})</span></div>
@@ -919,8 +1159,8 @@ function libCards(shows){
   if(done.length)h+='<div class="list-divider"><span>Caught Up</span></div>'+done.map(sh=>{
     const {t}=info(sh);
     return `<div class="row has-art done cu-row" style="${colorVars(sh.id)}" onclick="openShow('${sh.id}')">
-      <div class="fill" style="width:100%"></div>${artSec(sh.art,sh.id,sh.title)}
-      <div class="main"><span class="t">${esc(sh.title)}</span><span class="a">${esc(sh.author)}</span></div>
+      <div class="fill" style="width:100%"></div>${artSec(sh.art,sh.id,nm(sh))}
+      <div class="main"><span class="t">${esc(nm(sh))}</span><span class="a">${esc(au(sh))}</span></div>
       <div class="prog"><span>${t} / ${t}</span><span>${lastPlayed(sh)?ago(lastPlayed(sh)):''}</span></div></div>`;
   }).join('');
   return h;
@@ -969,8 +1209,8 @@ function dtFeeds(){
       <input id="relay-url" placeholder="Your relay, e.g. https://feeds.you.workers.dev/?url=" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(S.relay||'')}"></div>
     <div class="dt-card how"><span>${S.relay?'Your relay is tried alongside the public ones.':'Stuck shows are retried every time you open the app.'}</span></div>
     <div class="list-divider"><span>${stuck.length?'Stuck at Apple’s 200':'Feeds'}</span></div>
-    ${stuck.length?stuck.map(sh=>`<div class="row has-art" style="${colorVars(sh.id)};cursor:default">${artSec(sh.art,sh.id,sh.title)}
-        <div class="main"><span class="t">${esc(sh.title)}</span><span class="a">${sh.episodes.length} from Apple · ${sh.feedIssue==='unreadable'?'feed loaded but couldn’t be read':sh.feedIssue==='unreachable'?'no relay could reach the feed':'not checked yet, tap Retry'}</span></div>
+    ${stuck.length?stuck.map(sh=>`<div class="row has-art" style="${colorVars(sh.id)};cursor:default">${artSec(sh.art,sh.id,nm(sh))}
+        <div class="main"><span class="t">${esc(nm(sh))}</span><span class="a">${sh.episodes.length} from Apple · ${sh.feedIssue==='unreadable'?'feed loaded but couldn’t be read':sh.feedIssue==='unreachable'?'no relay could reach the feed':'not checked yet, tap Retry'}</span></div>
         <button class="go" type="button" data-retry="${sh.id}">Retry</button></div>`).join('')
       :'<div class="empty" style="padding:16px">Every show has its full episode list.</div>'}`;
   $('#app').querySelectorAll('[data-retry]').forEach(btn=>btn.onclick=()=>retryFeeds([btn.dataset.retry],btn));
@@ -990,7 +1230,7 @@ async function saveRelay(){
   toast('Testing your relay…',20000);
   let ok=false;
   try{const r=await fetchTimeout(relayURL(v,sh.feedUrl),30000);ok=r.ok&&/<item[\s>]/i.test(await r.text())}catch(e){}
-  toast(ok?`Relay works: it loaded ${sh.title}`:'Saved, but the relay didn’t return a feed. Check the address.',4000);
+  toast(ok?`Relay works: it loaded ${nm(sh)}`:'Saved, but the relay didn’t return a feed. Check the address.',4000);
   dtFeeds();
 }
 async function retryFeeds(ids,btn){
@@ -1037,7 +1277,7 @@ function dtImport(){
   $('#dt-replace').onclick=()=>{
     const r=parseImport($('#dt-import-text').value);if(r.state!=='ok'){toast(r.msg||'Paste or load a backup first');return}
     if(!confirm('Replace your whole library with this backup?'))return;
-    const keep=bk();S={shows:r.data.shows,order:r.data.order,backup:keep};save();toast('Library replaced');go('lib');
+    const keep=bk();S={shows:r.data.shows,order:r.data.order,backup:keep};syncPlaceholders();save();toast('Library replaced');go('lib');
   };
 }
 function updateImportStatus(){
@@ -1071,70 +1311,243 @@ async function pasteImport(){
 }
 
 const FILTERS={all:'All',unplayed:'Unplayed',played:'Played'};
+/* ---------- search + sort/filter card and the Sort and Filter page (Library and a show's window), like Stack Tracker's ---------- */
+// each window's options: [name on the page, short name on the card, what it means]
+const SF={
+  show:{
+    filters:{all:['All','All','Every episode'],unplayed:['Unplayed','Unplayed','Not listened to yet'],played:['Played','Played','Already listened to']},
+    sorts:{new:['Newest first','Newest','Latest releases at the top'],old:['Oldest first','Oldest','From the first episode']},
+    get f(){return view.filter}, set f(v){view.filter=v},
+    get s(){return view.sort}, set s(v){view.sort=v},
+    get q(){return view.q}, set q(v){view.q=v},
+    redraw(){renderEpisodes()},
+  },
+  lib:{
+    filters:{all:['All podcasts','All','Every show you track'],started:['Started','Started','Partway through'],
+      notstarted:['Not started','Not started','Nothing played yet'],caught:['Caught up','Caught up','Every episode played']},
+    sorts:{recent:['Recently played','Recent','Shows you’ve listened to lately'],added:['Date added','Added','Newest additions first'],
+      title:['Title','Title','A to Z'],progress:['Progress','Progress','Furthest along first'],updated:['New episodes','New eps','Latest releases first']},
+    get f(){return view.libFilter||'all'}, set f(v){view.libFilter=v},
+    get s(){return view.libSort}, set s(v){view.libSort=v},
+    get q(){return view.libQ||''}, set q(v){view.libQ=v},
+    redraw(){renderLibList()},
+  },
+};
+const sfNow=()=>SF[view.name==='show'?'show':'lib'];
+function sfCard(compact){
+  const c=sfNow();
+  return `<div id="sf-card" class="${c.q?'searching':''} ${compact?'compact':''}">
+    <span id="sf-search" aria-label="Search">${SEARCH_ICON}</span>
+    <input id="sfq" aria-label="Search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" value="${esc(c.q)}">
+    <span id="sf-close" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
+    <span class="sl"><span class="sk">Filter by:</span><span class="sv" id="sf-fname">${c.filters[c.f][1]}</span></span><span class="sk dot">•</span><span class="sl"><span class="sk">Sort by:</span><span class="sv" id="sf-sname">${c.sorts[c.s][1]}</span></span></div>`;
+}
+let sfTimer=0;
+function wireSfCard(){
+  const card=$('#sf-card'),q=$('#sfq');if(!card)return;
+  card.onclick=()=>{if(card.classList.contains('searching')){q.focus();return}openSortPage()};
+  $('#sf-search').onclick=e=>{e.stopPropagation();card.classList.add('searching');q.focus()};
+  q.oninput=()=>{clearTimeout(sfTimer);sfTimer=setTimeout(()=>{const c=sfNow();c.q=q.value;c.redraw()},200)};
+  q.onkeydown=e=>{if(e.key==='Enter')q.blur()};
+  $('#sf-close').onclick=e=>{e.stopPropagation();clearTimeout(sfTimer);card.classList.remove('searching');q.value='';q.blur();const c=sfNow();if(c.q){c.q='';c.redraw()}};
+}
+// Sort and Filter page: picking applies straight away and the page stays open; Back closes it
+function openSortPage(){paintSortPage();$('#so-page').hidden=false}
+function paintSortPage(){
+  const c=sfNow();
+  const opt=(kind,k,[name,,info],on)=>`<button type="button" class="so-opt ${on?'on':''}" data-${kind}="${k}"><b>${name}</b><span>${info}</span></button>`;
+  $('#so-body').innerHTML=`<div class="list-divider"><span>Filter</span></div>
+    ${Object.entries(c.filters).map(([k,v])=>opt('f',k,v,c.f===k)).join('')}
+    <div class="list-divider"><span>Sort</span></div>
+    ${Object.entries(c.sorts).map(([k,v])=>opt('s',k,v,c.s===k)).join('')}`;
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('#so-back')){$('#so-page').hidden=true;return}
+  const o=e.target.closest('#so-body .so-opt');if(!o)return;
+  const c=sfNow();
+  if(o.dataset.f)c.f=o.dataset.f;
+  if(o.dataset.s)c.s=o.dataset.s;
+  paintSortPage();
+  if($('#sf-fname')){$('#sf-fname').textContent=c.filters[c.f][1];$('#sf-sname').textContent=c.sorts[c.s][1]}
+  c.redraw();
+});
+// what Edit can change on a show (episode edits, its name and publisher, its color), kept so Cancel can put it back
+function takeEditSnapshot(sh){view.snap={id:sh.id,data:JSON.stringify({edits:sh.edits||null,rename:sh.rename||null,color:sh.color||null,colorHS:sh.colorHS||null})}}
+function restoreEditSnapshot(sh){
+  if(!view.snap||view.snap.id!==sh.id)return;
+  const d=JSON.parse(view.snap.data);
+  for(const k of ['edits','rename','color','colorHS'])if(d[k]==null)delete sh[k];else sh[k]=d[k];
+  view.snap=null;save();
+}
 function renderShow(){
   const sh=S.shows[view.id];if(!sh){go('lib');return}
-  $('#hdr-row').innerHTML=`<button class="plain-btn" id="back">‹ Back</button>
-    <div class="seg" id="filt" style="flex:1">${Object.entries(FILTERS).map(([k,v])=>`<button data-f="${k}" class="${view.filter===k?'on':''}">${v}</button>`).join('')}</div>
-    <div class="sort-card" id="sortBtn" style="flex:0 0 22%"><span class="k">Sort by:</span><span id="sortName">${view.sort==='new'?'Newest':'Oldest'}</span></div>`;
-  $('#back').onclick=()=>go('lib');
-  $('#filt').onclick=e=>{const f=e.target.dataset.f;if(!f)return;view.filter=f;$('#filt').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===f));renderEpisodes()};
-  $('#sortBtn').onclick=()=>{view.sort=view.sort==='new'?'old':'new';$('#sortName').textContent=view.sort==='new'?'Newest':'Oldest';renderEpisodes()};
+  $('#tb-title').textContent=view.edit?'Edit Podcast':'Podcast';   // the bar names the window; the podcast's name is in the card below
+  // in edit mode Back turns into a red Cancel: it puts back everything as it was when you tapped Edit
+  const backBtn=$('#tb-back');backBtn.textContent=view.edit?'Cancel':'Back';backBtn.classList.toggle('cancel',!!view.edit);
+  backBtn.onclick=()=>{
+    if(!view.edit){go('lib');return}
+    if(document.activeElement)document.activeElement.blur();   // a box still being typed in saves first, then gets undone with the rest
+    restoreEditSnapshot(sh);view.edit=false;render();window.scrollTo(0,0);
+  };
+  const editBtn=$('#tb-edit');editBtn.textContent=view.edit?'Done':'Edit';editBtn.classList.toggle('on',!!view.edit);
+  editBtn.onclick=()=>{
+    if(document.activeElement)document.activeElement.blur();
+    if(!view.edit)takeEditSnapshot(sh);else view.snap=null;   // Done keeps the changes
+    view.edit=!view.edit;render();window.scrollTo(0,0);
+  };
 
-  $('#app-footer').innerHTML=`<div class="pcard" id="pcard" style="${colorVars(sh.id)}"><div class="fill" id="pfill"></div>
-      <div class="ov"><span id="pcount"></span><span id="ppct"></span></div></div>
-    <div class="acts"><button id="refBtn">Refresh</button><button onclick="markAll(true)">All Played</button>
-      <button onclick="markAll(false)">Clear</button><button class="del" onclick="removeShow()">Remove</button></div>`;
-  $('#refBtn').onclick=e=>refreshShow(e.currentTarget);
+  if(view.edit){
+    // edit mode: just the show's name and publisher, then every episode. No filters, tabs, search, stats or footer
+    $('#hdr-row').innerHTML='';$('#app-footer').innerHTML='';
+    const renamed=!!sh.rename;
+    $('#app').innerHTML=`<div class="card show-head show-ed ${renamed?'edited':''}">${artSec(sh.art,sh.id,nm(sh))}
+        <div class="main"><input class="se-title" value="${esc(nm(sh))}" placeholder="${esc(sh.title)}" aria-label="Podcast name" enterkeyhint="done">
+          <input class="se-author" value="${esc(au(sh))}" placeholder="${esc(sh.author||'Publisher')}" aria-label="Publisher" enterkeyhint="done"></div>
+        <button type="button" class="ee-reset se-reset" title="Back to the feed’s name and publisher" ${renamed?'':'hidden'}>↺</button></div>
+      ${colorCards(sh)}
+      <div id="eps" style="display:flex;flex-direction:column;gap:4px;${colorVars(sh.id)}"></div>
+      <button type="button" class="dt-card rm-show" id="rm-show">Remove this podcast<b>${esc(nm(sh))} and its played history</b></button>`;
+    $('#rm-show').onclick=()=>{view.edit=false;view.snap=null;removeShow()};
+    renderEpisodes();return;
+  }
+
+  // second header area: a square photo card on the left, as tall as the two cards beside it (name on top, search + sort/filter below)
+  $('#hdr-row').classList.add('show-row');
+  $('#hdr-row').innerHTML=`<div class="photo-card" style="${colorVars(sh.id)}">${artSec(sh.art,sh.id,nm(sh))}</div>
+    <div class="show-col"><div class="title-card"><span class="t">${esc(nm(sh))}</span></div>${sfCard(true)}</div>`;
+  wireSfCard();
+
+  $('#app-footer').innerHTML='';   // no footer in a show's window
 
   const latest=Math.max(0,...sh.episodes.map(e=>e.date));
-  $('#app').innerHTML=`<div class="card show-head">${artSec(sh.art,sh.id,sh.title)}
-      <div class="main"><span class="t">${esc(sh.title)}</span><span class="a">${esc(sh.author)}</span></div></div>
-    <div class="stats"><div class="sr"><span><b>${sh.episodes.length}</b> episodes</span><span>latest <b>${fmtDate(latest)}</b></span></div>
+  $('#app').innerHTML=`    <div class="stats"><div class="sr"><span id="epStat"></span><span>latest <b>${fmtDate(latest)}</b></span></div>
       <div class="sr"><span id="leftStat"></span><span>checked <b>${fmtDate(sh.updatedAt)}</b></span></div></div>
     ${sh.source==='itunes'?'<div class="note warn">The feed couldn’t be reached, so this is Apple’s list (newest 200 at most). Try Refresh, or set your own relay in Data › Feeds.</div>':''}
-    <div class="field-card">${SEARCH_ICON}<input id="epq" placeholder="Search episodes" autocomplete="off" value="${esc(view.q)}"></div>
-    <div class="list-divider"><span>Episodes</span></div>
-    <div id="eps" style="display:flex;flex-direction:column;gap:4px;${colorVars(sh.id)}"></div>`;
-  $('#epq').oninput=e=>{view.q=e.target.value;renderEpisodes()};
+    <div class="ep-wrap" style="${colorVars(sh.id)}"><div id="tagtabs-wrap" style="display:contents"></div>
+      <div id="eps" class="ep-list"></div></div>`;
   updateProgress();renderEpisodes();
 }
+function colorCards(sh){
+  const cur=cloth(sh.id), hi=nearestHue(cur);
+  const [h,sat]=sh.colorHS||hexToHsl(cur), tones=tonesFor(h,sat), ti=toneIndex(tones,cur);
+  return `<div class="cp-row" id="cp-hues" aria-label="Color">${HUES.map(([n,c],i)=>`<button type="button" data-color="${c}" title="${n}" style="background:${c}" class="${i===hi?'on':''}"></button>`).join('')}</div>
+    <div class="cp-row" id="cp-tones" aria-label="Tone">${tones.map((c,i)=>`<button type="button" data-color="${c}" style="background:${c}" class="${i===ti?'on':''}"></button>`).join('')}</div>
+    <button type="button" class="dt-card cp-auto" id="cp-auto">${sh.color?'Tap here for name-based color':'Using the name-based color'}<b>${sh.color?'Custom color '+cur.toUpperCase():'Generated from “'+esc(sh.title)+'”'}</b></button>`;
+}
+function setShowColor(sh,hex){if(hex)sh.color=hex;else delete sh.color;save();renderShow()}
+$('#app').addEventListener('click',e=>{
+  if(view.name!=='show'||!view.edit)return;
+  const sh=S.shows[view.id];if(!sh)return;
+  const hb=e.target.closest('#cp-hues [data-color]');
+  if(hb){const [h,s]=hexToHsl(hb.dataset.color);sh.colorHS=[h,s];setShowColor(sh,hb.dataset.color);return}
+  const tb=e.target.closest('#cp-tones [data-color]');
+  if(tb){if(!sh.colorHS){const [h,s]=hexToHsl(cloth(sh.id));sh.colorHS=[h,s]}setShowColor(sh,tb.dataset.color);return}
+  if(e.target.closest('#cp-auto')&&sh.color){delete sh.colorHS;setShowColor(sh,null)}
+});
+// show name and publisher: save when you leave the box; ↺ goes back to the feed's
+$('#app').addEventListener('change',e=>{
+  if(view.name!=='show'||!e.target.closest('.show-ed'))return;
+  const sh=S.shows[view.id];if(!sh)return;
+  if(e.target.classList.contains('se-title'))setShowName(sh,'title',e.target.value.trim());
+  if(e.target.classList.contains('se-author'))setShowName(sh,'author',e.target.value.trim());
+  const card=$('.show-ed');card.classList.toggle('edited',!!sh.rename);card.querySelector('.se-reset').hidden=!sh.rename;
+});
+$('#app').addEventListener('click',e=>{
+  if(view.name!=='show'||!e.target.closest('.se-reset'))return;
+  const sh=S.shows[view.id];delete sh.rename;save();renderShow();
+});
+$('#app').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest&&e.target.closest('.show-ed input'))e.target.blur()});
 function updateProgress(){
-  const sh=S.shows[view.id];if(!sh||!$('#pcard'))return;
-  const p=playedCount(sh),t=sh.episodes.length,f=t?p/t:0;
-  $('#pfill').style.width=f*100+'%';
-  $('#pcard').classList.toggle('done',t>0&&p===t);
-  $('#pcount').textContent=`${p} / ${t} played`;
-  $('#ppct').textContent=Math.round(f*100)+'%';
+  const sh=S.shows[view.id];if(!sh)return;
+  const p=playedCount(sh),t=sh.episodes.length;
   const left=sh.episodes.filter(e=>!sh.played[e.id]).reduce((s,e)=>s+e.dur,0);
-  const ls=$('#leftStat');if(ls)ls.innerHTML=`<b>${t-p}</b> unplayed${left?` · <b>${fmtDur(left)}</b> left`:''}`;
+  const es=$('#epStat');if(es)es.innerHTML=`<b>${p}/${t}</b> (${t-p}) episodes`;    // played/total, then how many are left
+  const ls=$('#leftStat');if(ls)ls.innerHTML=left?`<b>${fmtDur(left)}</b> left`:(t&&p===t?'all played':'');
+}
+const toDay=ms=>{if(!ms)return'';const d=new Date(ms);return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`};
+function renderTagTabs(all){
+  const wrap=$('#tagtabs-wrap');if(!wrap)return;
+  const counts={};all.forEach(e=>counts[e.tag]=(counts[e.tag]||0)+1);
+  const used=Object.keys(TAGS).filter(k=>counts[k]);
+  // tabs appear once anything is tagged other than Main
+  if(!used.some(k=>k!=='main')){wrap.innerHTML='';view.tag='all';return}
+  if(view.tag!=='all'&&!counts[view.tag])view.tag='all';
+  wrap.innerHTML=`<div class="tabs tagtabs" id="tagtabs"><div class="tab ${view.tag==='all'?'active':''}" data-tag="all">All<b>${all.length}</b></div>${
+    used.map(k=>`<div class="tab ${view.tag===k?'active':''}" data-tag="${k}">${TAGS[k]}<b>${counts[k]}</b></div>`).join('')}</div>`;
+  $('#tagtabs').onclick=e=>{const t=e.target.closest('[data-tag]');if(!t)return;view.tag=t.dataset.tag;renderEpisodes()};
 }
 function renderEpisodes(){
   const sh=S.shows[view.id];const el=$('#eps');if(!sh||!el)return;
+  const all=eps(sh);
+  if(view.edit){   // editing: every episode, newest or oldest first as last sorted, no filters
+    const list=all.sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
+    el.innerHTML=list.map(e=>`<div class="ep-ed ${e.edited?'edited':''}" data-id="${esc(e.id)}">
+      <div class="ee-top"><input class="ee-title" value="${esc(e.title)}" aria-label="Episode title" enterkeyhint="done">
+        <button type="button" class="ee-reset" title="Back to the feed’s title, date and tag" ${e.edited?'':'hidden'}>↺</button></div>
+      <div class="ee-bot"><input type="date" class="ee-date" value="${toDay(e.date)}" aria-label="Release date">
+        <div class="seg ee-tag">${Object.entries(TAGS).map(([k,v])=>`<button type="button" data-tag="${k}" class="${e.tag===k?'on':''}">${v}</button>`).join('')}</div></div></div>`).join('');
+    return;
+  }
+  renderTagTabs(all);
   const q=view.q.trim().toLowerCase();
-  const list=sh.episodes.filter(e=>{
+  const list=all.filter(e=>{
     const d=!!sh.played[e.id];
     if(view.filter==='played'&&!d)return false;
     if(view.filter==='unplayed'&&d)return false;
+    if(view.tag&&view.tag!=='all'&&e.tag!==view.tag)return false;
     return !q||e.title.toLowerCase().includes(q);
   }).sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
   if(!list.length){el.innerHTML='<div class="empty">Nothing here.</div>';return}
+  // each card's number, by release date (oldest first), whatever numbering the feed uses:
+  // Main episodes count 1, 2, 3 …; a Bonus after Main 4 is 4.1, 4.2 …; a Promo after it is 4.a, 4.b … (before Main 1: 0.1, 0.a)
+  const pos={};let m=0,nb=0,np=0;
+  const letters=n=>{let t='';for(;n>0;n=Math.floor((n-1)/26))t=String.fromCharCode(97+(n-1)%26)+t;return t};   // 1→a … 26→z, 27→aa
+  all.slice().sort((a,b)=>a.date-b.date).forEach(e=>{
+    if(e.tag==='bonus')pos[e.id]=`${m}.${++nb}`;
+    else if(e.tag==='promo')pos[e.id]=`${m}.${letters(++np)}`;
+    else{m++;nb=0;np=0;pos[e.id]=String(m)}
+  });
   el.innerHTML=list.map(e=>`<div class="row ep ${sh.played[e.id]?'done':''}" data-id="${esc(e.id)}">
-    ${(()=>{const sg=splitGuest(e.title);return `<div class="main"><span class="t">${esc(sg.title)}</span><span class="a">${sg.guests.length?esc(guestText(sg.guests))+' · ':''}${fmtDate(e.date)}${e.dur?' · '+fmtDur(e.dur):''}</span></div>`})()}
+    <div class="ep-num ${pos[e.id].length>6?'xlong':pos[e.id].length>4?'long':''}">${pos[e.id]}</div>
+    ${(()=>{const sg=splitGuest(e.title);return `<div class="main"><span class="t">${esc(sg.title)}</span><span class="a">${e.tag!=='main'?`<span class="tagpill">${TAGS[e.tag]}</span>`:''}${sg.guests.length?esc(guestText(sg.guests))+' · ':''}${fmtDate(e.date)}${e.dur?' · '+fmtDur(e.dur):''}</span></div>`})()}
     <button class="thru" title="Mark this and every older episode played">≤</button></div>`).join('');
 }
+// edit mode: save as you go. A title saves when you leave the box, a date when it's picked, a tag when tapped
+$('#app').addEventListener('change',e=>{
+  const box=e.target.closest('.ep-ed');if(!box||view.name!=='show')return;
+  const sh=S.shows[view.id],id=box.dataset.id,orig=sh.episodes.find(x=>x.id===id);if(!orig)return;
+  if(e.target.classList.contains('ee-title'))setEdit(sh,id,'title',e.target.value.trim());
+  if(e.target.classList.contains('ee-date')){
+    const v=e.target.value;
+    if(!v)setEdit(sh,id,'date',null);
+    else if(v===toDay(orig.date))setEdit(sh,id,'date',orig.date);          // same day as the feed: keep the feed's exact time
+    else{const [y,m,d]=v.split('-').map(Number);setEdit(sh,id,'date',new Date(y,m-1,d,12).getTime())}
+  }
+  renderEpisodes();
+});
+$('#app').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('ee-title'))e.target.blur()});
+$('#app').addEventListener('click',e=>{
+  const box=e.target.closest('.ep-ed');if(!box||view.name!=='show')return;
+  const sh=S.shows[view.id],id=box.dataset.id;
+  const t=e.target.closest('.ee-tag [data-tag]');
+  if(t){setEdit(sh,id,'tag',t.dataset.tag);renderEpisodes();return}
+  if(e.target.closest('.ee-reset')){if(sh.edits){delete sh.edits[id];if(!Object.keys(sh.edits).length)delete sh.edits;save()}renderEpisodes()}
+});
 $('#app').addEventListener('click',e=>{
   const row=e.target.closest('.ep');if(!row||view.name!=='show')return;
   if(e.target.closest('.thru'))playedThrough(row.dataset.id);
   else toggleEp(row.dataset.id);
 });
 
-load();removePlaceholders();render();checkBackup();autoRefresh();
+load();syncPlaceholders();render();window.__ptStarted=true;checkBackup();autoRefresh();
 
 /* ---------- offline: the service worker keeps a copy of the app (only when served over http/https, e.g. GitHub Pages) ---------- */
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  const reg=()=>navigator.serviceWorker.register('sw.js').catch(()=>{});
-  if(document.readyState==='complete')reg();else window.addEventListener('load',reg);
-}
+try{
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    const reg=()=>{try{navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}};
+    if(document.readyState==='complete')reg();else window.addEventListener('load',reg);
+  }
+}catch(e){}   // some editor previews don't allow it at all; the app works the same without it
 </script>
 </body>
 </html>
