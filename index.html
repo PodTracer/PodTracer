@@ -502,6 +502,145 @@
 </style>
 </head>
 <body>
+<!-- the opening: picks up exactly where Android's own splash (the icon on tan) leaves off, then the three mics race:
+     up and out the top, back across the middle on a gentle climb, the middle one wiping in the name while the outer two peel away.
+     Plays every time the app opens, installed or in the browser; tap to skip -->
+<style>
+  @font-face{font-family:'Bungee Shade';src:url(data:font/woff2;base64,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) format('woff2');font-display:block;}   /* just the title's letters */
+  #spl{position:fixed; inset:0; z-index:100; background:#efeadf; display:flex; align-items:center; justify-content:center; overflow:hidden; transition:opacity .45s ease;}
+  #spl.gone{opacity:0; pointer-events:none;}
+  #spl .icon{position:relative; z-index:2; width:var(--icon); height:var(--icon); transform:translateY(var(--shift,0px));}
+  #spl svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible;}
+  #spl-wake{position:absolute; z-index:1; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-8deg); visibility:hidden; white-space:nowrap; clip-path:inset(-20px 100% -20px 0);}
+  #spl-wake .t{font:400 var(--fs,26px)/1 'Bungee Shade',Impact,sans-serif; color:var(--tc,#7a2f2b); -webkit-text-stroke:1.1px var(--tc,#7a2f2b);}
+</style>
+<div id="spl"><div class="icon"><svg id="spl-art" viewBox="0 0 512 512"></svg></div><div id="spl-wake"><div class="t">POD TRACER</div></div></div>
+<script>
+(function(){
+  try{
+
+/* the icon redrawn in shapes so each racer can move: [center x, capsule top, height, fill fraction, color] (from the icon's own numbers) */
+const MICS=[[110,117,205,.30,'#7a2f2b'],[256,42,250,.55,'#303d66'],[402,179,165,.80,'#2b5752']];
+const HALF=50,NS='http://www.w3.org/2000/svg',svg=document.getElementById('spl-art');
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e};
+const defs=el('defs',{});
+const trailsG=el('g',{});   // the horizontal pass: trails drawn along the racers' actual paths, so they curve as the outer two veer
+// the grille: fine dark criss-cross lines
+const pat=el('pattern',{id:'mesh',patternUnits:'userSpaceOnUse',width:7.78,height:7.78,patternTransform:'rotate(45)'},defs);
+el('path',{d:'M0 0V7.78M0 0H7.78',stroke:'#0b0b0b',['stroke-width']:1.45,fill:'none'},pat);
+svg.appendChild(trailsG);
+const racers=MICS.map(([cx,top,h,f,c],i)=>{
+  const g=el('g',{}),cb=top+h;
+  // tapered motion streaks under the tail (drawn first, under the capsule)
+  const streaks=el('g',{},g);
+  // a racing streak in the racer's own color, trailing off behind it: only shown on the fast pass across the middle
+  const lg=el('linearGradient',{id:'rs'+i,x1:0,y1:0,x2:0,y2:1},defs);
+  el('stop',{offset:0,'stop-color':c,'stop-opacity':.9},lg);el('stop',{offset:.55,'stop-color':c,'stop-opacity':.45},lg);el('stop',{offset:1,'stop-color':c,'stop-opacity':0},lg);
+  const trail=el('path',{d:`M${cx-38} ${cb-30} L${cx+38} ${cb-30} L${cx+14} ${cb+190} L${cx-14} ${cb+190} Z`,fill:`url(#rs${i})`,opacity:0},streaks);
+  [[-28,90],[0,130],[28,90]].forEach(([dx,L])=>{const y0=cb+18,y1=Math.min(470,y0+L),x=cx+dx;
+    el('polygon',{points:`${x-8.5},${y0} ${x+8.5},${y0} ${x+1.5},${y1} ${x-1.5},${y1}`,fill:'#000'},streaks)});
+  // capsule: light body, color filled up from the bottom, the grille over it, a thick black outline
+  el('clipPath',{id:'c'+i},defs).appendChild(Object.assign(document.createElementNS(NS,'rect'),{}));
+  const cp=defs.lastChild.firstChild;['x','y','width','height','rx'].forEach((k,j)=>cp.setAttribute(k,[cx-HALF,top,HALF*2,h,HALF][j]));
+  el('rect',{x:cx-HALF,y:top,width:HALF*2,height:h,rx:HALF,fill:'#d9d0be'},g);
+  el('rect',{x:cx-HALF,y:cb-h*f,width:HALF*2,height:h*f,fill:c,'clip-path':`url(#c${i})`},g);
+  el('rect',{x:cx-HALF+9,y:top+9,width:HALF*2-18,height:h-18,rx:HALF-9,fill:'url(#mesh)',opacity:.92},g);
+  el('rect',{x:cx-HALF+7,y:top+7,width:HALF*2-14,height:h-14,rx:HALF-7,fill:'none',stroke:'#000','stroke-width':14},g);
+  return {g,streaks,trail,cx,cb,top,h};
+});
+
+/* the race: a short rev, then each racer takes off upward, picking up speed, streaks stretching; the tallest leads */
+const splash=document.getElementById('spl');
+let raf=0,t0=0;const speed=1;
+const ORDER=[1,2,0];                         // middle (tallest) goes first, then right, then left
+// matched to Chrome's own splash on your phone: the icon is 71.1% of the screen's width, centered on the whole screen.
+// Installed, the page starts below the status bar, so it shifts down to sit where Chrome's was (status bar ~24px)
+function size(){
+  const w=Math.min(innerWidth,innerHeight/1.2);splash.style.setProperty('--icon',(w*.711).toFixed(1)+'px');
+  const app=matchMedia('(display-mode: standalone)').matches;
+  const shift=app?Math.max(0,(screen.height-innerHeight)/2-24):0;
+  splash.style.setProperty('--shift',shift.toFixed(1)+'px');
+}
+addEventListener('resize',size);size();
+const easeIn=t=>t*t*t;
+function frame(ts){
+  if(!t0)t0=ts;const t=(ts-t0)*speed;
+  const REV=[250,650],GO=650,EACH=520,GAP=110;            // 1: rev, then up and out through the top
+  const ZOOM=GO+2*GAP+EACH+120,ZDUR=950,ZGAP=110;          // 2: back in from the left, across the middle, out the right
+  const HOLD=ZOOM+2*ZGAP+ZDUR,FADE=HOLD+650;               // 3: the name they left behind holds, then the splash fades
+  const box=document.querySelector('#spl .icon').getBoundingClientRect(),sc=box.width/512;
+  // the pass: a straight line through the middle of the screen, rising gently to the right (left a little low, right a little high)
+  const TH=8*Math.PI/180,dx=Math.cos(TH),dy=-Math.sin(TH),nx=Math.sin(TH),ny=Math.cos(TH);
+  const Cx=(innerWidth/2-box.left)/sc,Cy=(innerHeight/2-box.top)/sc;
+  const nmEl=document.getElementById('spl-wake'),halfW=nmEl.offsetWidth/2/sc;   // the word's half-length along the line, in the icon's units
+  const reach=(innerWidth/2)/sc/dx+60;
+  let wipe=null,trailHTML='';
+  racers.forEach((r,i)=>{
+    const k=ORDER.indexOf(i),start=GO+k*GAP,cyc=r.top+r.h/2;
+    let tf='',stretch=1;
+    if(t<ZOOM){
+      r.trail.setAttribute('opacity',0);r.streaks.setAttribute('opacity',1);
+      let dy=0,shake=0;
+      if(t>REV[0]&&t<start){const p=Math.min(1,(t-REV[0])/(REV[1]-REV[0]));shake=Math.sin(t/18+i*2)*1.6*p;stretch=1+.18*p*(.5+.5*Math.sin(t/40+i))}
+      if(t>=start){const p=Math.min(1,(t-start)/EACH);dy=-easeIn(p)*(box.top/sc+1250);stretch=1+p*2.4}
+      tf=`translate(${shake.toFixed(2)} ${dy.toFixed(1)})`;
+    }else{
+      // on their sides, nose forward along the line, in three lanes; the leader is the one that left first.
+      // Once the outer two have cleared the start of the word they peel away from the middle one, which keeps straight on
+      const zs=ZOOM+k*ZGAP,p=Math.max(0,Math.min(1,(t-zs)/ZDUR)),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      const len=r.h/2+170,s0=-reach-len*.6,s1=reach+len,sp=s0+(s1-s0)*e;
+      const side=[-1,0,1][i],K=3200;
+      const at=sv=>{const past=Math.max(0,sv+halfW),nn=side*(118+past*past/K);return[Cx+sv*dx+nn*nx,Cy+sv*dy+nn*ny]};   // the racer's path
+      const past=Math.max(0,sp+halfW),ang=side*Math.atan(2*past/K)*180/Math.PI;   // the veer: off the lane and turning outward
+      const [X,Y]=at(sp);
+      tf=`translate(${(X-r.cx).toFixed(1)} ${(Y-cyc).toFixed(1)}) rotate(${(90-8+ang).toFixed(2)} ${r.cx} ${cyc})`;
+      stretch=1.6+Math.sin(p*Math.PI)*1.6;
+      // trails follow where the racer has been (not stuck to its body), so a veering racer leaves a curved wake
+      const speedA=Math.min(1,Math.sin(p*Math.PI)*1.6);
+      if(p>0&&p<1){
+        const tail=r.h/2;
+        const ribbon=(off,d0,L,w0,w1,fill,op0,op1,steps)=>{let out='';
+          for(let j=0;j<steps;j++){const pts=[];
+            for(const jj of [j,j+1]){const dd=d0+L*jj/steps,sv=sp-dd,[x,y]=at(sv),[x2,y2]=at(sv+1),[x1,y1]=at(sv-1);
+              let tx=x2-x1,ty=y2-y1;const m=Math.hypot(tx,ty)||1;tx/=m;ty/=m;const Nx=-ty,Ny=tx,w=(w0+(w1-w0)*jj/steps)/2;
+              pts.push([x+Nx*(off+w),y+Ny*(off+w)],[x+Nx*(off-w),y+Ny*(off-w)]);}
+            const op=(op0+(op1-op0)*(j+.5)/steps);
+            out+=`<polygon points="${pts[0]} ${pts[2]} ${pts[3]} ${pts[1]}" fill="${fill}" fill-opacity="${op.toFixed(3)}"/>`;}
+          return out};
+        trailHTML+=ribbon(0,tail-30,220*stretch/1.6,76,28,MICS[i][4],.9*speedA,0,14);   // the color streak
+        [[-28,90],[0,130],[28,90]].forEach(([o,Ln])=>{trailHTML+=ribbon(o,tail+18,Ln*stretch,17,3,'#000',1,1,10)});   // the black speed lines
+      }
+      r.trail.setAttribute('opacity',0);r.streaks.setAttribute('opacity',0);
+      if(i===1)wipe=p>0?sp+halfW:-1e4;   // the middle mic wipes the name in: it shows up to the mic's middle, so new letters appear only under it
+    }
+    r.g.setAttribute('transform',tf);
+    r.streaks.setAttribute('transform',`translate(0 ${r.cb}) scale(1 ${stretch.toFixed(3)}) translate(0 ${-r.cb})`);
+  });
+  trailsG.innerHTML=trailHTML;
+  if(t>GO)splash.classList.add('racing');
+  // the name, wiped in by the middle mic as it passes over it
+  if(t>=ZOOM){const W=nmEl.offsetWidth,w=Math.max(0,Math.min(W,(wipe===null?-1e4:wipe)*sc));
+    nmEl.style.clipPath=`inset(-20px ${(W-w).toFixed(1)}px -20px 0)`;nmEl.style.visibility='visible'}
+  if(t>FADE&&!splash.classList.contains('gone')){splash.classList.add('gone');setTimeout(done,500)}
+  if(t<FADE+600)raf=requestAnimationFrame(frame);else done();
+}
+
+
+function done(){cancelAnimationFrame(raf);if(splash.isConnected)splash.remove()}
+{const w=document.getElementById('spl-wake');
+  const C=['#7a2f2b','#86452b','#8a6a3f','#5b6633','#2f5a3a','#2b5752','#234a5e','#303d66','#3a2f52','#66304c'];   // a new one of the app's colors each launch
+  w.style.setProperty('--tc',C[Math.floor(Math.random()*C.length)]);
+  const ic=document.querySelector('#spl .icon').getBoundingClientRect();
+  w.style.setProperty('--fs',(ic.width/512*100*.92).toFixed(1)+'px');}
+splash.addEventListener('click',()=>{splash.classList.add('gone');setTimeout(done,450)});   // tap skips
+// wait for the title's font (bundled below, so it's quick and works offline) before the race starts
+(document.fonts&&document.fonts.load?document.fonts.load('10px "Bungee Shade"').catch(()=>{}):Promise.resolve()).then(()=>{raf=requestAnimationFrame(frame)});
+setTimeout(done,9000);   // never in the way for long, whatever happens
+
+  }catch(e){const s=document.getElementById('spl');if(s)s.remove()}
+})();
+</script>
+
 <div id="app-header">
   <div id="tabs">
     <div class="tab" data-v="lib">Library</div>
