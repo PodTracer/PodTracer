@@ -98,7 +98,7 @@
     opacity:0; visibility:hidden; pointer-events:none; transition:opacity 1050ms cubic-bezier(.37,0,.63,1), visibility 0s linear 1050ms;}
   #f3-back.on{opacity:1; visibility:visible; transition:opacity 1050ms cubic-bezier(.37,0,.63,1), visibility 0s;}
   #f3-back.quick{transition-duration:780ms, 0s;}
-  #f3-canvas{position:fixed; inset:0; z-index:31; display:none; touch-action:none; cursor:pointer;}
+  #f3-canvas{position:fixed; inset:0; width:100%; height:100%; z-index:31; display:none; touch-action:none; cursor:pointer;}
   #f3-canvas.on{display:block;}
   body.f3-open{overflow:hidden; touch-action:none;}
   .photo-card{cursor:pointer;} .photo-card.lifted{visibility:hidden;}
@@ -107,17 +107,40 @@
   .gear-card:active svg{transform:rotate(30deg);}
   #st-page{position:fixed; inset:0; z-index:40; background:var(--bg); overflow-y:auto;}
   #st-page[hidden]{display:none;}
-  .st-name{max-width:760px; margin:4px auto 0; padding:0 4px;}
-  .st-name span{display:block; height:30px; box-sizing:border-box; padding:0 8px; text-align:center; border:3px solid #000; border-radius:8px; background:var(--panel);
-    font:700 .78rem/24px Georgia,serif; letter-spacing:.5px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  #st-body{display:flex; flex-direction:column; gap:4px; padding:0 4px calc(16px + env(safe-area-inset-bottom)); max-width:760px; margin:0 auto;}
-  .st-tog{position:relative; padding-right:48px;}
-  .st-tog i{position:absolute; right:8px; top:50%; transform:translateY(-50%); width:24px; height:24px; box-sizing:border-box; border:3px solid #000; border-radius:6px; background:#fff;
-    font:900 .8rem/18px Arial,sans-serif; font-style:normal; text-align:center; color:var(--ink);}
-  .st-tog.on i{border-color:#fff;}
-  .st-sum{height:30px; display:flex; align-items:center; justify-content:center; font:.72rem Arial,sans-serif; color:var(--muted); text-transform:uppercase; letter-spacing:.3px;}
-  .st-sum b{color:var(--ink); margin:0 4px;}
-  #st-rm b{color:var(--red);}
+  #st-body{display:flex; flex-direction:column; gap:4px; padding:4px 4px calc(16px + env(safe-area-inset-bottom)); max-width:560px; margin:0 auto;}
+  /* the show: cover square, name, publisher */
+  .sr-show{display:flex; height:45px; border:3px solid #000; border-radius:8px; overflow:hidden; background:#fff;}
+  .sr-show .art-sec{width:42px;}
+  .sr-show .tx{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; padding:0 10px; gap:2px;}
+  .sr-show b{font:700 .8rem/1.1 Georgia,serif; letter-spacing:.4px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sr-show small{font:700 .56rem Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  /* one framed list, sections marked by thin tan strips */
+  .sr-list{border:3px solid #000; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; gap:3px; background:#000;}
+  .sr-sec{height:22px; display:flex; align-items:center; justify-content:space-between; padding:0 10px; background:#d9d0be;
+    font:700 .56rem Arial,sans-serif; letter-spacing:.8px; text-transform:uppercase; color:var(--ink);}
+  .sr-sec span{color:rgba(43,38,32,.6);}
+  /* progress: the count centered above a full-width bar in the podcast's color */
+  .sr-prog{display:flex; flex-direction:column; justify-content:center; gap:5px; padding:8px 10px 10px; background:#fff;}
+  .sr-prog .n{text-align:center; font:700 .6rem Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase; color:var(--muted);}
+  .sr-prog .n b{color:var(--ink);}
+  .sr-prog .track{display:block; width:100%; height:12px; border:2px solid #000; border-radius:6px; background:var(--unread); overflow:hidden;}
+  .sr-prog .sr-fill{display:block; height:100%; background:var(--cloth); transition:width .35s ease;}
+  /* every row: text on the left, a square on the right */
+  .sr-row{display:flex; align-items:stretch; min-height:45px; margin:0; padding:0; border:0; border-radius:0; background:#fff; width:100%; text-align:left; cursor:pointer; color:var(--ink); transition:background .15s;}
+  .sr-row .tx{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:2px; padding:0 10px;}
+  .sr-row b{font:600 .88rem/1.1 Georgia,serif;} .sr-row small{font:.62rem/1.2 Arial,sans-serif; color:var(--muted);}
+  .sr-sq{flex:none; width:48px; display:grid; place-items:center; border-left:3px solid #000; background:var(--unread); transition:background .2s;}
+  .sr-sq svg{width:20px; height:20px; fill:none; stroke:var(--ink); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+  /* check rows: an empty square; on, the podcast's color behind the check circle (only a just-tapped one pops in) */
+  .sr-row.on .sr-sq{background:var(--cloth);}
+  .sr-rnd{width:28px; height:28px; display:grid; place-items:center; border:3px solid #000; border-radius:50%; background:#fff;}
+  .sr-rnd svg{width:14px; height:14px; stroke-width:3.4;}
+  .sr-row.live .sr-rnd{animation:srpop .22s ease;}
+  @keyframes srpop{from{transform:scale(.6); opacity:0}to{transform:scale(1); opacity:1}}
+  /* two-tap: the first tap turns the row red and asks, the second does it */
+  .sr-row.armed{background:var(--red);} .sr-row.armed b,.sr-row.armed small{color:#fff;} .sr-row.armed .sr-sq{background:#7f2424;} .sr-row.armed .sr-sq svg{stroke:#fff;}
+  .sr-row.danger b{color:var(--red);} .sr-row.danger .sr-sq svg{stroke:var(--red);} .sr-row.danger.armed b{color:#fff;} .sr-row.danger.armed .sr-sq svg{stroke:#fff;}
+  .sr-row.busy .sr-sq svg{transform-origin:50% 50%; animation:srspin .9s linear infinite;} @keyframes srspin{to{transform:rotate(360deg)}}
   #tg-page{position:fixed; inset:0; z-index:40; background:var(--bg); overflow-y:auto;}
   #tg-page[hidden]{display:none;}
   #tg-body{display:flex; flex-direction:column; gap:4px; padding:4px 4px calc(16px + env(safe-area-inset-bottom)); max-width:760px; margin:0 auto;}
@@ -155,7 +178,8 @@
   .ep-ed{display:flex; flex-direction:column; gap:4px; padding:6px; background:color-mix(in srgb, var(--cloth) 50%, transparent); border:3px solid #000; border-radius:8px;}   /* edit cards: the podcast's color at half opacity */
   .ee-top, .ee-bot{display:flex; gap:4px; height:34px;}
   .ee-bot{display:grid; grid-template-columns:1fr 1fr;}   /* date | length, even halves */
-  .ee-title{flex:1; min-width:0; border:3px solid #000; border-radius:6px; padding:0 8px; background:#fff; font:600 .84rem Georgia,serif; outline:none;}
+  .ee-title{flex:1; min-width:0; box-sizing:border-box; height:34px; border:3px solid #000; border-radius:6px; padding:6px 8px; background:#fff; font:600 .84rem/1.2 Georgia,serif; color:var(--ink); outline:none; resize:none; overflow:hidden; display:block;}
+  .ee-title.two{padding:1px 8px; font-size:.7rem; line-height:1.12;}   /* a long title: two lines in the same height */
   .ee-date{flex:1 1 0; box-sizing:border-box; min-width:0; border:3px solid #000; border-radius:6px; padding:0 6px; background:#fff; font:.78rem Arial,sans-serif; outline:none;}
   .ee-tagrow{display:flex; gap:4px; align-items:stretch;}   /* the + grows with the tag rows */
   .ep-ed .ee-tag{flex:1; min-width:0; height:auto; box-sizing:border-box; flex-wrap:wrap; gap:3px; background:#000; border-width:3px; border-radius:6px;}
@@ -169,18 +193,30 @@
   .ee-reset{flex:0 0 34px; margin:0; padding:0; border:3px solid #000; border-radius:6px; background:#fff; color:var(--red); font:700 1rem Arial,sans-serif; cursor:pointer;}
   .ee-reset[hidden]{display:none;}
   /* guests: a fixed lowercase "with" then the names */
+  .ee-se{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:4px;} .ee-se .ee-guest{min-width:0;}   /* season | episode, even halves */
+  .ee-se .ee-guest span{text-transform:lowercase;}
+  .ee-num{flex:1; min-width:0; height:100%; border:0; padding:0; background:transparent; font:700 .82rem Arial,sans-serif; color:var(--ink); outline:none; font-variant-numeric:tabular-nums;}
   .ee-guest{display:flex; align-items:center; gap:6px; height:34px; box-sizing:border-box; padding:0 8px; border:3px solid #000; border-radius:6px; background:#fff; cursor:text;}
   .ee-guest span{flex:none; font:.78rem Arial,sans-serif; color:var(--muted);}
   .ee-guests{flex:1; min-width:0; height:100%; border:0; padding:0; background:transparent; font:600 .78rem Arial,sans-serif; color:var(--ink); outline:none;}
   /* episode length: hours / minutes / seconds wheels, dragged up and down (as in Stack Tracker) */
-  .ee-len{flex:1 1 0; min-width:0; display:flex; height:34px; box-sizing:border-box; background:var(--panel); border:3px solid #000; border-radius:6px; overflow:hidden;}
-  .tw-wheel{position:relative; flex:1; min-width:0; height:100%; overflow:hidden; touch-action:none; cursor:grab; background:#fff;}
+  .ee-len{position:relative; flex:1 1 0; min-width:0; display:flex; height:34px; box-sizing:border-box; background:var(--panel); border:3px solid #000; border-radius:6px; overflow:hidden;}
+  .tw-wheel{position:relative; flex:1; min-width:0; height:100%; overflow:hidden; cursor:grab; background:#fff;}
+  .ee-len.active .tw-wheel{touch-action:none;}   /* only the active wheels catch drags; the others let the page scroll */
+  /* locked until tapped: fogged glass over the wheels; one set of wheels is live at a time, fading in and out */
+  .ee-fog{position:absolute; inset:0; z-index:3; margin:0; padding:0; border:0; border-radius:0; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; background:rgba(239,234,223,.55);
+    -webkit-backdrop-filter:blur(2.5px) saturate(.8); backdrop-filter:blur(2.5px) saturate(.8);
+    font:700 .58rem/1 Arial,sans-serif; letter-spacing:.7px; text-transform:uppercase; color:var(--ink);
+    opacity:1; transition:opacity .28s ease;}
+  .ee-len.active .ee-fog{opacity:0; pointer-events:none;}
   .tw-wheel + .tw-wheel{border-left:3px solid #000;}
   .tw-wheel::after{content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
     background:linear-gradient(to bottom, rgba(0,0,0,.16), rgba(0,0,0,0) 32%, rgba(0,0,0,0) 68%, rgba(0,0,0,.16));}
   .tw-wheel div{position:absolute; left:0; right:0; top:0; height:16px; text-align:center; color:var(--ink);
     font:700 14px/16px Arial,Helvetica,sans-serif; font-variant-numeric:tabular-nums; user-select:none; -webkit-user-select:none; will-change:transform;}
   .tw-wheel span{position:absolute; left:4px; top:3px; z-index:2; font:700 .5rem Arial,sans-serif; color:var(--muted); pointer-events:none;}
+  .cp-pair{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:4px; flex:none;}   /* colors | tones, side by side */
   .cp-row{display:flex; height:23px; flex:none; border:3px solid #000; border-radius:8px; overflow:hidden; background:#000; gap:3px;}
   .cp-row button{flex:1; min-width:0; margin:0; padding:0; border:0; border-radius:0; cursor:pointer; position:relative;}
   .cp-row button.on::after{content:''; position:absolute; left:50%; top:50%; width:7px; height:7px; margin:-6px 0 0 -6px;
@@ -212,7 +248,7 @@
     color:var(--ink); font-family:Arial,sans-serif; font-size:.78rem; font-weight:600; letter-spacing:.3px; white-space:nowrap;}
   .seg button + button, .acts button + button{border-left:3px solid #000;}
   .seg button.on{background:var(--ink); color:#fff;}
-  .acts button:active, .seg button:active{background:var(--bg);}
+  .acts button:active{background:var(--bg);}   /* tabs and segmented cards: no tap color, only the selected one is colored */
   .acts .del{color:var(--red);}
   .acts button:disabled{color:var(--muted);}
   .ink-btn{flex:0 0 auto; height:45px; padding:0 16px; border:3px solid #000; border-radius:8px; background:var(--ink); color:#fff;
@@ -419,13 +455,26 @@
   .v4 .cks.gold, .v5 .cks.gold{background:var(--cloth); cursor:pointer;}
   .oc .cks.gold .rnd .ck2{width:21px; height:21px; stroke-width:1.8;}
   .oc.v5 .cks.gold .rnd .ck2{width:17px; height:17px;}
+  /* a new episode since you caught up (under two weeks old): green check */
+  .oc .rnd.fresh{background:#fff; border-color:#000; color:#2f8a45;}
+  .oc .et.cu-say{font-style:italic; color:rgba(43,38,32,.72);}
   .oc .cks.gold .rnd{background:#000; border:2px solid #fff; color:#f0cf6e;}
   .oc .cks.gold.end .rnd{color:#fff;}
   /* simple cards: the standard 45px, square art on the left, square check on the right */
   .v5{height:45px; flex-direction:row;}
   .v5 .art-sec{width:45px;}
-  .v5 .bd{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:1px; padding:0 8px 0 9px; line-height:1.1;}
-  .v5 .k{font-size:.5rem; line-height:1.1;}
+  .v5.bare{cursor:default;} .v5.bare .bd{padding-left:10px;}
+  .tri-sec{flex:none; width:45px; align-self:stretch; margin:0; border:0; border-radius:0; cursor:pointer; display:flex; align-items:center; justify-content:center; background:var(--cloth); border-right:3px solid #000; padding:0 0 0 3px; box-sizing:border-box;}   /* left pad = the card's border, so they sit centered in what you see */
+  .tri-sec svg{width:38px; height:38px; overflow:visible;}
+  .ep.flash{animation:epflash 1.4s ease .25s;}
+  @keyframes epflash{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}30%{box-shadow:0 0 0 3px var(--cloth)}}
+  .tri-sec polygon{filter:drop-shadow(0 1.6px 1.2px rgba(0,0,0,.5));}
+  #show-next{flex:none;}
+  /* podcast name pinned to the top, details to the bottom, episode title centered between */
+  .v5 .bd{flex:1; min-width:0; display:grid; grid-template-rows:auto 1fr auto; padding:4px 8px 4px 9px; line-height:1.1;}
+  .v5 .bd > .et{align-self:center;}
+  .v5 .mt{font:700 .6rem/1.1 Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase; color:var(--muted);}   /* same size and weight as the podcast name */
+  .v5 .k{font-size:.6rem; line-height:1.1;}
   .v5 .et{font:700 .8rem/1.1 Georgia,serif; color:var(--ink);}
   .v5 .gu{font:italic .6rem/1.15 Georgia,serif; color:rgba(43,38,32,.75);}
   .v5 .cks{flex:none; width:45px; margin:0; padding:0 3px 0 0; border:none; border-left:3px solid #000; border-radius:0; display:grid; place-items:center;
@@ -464,7 +513,7 @@
 <main id="app"></main>
 <div id="app-footer"></div>
 <div id="f3-back"></div><canvas id="f3-canvas"></canvas>
-<div id="st-page" hidden><div class="so-head"><button type="button" id="st-back">Back</button><h2>Settings</h2></div><div class="st-name"><span id="st-title"></span></div><div id="st-body"></div></div>
+<div id="st-page" hidden><div class="so-head"><button type="button" id="st-back">Back</button><h2>Settings</h2></div><div id="st-body"></div></div>
 <div id="tg-page" hidden><div class="so-head"><button type="button" id="tg-back">Back</button><h2>Tags</h2></div><div id="tg-body"></div></div>
 <div id="so-page" hidden><div class="so-head"><button type="button" id="so-back">Back</button><h2>Sort and Filter</h2></div><div id="so-body"></div></div>
 <input type="file" id="importFile" hidden>
@@ -589,8 +638,9 @@ function placeholderArt(id,title){
   const c=cloth(id), ini=esc(String(title||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?');
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${c}"/>`+
     `<g stroke="rgba(255,255,255,.08)" stroke-width="1">${[10,20,30,40,50,60,70,80,90].map(v=>`<path d="M${v} 0V100M0 ${v}H100"/>`).join('')}</g>`+
-    `<text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="34" fill="#efeadf">${ini}</text>`+
-    `<g fill="none" stroke="#efeadf" stroke-width="3" stroke-linecap="round"><rect x="45" y="68" width="10" height="16" rx="5"/><path d="M40 78a10 10 0 0 0 20 0M50 88v4"/></g></svg>`;
+    // initials and mic centered as a group, clear of the card's border so the mic's stand isn't cut off
+    `<text x="50" y="47" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="34" fill="#efeadf">${ini}</text>`+
+    `<g fill="none" stroke="#efeadf" stroke-width="3" stroke-linecap="round"><rect x="45" y="56" width="10" height="16" rx="5"/><path d="M40 66a10 10 0 0 0 20 0M50 76v4"/></g></svg>`;
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 function artSec(src,id,title){
@@ -870,7 +920,7 @@ function eps(sh){
     const or=(v,d)=>v==null?d:v;
     if(!x)return {...e,title:op.title,guests:op.guests,tag:feedTag(e)};
     const tg=x.tag&&!TAGS[x.tag]&&!(sh.tags&&sh.tags[x.tag])?null:x.tag;   // a tag that no longer exists falls back to the feed's
-    return {...e,title:or(x.title,op.title),guests:x.guests!=null?guestParse(x.guests):op.guests,date:or(x.date,e.date),tag:or(tg,feedTag(e)),dur:or(x.dur,e.dur),edited:true}});
+    return {...e,title:or(x.title,op.title),guests:x.guests!=null?guestParse(x.guests):op.guests,date:or(x.date,e.date),tag:or(tg,feedTag(e)),dur:or(x.dur,e.dur),season:or(x.season,e.season),ep:or(x.ep,e.ep),edited:true}});
 }
 const nm=sh=>(sh.rename&&sh.rename.title)||sh.title;      // the show's name as you see it
 const au=sh=>(sh.rename&&sh.rename.author!=null)?sh.rename.author:(sh.author||'');
@@ -884,7 +934,7 @@ function setShowName(sh,field,val){
 function setEdit(sh,id,field,val){
   const orig=sh.episodes.find(e=>e.id===id);if(!orig)return;
   const op=partsOf(orig.title);
-  const base={title:op.title,guests:guestJoin(op.guests),date:orig.date,tag:feedTag(orig),dur:orig.dur||0}[field];
+  const base={title:op.title,guests:guestJoin(op.guests),date:orig.date,tag:feedTag(orig),dur:orig.dur||0,season:orig.season||0,ep:orig.ep||0}[field];
   sh.edits=sh.edits||{};const x={...(sh.edits[id]||{})};
   if(val===base||val==null||(val===''&&field!=='guests'))delete x[field];else x[field]=val;   // guests can be cleared on purpose
   if(Object.keys(x).length)sh.edits[id]=x;else delete sh.edits[id];
@@ -989,8 +1039,8 @@ async function trackShow(i,btn){
 function mergeEpisodes(sh,eps,source){
   const wasCaughtUp=sh.episodes.length>0&&!upNext(sh);
   const before=new Set(sh.episodes.map(e=>e.id));
-  const added=eps.filter(e=>!before.has(e.id)).length;
-  if(added&&wasCaughtUp)sh.newAt=Date.now();   // caught up and something new dropped: it goes to the top
+  const fresh=eps.filter(e=>!before.has(e.id)),added=fresh.length;
+  if(added&&wasCaughtUp){sh.newAt=Date.now();sh.newEps=fresh.map(e=>e.id)}   // caught up and something new dropped: it goes to the top, marked new
   const now=new Set(eps.map(e=>e.id));   // keep episodes that dropped out of the feed, so history isn't lost
   sh.episodes=eps.concat(sh.episodes.filter(e=>!now.has(e.id)));
   if(!(source==='itunes'&&sh.source==='rss'))sh.source=source;   // a failed feed check doesn't downgrade a full list
@@ -1027,6 +1077,7 @@ async function autoRefresh(){
   if(view.name==='data'&&view.dt==='feeds')dtFeeds();
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoRefresh()});
+function removeShowNow(id){delete S.shows[id];S.order=S.order.filter(x=>x!==id);save();go('lib')}
 function removeShow(){
   const sh=S.shows[view.id];if(!sh)return;
   if(!confirm(`Remove "${nm(sh)}" and its played history?`))return;
@@ -1047,9 +1098,8 @@ function playedThrough(epId){
 }
 function markAll(val){
   const sh=S.shows[view.id];
-  if(!confirm(val?'Mark every episode played?':'Clear all played marks?'))return;
   sh.played={};if(val)sh.episodes.forEach(e=>sh.played[e.id]=Date.now());
-  save();renderEpisodes();updateProgress();if(!$('#st-page').hidden)paintSettings();
+  save();renderEpisodes();updateProgress();if(!$('#st-page').hidden)srProg(sh);
 }
 
 /* ---------- backup ---------- */
@@ -1326,6 +1376,43 @@ function info(sh){const p=playedCount(sh),t=totalCount(sh),f=t?p/t:0;return{p,t,
 const onCard=id=>`data-show="${id}" style="${colorVars(id)}" onclick="openShow('${id}')"`;
 const onChk=id=>`onclick="listenNext('${id}',event)"`;
 
+// a new episode that dropped while you were caught up, still under two weeks old and not yet checked: its check shows green
+const NEW_FOR=14*86400000;
+const isFresh=(sh,nx)=>!!(nx&&sh.newEps&&sh.newEps.includes(nx.id)&&Date.now()-(nx.date||0)<NEW_FOR);
+// the left square of the podcast window's card: the show's color with three stacked downward triangles, white to grey, each casting a shadow
+// white at the top to grey at the bottom; drawn bottom first so the top one lies over the others and its shadow falls on them.
+// Tapping it scrolls the list to the next episode
+const TRI_SEC=`<button type="button" class="tri-sec" onclick="goToNext()" aria-label="Show the next episode in the list"><svg viewBox="0 0 40 40" aria-hidden="true">${
+  [['#a9a59e',21.5],['#d6d3ce',15],['#ffffff',8.5]].map(([c,y])=>`<polygon points="7.5,${y} 32.5,${y} 20,${y+12}" fill="${c}" stroke="${c}" stroke-width="1.6" stroke-linejoin="round"/>`).join('')}</svg></button>`;
+// bring the next episode into view, centered between the header and the bottom of the screen (or as near as scrolling allows);
+// if a filter, tab or search is hiding it, those are cleared first
+function goToNext(){
+  const sh=S.shows[view.id];const nx=sh&&upNext(sh);if(!nx)return;
+  const find=()=>document.querySelector(`#eps .ep[data-id="${CSS.escape(nx.id)}"]`);
+  let row=find();
+  if(!row){view.filter='all';view.tag='all';view.q='';const q=$('#sfq');if(q){q.value='';$('#sf-card').classList.remove('searching')}
+    if($('#sf-fname'))$('#sf-fname').textContent=SF.show.filters.all[1];renderEpisodes();row=find();}
+  if(!row)return;
+  const hh=$('#app-header').getBoundingClientRect().bottom,r=row.getBoundingClientRect();
+  const y=scrollY+r.top+r.height/2-(hh+(innerHeight-hh)/2);
+  scrollTo({top:Math.max(0,y),behavior:'smooth'});
+  row.classList.remove('flash');void row.offsetWidth;row.classList.add('flash');
+}
+// the podcast window's own simple card: name, next episode, stats, and the check (or the caught-up / completed state)
+function showNextCard(sh){
+  const {p,t,f,left,nx}=info(sh);
+  if(nx)return `<div class="oc v5 bare">${TRI_SEC}
+      <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell">${esc(nx.title)}</span><span class="mt ell">${nx.label} · ${fmtDate(nx.date)}${nx.dur?' · '+fmtDur(nx.dur):''} · ${p}/${t} (${left})</span></div>
+      <span class="cks" style="--f:${fillHeight(f)}"><button type="button" class="rnd ${isFresh(sh,nx)?'fresh':''}" onclick="showListenNext()" aria-label="Mark listened">${CHK}</button></span></div>`;
+  const lt=countedEps(sh).sort((a,b)=>b.date-a.date)[0]||{date:0},lp=lastPlayed(sh);
+  return `<div class="oc v5 bare cu">${TRI_SEC}
+      <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell cu-say">${sh.ended?'Completed':'Coming soon…'}</span><span class="mt ell">${sh.ended?'Ended':'Caught up'} · ${fmtDate(lt.date)} · ${p}/${t} (0)${lp?' · '+ago(lp):''}</span></div>
+      <span class="cks gold ${sh.ended?'end':''}"><span class="rnd">${sh.ended?CHK2:CHK}</span></span></div>`;
+}
+function showListenNext(){
+  const sh=S.shows[view.id];const nx=sh&&upNext(sh);if(!nx)return;
+  sh.played[nx.id]=Date.now();save();renderEpisodes();updateProgress();
+}
 function libCards(shows){
   const go=shows.filter(sh=>upNext(sh)), done=shows.filter(sh=>!upNext(sh));
   let h='';
@@ -1334,14 +1421,14 @@ function libCards(shows){
     const {p,t,f,left,nx}=info(sh);
     // simple: one standard 45px card, square art | podcast, episode (one line), guests | square check that fills
     if(simple)return `<div class="oc v5" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
-      <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell">${esc(nx.title)}</span>${nx.guests.length?`<span class="gu ell">${esc(guestText(nx.guests))}</span>`:''}</div>
-      <span class="cks" style="--f:${fillHeight(f)}" onclick="event.stopPropagation()"><button type="button" class="rnd" ${onChk(sh.id)} aria-label="Mark listened">${CHK}</button></span></div>`;
+      <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell">${esc(nx.title)}</span><span class="mt ell">${nx.label} · ${fmtDate(nx.date)}${nx.dur?' · '+fmtDur(nx.dur):''} · ${p}/${t} (${left})</span></div>
+      <span class="cks" style="--f:${fillHeight(f)}" onclick="event.stopPropagation()"><button type="button" class="rnd ${isFresh(sh,nx)?'fresh':''}" ${onChk(sh.id)} aria-label="${isFresh(sh,nx)?'New episode: mark listened':'Mark listened'}">${CHK}</button></span></div>`;
     return `<div class="oc v4" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
       <div class="bd"><span class="k ell">${esc(nm(sh))}</span>${(()=>{const sg=nx;return sg.guests.length
           ?`<span class="mid"><span class="et one">${esc(sg.title)}</span><span class="gu">${esc(guestText(sg.guests))}</span></span>`
           :`<span class="mid"><span class="et">${esc(sg.title)}</span></span>`})()}
         <span class="mt">${nx.label} · ${fmtDate(nx.date)}${nx.dur?' · '+fmtDur(nx.dur):''} · ${p}/${t} (${left})</span></div>
-      <span class="cks" style="--f:${fillHeight(f)}" onclick="event.stopPropagation()"><button type="button" class="rnd" ${onChk(sh.id)} aria-label="Mark listened">${CHK}</button></span></div>`;
+      <span class="cks" style="--f:${fillHeight(f)}" onclick="event.stopPropagation()"><button type="button" class="rnd ${isFresh(sh,nx)?'fresh':''}" ${onChk(sh.id)} aria-label="${isFresh(sh,nx)?'New episode: mark listened':'Mark listened'}">${CHK}</button></span></div>`;
   }).join('');
   // caught up: the same card as the others, showing the latest episode; the check square turns gold,
   // its circle takes the podcast's color with a white check
@@ -1351,12 +1438,12 @@ function libCards(shows){
     const lt=countedEps(sh).sort((a,b)=>b.date-a.date)[0]||{title:'',guests:[],date:0};
     const lp=lastPlayed(sh);
     const chk=`<span class="cks gold ${sh.ended?'end':''}" aria-label="${sh.ended?'Ended and finished':'Caught up'}"><span class="rnd">${sh.ended?CHK2:CHK}</span></span>`;
+    // no episode names here: a finished, ended show just says so; a caught-up one is waiting for what's next
+    const say=sh.ended?'Completed':'Coming soon…';
     if(simple)return `<div class="oc v5 cu" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
-      <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell">${esc(lt.title)}</span>${lt.guests.length?`<span class="gu ell">${esc(guestText(lt.guests))}</span>`:''}</div>${chk}</div>`;
+      <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell cu-say">${say}</span><span class="mt ell">${sh.ended?'Ended':'Caught up'} · ${fmtDate(lt.date)} · ${p}/${t} (0)${lp?' · '+ago(lp):''}</span></div>${chk}</div>`;
     return `<div class="oc v4 cu" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
-      <div class="bd"><span class="k ell">${esc(nm(sh))}</span>${lt.guests.length
-          ?`<span class="mid"><span class="et one">${esc(lt.title)}</span><span class="gu">${esc(guestText(lt.guests))}</span></span>`
-          :`<span class="mid"><span class="et">${esc(lt.title)}</span></span>`}
+      <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="mid"><span class="et cu-say">${say}</span></span>
         <span class="mt">${sh.ended?'Ended':'Caught up'} · ${fmtDate(lt.date)} · ${p}/${t} (0)${lp?' · '+ago(lp):''}</span></div>${chk}</div>`;
   };
   const cu=done.filter(sh=>!sh.ended), fin=done.filter(sh=>sh.ended);
@@ -1407,6 +1494,7 @@ function dtFeeds(){
     <div class="field-card" style="flex:none">${'<svg viewBox="0 0 24 24" fill="none" stroke="#2b2620" stroke-width="3" stroke-linecap="round"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>'}
       <input id="relay-url" placeholder="Your relay, e.g. https://feeds.you.workers.dev/?url=" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(S.relay||'')}"></div>
     <div class="dt-card how"><span>${S.relay?'Your relay is tried alongside the public ones.':'Stuck shows are retried every time you open the app.'}</span></div>
+    <button type="button" class="dt-card" id="refresh-all" ${S.order.length?'':'disabled'}>${RA.busy?RA.busy:'Refresh all podcasts'}<b>${RA.busy?'Checking every feed':S.lastAuto?'Last checked '+ago(S.lastAuto):'Check every feed for new episodes'}</b></button>
     <div class="list-divider"><span>${stuck.length?'Stuck at Apple’s 200':'Feeds'}</span></div>
     ${stuck.length?stuck.map(sh=>`<div class="row has-art" style="${colorVars(sh.id)};cursor:default">${artSec(sh.art,sh.id,nm(sh))}
         <div class="main"><span class="t">${esc(nm(sh))}</span><span class="a">${sh.episodes.length} from Apple · ${sh.feedIssue==='unreadable'?'feed loaded but couldn’t be read':sh.feedIssue==='unreachable'?'no relay could reach the feed':'not checked yet, tap Retry'}</span></div>
@@ -1416,7 +1504,22 @@ function dtFeeds(){
   $('#app-footer').innerHTML=`<div class="dt-pair"><button class="cloth-btn" style="--cloth:#234a5e" id="relay-save">Save Relay</button>
     <button class="cloth-btn" style="--cloth:#2b5752" id="retry-all" ${stuck.length?'':'disabled'}>Retry All</button></div>`;
   $('#relay-save').onclick=saveRelay;
+  $('#refresh-all').onclick=refreshAll;
   $('#retry-all').onclick=e=>retryFeeds(stuck.map(sh=>sh.id),e.currentTarget);
+}
+// Data › Feeds › Refresh all: every podcast's feed, one after another, with a running count
+const RA={busy:''};
+async function refreshAll(){
+  if(RA.busy)return;   // runs even if the quiet background check is going; merging twice is harmless
+  const ids=[...S.order];let n=0,added=0;
+  for(const id of ids){
+    n++;RA.busy=`Checking ${n} of ${ids.length}…`;if(view.name==='data'&&view.dt==='feeds')dtFeeds();
+    const sh=S.shows[id];if(!sh)continue;
+    try{const {eps,source}=await getEpisodes(sh);if(S.shows[id]&&eps.length){added+=mergeEpisodes(S.shows[id],eps,source);save()}}catch(e){}
+  }
+  S.lastAuto=Date.now();S.lastStuck=Date.now();save();RA.busy='';
+  toast(added?`${added} new episode${added>1?'s':''} across your podcasts`:'Everything is up to date',3000);
+  if(view.name==='data'&&view.dt==='feeds')dtFeeds();else if(view.name==='lib')renderLibList();
 }
 async function saveRelay(){
   const v=$('#relay-url').value.trim();
@@ -1621,9 +1724,8 @@ function renderShow(){
 
   $('#app-footer').innerHTML='';   // no footer in a show's window
 
-  const latest=Math.max(0,...sh.episodes.map(e=>e.date));
-  $('#app').innerHTML=`    <div class="stats"><div class="sr"><span id="epStat"></span><span>latest <b>${fmtDate(latest)}</b></span></div>
-      <div class="sr"><span id="leftStat"></span><span>checked <b>${fmtDate(sh.updatedAt)}</b></span></div></div>
+  // in place of the stats card: the show's simple card (no art, the cover is in the header), its check marks the next episode
+  $('#app').innerHTML=`    <div id="show-next" style="${colorVars(sh.id)}"></div>
     ${sh.source==='itunes'?'<div class="note warn">The feed couldn’t be reached, so this is Apple’s list (newest 200 at most). Try Refresh, or set your own relay in Data › Feeds.</div>':''}
     <div class="ep-wrap" style="${colorVars(sh.id)}"><div id="tagtabs-wrap" style="display:contents"></div>
       <div id="eps" class="ep-list"></div></div>`;
@@ -1632,8 +1734,8 @@ function renderShow(){
 function colorCards(sh){
   const cur=cloth(sh.id), hi=nearestHue(cur);
   const [h,sat]=sh.colorHS||hexToHsl(cur), tones=tonesFor(h,sat), ti=toneIndex(tones,cur);
-  return `<div class="cp-row" id="cp-hues" aria-label="Color">${HUES.map(([n,c],i)=>`<button type="button" data-color="${c}" title="${n}" style="background:${c}" class="${i===hi?'on':''}"></button>`).join('')}</div>
-    <div class="cp-row" id="cp-tones" aria-label="Tone">${tones.map((c,i)=>`<button type="button" data-color="${c}" style="background:${c}" class="${i===ti?'on':''}"></button>`).join('')}</div>
+  return `<div class="cp-pair"><div class="cp-row" id="cp-hues" aria-label="Color">${HUES.map(([n,c],i)=>`<button type="button" data-color="${c}" title="${n}" style="background:${c}" class="${i===hi?'on':''}"></button>`).join('')}</div>
+    <div class="cp-row" id="cp-tones" aria-label="Tone">${tones.map((c,i)=>`<button type="button" data-color="${c}" style="background:${c}" class="${i===ti?'on':''}"></button>`).join('')}</div></div>
     <button type="button" class="dt-card cp-auto" id="cp-auto"><span>${sh.color?'Tap here for name-based color':'Using the name-based color'} ·</span><b>${sh.color?'Custom color '+cur.toUpperCase():'Generated from “'+esc(sh.title)+'”'}</b></button>`;
 }
 function setShowColor(sh,hex){if(hex)sh.color=hex;else delete sh.color;save();renderShow()}
@@ -1641,7 +1743,9 @@ $('#app').addEventListener('click',e=>{
   if(view.name!=='show'||!view.edit)return;
   const sh=S.shows[view.id];if(!sh)return;
   const hb=e.target.closest('#cp-hues [data-color]');
-  if(hb){const [h,s]=hexToHsl(hb.dataset.color);sh.colorHS=[h,s];setShowColor(sh,hb.dataset.color);return}
+  // a new color keeps the tone you're on: same step along its ten tones, just in the new color
+  if(hb){const cur=cloth(sh.id),[ch,cs]=sh.colorHS||hexToHsl(cur),ti=toneIndex(tonesFor(ch,cs),cur);
+    const [h,s]=hexToHsl(hb.dataset.color);sh.colorHS=[h,s];setShowColor(sh,tonesFor(h,s)[ti]);return}
   const tb=e.target.closest('#cp-tones [data-color]');
   if(tb){if(!sh.colorHS){const [h,s]=hexToHsl(cloth(sh.id));sh.colorHS=[h,s]}setShowColor(sh,tb.dataset.color);return}
   if(e.target.closest('#cp-auto')&&sh.color){delete sh.colorHS;setShowColor(sh,null)}
@@ -1661,6 +1765,7 @@ $('#app').addEventListener('click',e=>{
 $('#app').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest&&e.target.closest('.show-ed input'))e.target.blur()});
 function updateProgress(){
   const sh=S.shows[view.id];if(!sh)return;
+  const sn=$('#show-next');if(sn)sn.innerHTML=showNextCard(sh);
   const p=playedCount(sh),t=totalCount(sh);
   const left=countedEps(sh).filter(e=>!sh.played[e.id]).reduce((s,e)=>s+(e.dur||0),0);
   const es=$('#epStat');if(es)es.innerHTML=`<b>${p}/${t}</b> (${t-p}) episodes`;    // played/total, then how many are left
@@ -1678,32 +1783,74 @@ const GEAR=(()=>{   // a chunky cartoon gear: eight rounded teeth, thick outline
 })();
 function openSettings(){paintSettings();$('#st-page').hidden=false;$('#st-page').scrollTop=0}
 function closeSettings(){$('#st-page').hidden=true;if(view.name==='show')renderShow()}
+const SR_IC={
+  refresh:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>',
+  all:'<svg viewBox="0 0 24 24"><path d="M2.5 12.5l4 4L15 8"/><path d="M9 12.5l4 4L21.5 8"/></svg>',
+  clear:'<svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  remove:'<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg>',
+};
+const srCheck=on=>on?`<span class="sr-rnd">${SR_IC.check}</span>`:'';
+const srTagSub=(n,on)=>`${n} episode${n===1?'':'s'} · ${on?'counts':'not counted'}`;
+// the podcast's Settings, one framed list: what counts toward progress, refresh / mark all / clear all, ended, remove
 function paintSettings(){
   const sh=S.shows[view.id];if(!sh)return;
   const all=eps(sh),counts={};all.forEach(e=>counts[e.tag]=(counts[e.tag]||0)+1);
-  const sk=sh.skipTags||[],p=playedCount(sh),t=totalCount(sh);
-  $('#st-title').textContent=nm(sh);
-  $('#st-body').innerHTML=`<div class="list-divider"><span>Counts toward progress</span></div>
-    ${Object.entries(tagsOf(sh)).map(([k,v])=>{const on=!sk.includes(k),n=counts[k]||0;
-      return `<button type="button" class="so-opt st-tog ${on?'on':''}" data-count="${esc(k)}"><b>${esc(v)}</b><span>${on?'Counts':'Not counted'} · ${n} episode${n===1?'':'s'}</span><i>${on?'✓':''}</i></button>`}).join('')}
-    <div class="st-sum">Progress now: <b>${p}/${t}</b> (${t-p}) episodes</div>
-    <div class="list-divider"><span>Episodes</span></div>
-    <button type="button" class="so-opt" id="st-all"><b>Mark all played</b><span>Every episode, ${all.length} in all</span></button>
-    <button type="button" class="so-opt" id="st-clear"><b>Clear all</b><span>Every episode back to unplayed</span></button>
-    <div class="list-divider"><span>Podcast</span></div>
-    <button type="button" class="so-opt st-tog ${sh.ended?'on':''}" id="st-ended"><b>Ended show</b><span>${sh.ended?'No more episodes expected':'Still releasing episodes'}</span><i>${sh.ended?'✓':''}</i></button>
-    <button type="button" class="so-opt st-rm" id="st-rm"><b>Remove this podcast</b><span>${esc(nm(sh))} and its played history</span></button>`;
+  const sk=sh.skipTags||[];
+  $('#st-body').setAttribute('style',colorVars(sh.id));
+  $('#st-body').innerHTML=`
+    <div class="sr-show">${artSec(sh.art,sh.id,nm(sh))}<div class="tx"><b>${esc(nm(sh))}</b><small>${esc(au(sh))}${au(sh)?' · ':''}${all.length} episode${all.length===1?'':'s'}</small></div></div>
+    <div class="sr-list">
+      <div class="sr-sec">Counts toward progress</div>
+      ${Object.entries(tagsOf(sh)).map(([k,v])=>{const on=!sk.includes(k),n=counts[k]||0;
+        return `<button type="button" class="sr-row ${on?'on':''}" data-count="${esc(k)}"><span class="tx"><b>${esc(v)}</b><small>${srTagSub(n,on)}</small></span><span class="sr-sq">${srCheck(on)}</span></button>`}).join('')}
+      <div class="sr-prog"><span class="n"></span><span class="track"><span class="sr-fill"></span></span></div>
+      <div class="sr-sec">Episodes<span id="st-checked">checked ${sh.updatedAt?ago(sh.updatedAt):'never'}</span></div>
+      <button type="button" class="sr-row" id="st-refresh"><span class="tx"><b>Refresh episodes</b><small>Look for new episodes now</small></span><span class="sr-sq">${SR_IC.refresh}</span></button>
+      <button type="button" class="sr-row" id="st-all" data-two="all"><span class="tx"><b>Mark all played</b><small>Every episode, ${all.length} in all</small></span><span class="sr-sq">${SR_IC.all}</span></button>
+      <button type="button" class="sr-row" id="st-clear" data-two="clear"><span class="tx"><b>Clear all</b><small>Every episode back to unplayed</small></span><span class="sr-sq">${SR_IC.clear}</span></button>
+      <div class="sr-sec">Podcast</div>
+      <button type="button" class="sr-row ${sh.ended?'on':''}" id="st-ended"><span class="tx"><b>Ended show</b><small>${sh.ended?'No more episodes expected':'Still releasing episodes'}</small></span><span class="sr-sq">${srCheck(sh.ended)}</span></button>
+      <button type="button" class="sr-row danger" id="st-rm" data-two="remove"><span class="tx"><b>Remove this podcast</b><small>And its played history</small></span><span class="sr-sq">${SR_IC.remove}</span></button>
+    </div>`;
+  srProg(sh);
 }
+function srProg(sh){const p=playedCount(sh),t=totalCount(sh);const n=$('#st-body .sr-prog .n');if(!n)return;
+  n.innerHTML=`<b>${p}/${t}</b> (${t-p}) episodes`;$('#st-body .sr-prog .sr-fill').style.width=(t?p/t*100:0)+'%'}
+// a check row changes only itself (and the progress line), so only the tapped check pops in
+function srSet(row,on,sub){row.classList.toggle('on',on);row.classList.add('live');row.querySelector('small').textContent=sub;row.querySelector('.sr-sq').innerHTML=srCheck(on)}
+// refresh: the arrow spins in whole turns while the feed is checked, then finishes its turn so it stops upright
+async function refreshFromSettings(sh,row){
+  if(row.classList.contains('busy'))return;
+  row.classList.add('busy');row.querySelector('b').textContent='Checking…';
+  let msg;
+  try{const {eps,source}=await getEpisodes(sh);const added=mergeEpisodes(sh,eps,source);save();
+    msg=added?`${added} new episode${added>1?'s':''} found`:'Up to date';}
+  catch(e){msg='Couldn’t reach the feed, try again later'}
+  const done=()=>{row.classList.remove('busy');row.querySelector('b').textContent='Refresh episodes';row.querySelector('small').textContent=msg;
+    const c=$('#st-checked');if(c)c.textContent='checked '+(sh.updatedAt?ago(sh.updatedAt):'never');srProg(sh)};
+  const ic=row.querySelector('.sr-sq svg');
+  if(ic&&row.isConnected&&!document.hidden)ic.addEventListener('animationiteration',done,{once:true});else done();
+}
+const SR_ASK={all:'Tap again to mark every episode played',clear:'Tap again to clear every played mark',remove:'Tap again to remove it'};
 $('#st-page').addEventListener('click',e=>{
   const sh=S.shows[view.id];if(!sh)return;
   if(e.target.closest('#st-back')){closeSettings();return}
   const tg=e.target.closest('[data-count]');
-  if(tg){const k=tg.dataset.count,sk=new Set(sh.skipTags||[]);if(sk.has(k))sk.delete(k);else sk.add(k);
-    if(sk.size)sh.skipTags=[...sk];else delete sh.skipTags;save();paintSettings();return}
-  if(e.target.closest('#st-ended')){if(sh.ended)delete sh.ended;else sh.ended=true;save();paintSettings();return}
-  if(e.target.closest('#st-all')){markAll(true);return}
-  if(e.target.closest('#st-clear')){markAll(false);return}
-  if(e.target.closest('#st-rm')){const before=view.id;removeShow();if(!S.shows[before])$('#st-page').hidden=true}
+  if(tg){const k=tg.dataset.count,sk=new Set(sh.skipTags||[]),on=sk.has(k);if(on)sk.delete(k);else sk.add(k);
+    if(sk.size)sh.skipTags=[...sk];else delete sh.skipTags;save();
+    srSet(tg,on,srTagSub(eps(sh).filter(x=>x.tag===k).length,on));srProg(sh);return}
+  const en=e.target.closest('#st-ended');
+  if(en){if(sh.ended)delete sh.ended;else sh.ended=true;save();srSet(en,!!sh.ended,sh.ended?'No more episodes expected':'Still releasing episodes');return}
+  const rf=e.target.closest('#st-refresh');if(rf){refreshFromSettings(sh,rf);return}
+  // Mark all played / Clear all / Remove: tap once to arm (the row turns red and asks), again within 3 seconds to do it
+  const two=e.target.closest('[data-two]');if(!two)return;
+  if(two.classList.contains('armed')){clearTimeout(two._t);const k=two.dataset.two;
+    if(k==='remove'){$('#st-page').hidden=true;removeShowNow(sh.id);return}
+    two.classList.remove('armed');two.querySelector('small').textContent=two.dataset.sub;markAll(k==='all');return}
+  $('#st-body').querySelectorAll('.armed').forEach(x=>{clearTimeout(x._t);x.classList.remove('armed');x.querySelector('small').textContent=x.dataset.sub});
+  const sm=two.querySelector('small');two.dataset.sub=sm.textContent;sm.textContent=SR_ASK[two.dataset.two];two.classList.add('armed');
+  two._t=setTimeout(()=>{if(two.isConnected){two.classList.remove('armed');sm.textContent=two.dataset.sub}},3000);
 });
 /* ---------- the cover in 3D: tap the cover in a podcast's window and it lifts out as a framed photo.
    Same camera, timings and swipe feel as Stack Tracker's 3D books: swipe sideways to spin, up/down to tilt, tap to put it back.
@@ -1722,10 +1869,31 @@ const F3_FOV=45.2,F3_CAMZ=8.16,F3_DUR=1050,F3_CLOSE=780;
 const f3ease=t=>-(Math.cos(Math.PI*t)-1)/2;
 const f3smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
 const f3lerp=(a,b,t)=>a+(b-a)*t;
+// woods: color, grain contrast (gc) and how close the growth bands sit (bf)
 const WOODS=[
-  {n:'Maple',c:'#d9bc8c'},{n:'Oak',c:'#b5874e'},{n:'Olive wood',c:'#a8935e'},{n:'Teak',c:'#8f6436'},{n:'Cherry',c:'#9c5236'},
-  {n:'Mahogany',c:'#7a3526'},{n:'Walnut',c:'#5d3f2a'},{n:'Driftwood',c:'#a59d8f'},{n:'Barn wood',c:'#6e6458'},{n:'Ebony',c:'#2f2622'},
+  {n:'Maple',c:'#dcc39a',gc:.6,bf:1},{n:'Birch',c:'#e1cfae',gc:.5,bf:1.2},{n:'Ash',c:'#cdb894',gc:1.2,bf:.8},{n:'Beech',c:'#d0a57a',gc:.7,bf:1.3},
+  {n:'Pine',c:'#d9b07a',gc:1.4,bf:.6},{n:'Oak',c:'#b5874e',gc:1.1,bf:.9},{n:'White oak',c:'#c4a678',gc:1,bf:1},{n:'Hickory',c:'#bf9466',gc:1.3,bf:.7},
+  {n:'Yellowheart',c:'#d6b14a',gc:.8,bf:1.1},{n:'Olive wood',c:'#a8935e',gc:1.6,bf:.7},{n:'Teak',c:'#8f6436',gc:1,bf:1},{n:'Padauk',c:'#b4532e',gc:.9,bf:1.2},
+  {n:'Cherry',c:'#9c5236',gc:.7,bf:1},{n:'Bubinga',c:'#8a3f2c',gc:1.1,bf:1.4},{n:'Mahogany',c:'#7a3526',gc:.8,bf:1.1},{n:'Purpleheart',c:'#6e3a58',gc:.8,bf:1.2},
+  {n:'Rosewood',c:'#5a3226',gc:1.3,bf:1.5},{n:'Walnut',c:'#5d3f2a',gc:1,bf:1},{n:'Zebrawood',c:'#c7a97a',gc:2.6,bf:.9},{n:'Wenge',c:'#3d2c22',gc:1.5,bf:1.3},
+  {n:'Driftwood',c:'#a59d8f',gc:1.2,bf:.8},{n:'Barn wood',c:'#6e6458',gc:1.5,bf:.7},{n:'Whitewashed oak',c:'#d8d0c2',gc:.9,bf:.9},{n:'Bog oak',c:'#3a3633',gc:1,bf:1},
+  {n:'Ebony',c:'#2f2622',gc:.6,bf:1.3},
 ];
+// frame designs, each a stack of mitered rails (layers): i/o = inner/outer half-width, f = front, d = depth, b = edge rounding.
+// m: 'wood', 'wood2' (a second, contrasting wood) or 'liner' (gold, silver or black lacquer)
+const FRAMES=[
+  {n:'Flat',L:[{i:.415,o:.5,f:.045,d:.09,b:.006}]},
+  {n:'Bullnose',L:[{i:.41,o:.5,f:.05,d:.1,b:.022,seg:6}]},
+  {n:'Slim',L:[{i:.448,o:.5,f:.04,d:.08,b:.004}]},
+  {n:'Wide',L:[{i:.37,o:.5,f:.045,d:.09,b:.008}]},
+  {n:'Stepped',L:[{i:.44,o:.5,f:.028,d:.075,b:.005},{i:.405,o:.448,f:.052,d:.1,b:.006,seg:3}]},
+  {n:'Liner',L:[{i:.428,o:.5,f:.045,d:.09,b:.007},{i:.408,o:.432,f:.049,d:.085,b:.005,seg:3,m:'liner'}]},
+  {n:'Two woods',L:[{i:.44,o:.5,f:.045,d:.09,b:.006},{i:.405,o:.443,f:.04,d:.085,b:.005,m:'wood2'}]},
+  {n:'Shadow box',L:[{i:.425,o:.5,f:.07,d:.17,b:.006}]},
+  {n:'Beaded',L:[{i:.428,o:.5,f:.04,d:.085,b:.006},{i:.405,o:.432,f:.058,d:.095,b:.013,seg:6,m:'wood2'}]},
+  {n:'Cove',L:[{i:.45,o:.5,f:.055,d:.1,b:.018,seg:5},{i:.405,o:.452,f:.035,d:.08,b:.008,seg:3}]},
+];
+const LINERS=[{n:'gold',c:0xc9a447,sp:0xfff0c0,sh:70},{n:'silver',c:0xb9bcbf,sp:0xffffff,sh:80},{n:'black',c:0x161412,sp:0x666666,sh:60}];
 const f3rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
 const f3lum=h=>{const [r,g,b]=f3rgb(h).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*r+.7152*g+.0722*b};
 const f3hue=h=>{const [r,g,b]=f3rgb(h),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(!d)return 0;
@@ -1733,26 +1901,38 @@ const f3hue=h=>{const [r,g,b]=f3rgb(h),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=m
 function f3hash(s){let h=2166136261;for(const ch of String(s).toLowerCase())h=Math.imul(h^ch.codePointAt(0),16777619);return h>>>0}
 // the name picks a wood; if it would blur into the cover color (too close in lightness, or the same hue at nearly the
 // same lightness) it moves on to the next one, so every show gets its own wood that still reads well
-function woodFor(name,color){
-  const Lc=f3lum(color),Hc=f3hue(color),start=f3hash(name)%WOODS.length;
+// the name picks a wood; if it would blur into the cover color (too close in lightness, or the same hue at nearly the
+// same lightness) it moves on to the next one, so every show gets its own wood that still reads well
+function woodFor(name,color,salt=''){
+  const Lc=f3lum(color),Hc=f3hue(color),start=f3hash(name+salt)%WOODS.length;
   for(let i=0;i<WOODS.length;i++){const w=WOODS[(start+i)%WOODS.length],dl=Math.abs(f3lum(w.c)-Lc),
       dh=Math.min(Math.abs(f3hue(w.c)-Hc),360-Math.abs(f3hue(w.c)-Hc));
     if(dl>=.05&&!(dh<25&&dl<.12))return w;}
   return WOODS[start];
 }
+// the whole look from the name: the wood, the frame design, and (when the design has one) a second wood or a liner
+function frameFor(sh){
+  const name=nm(sh),color=cloth(sh.id),c=/^#[0-9a-f]{6}$/i.test(color)?color:'#555555';
+  const wood=woodFor(name,c),design=FRAMES[f3hash(name+'|frame')%FRAMES.length];
+  // second wood: clearly lighter or darker than the first
+  let wood2=WOODS[f3hash(name+'|wood2')%WOODS.length];
+  for(let i=0;i<WOODS.length&&Math.abs(f3lum(wood2.c)-f3lum(wood.c))<.08;i++)wood2=WOODS[(WOODS.indexOf(wood2)+1)%WOODS.length];
+  const liner=LINERS[f3hash(name+'|liner')%LINERS.length];
+  return{wood,wood2,design,liner};
+}
 // wood grain: long straight fibers that drift a little, soft growth bands, fine pores, a few darker lines; low contrast
-function grainTexture(hex,seed){
+function grainTexture(hex,seed,gc=1,bf=1){
   const S=512,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d'),img=g.createImageData(S,S),d=img.data;
   let st=seed||1;const rnd=()=>(st=Math.imul(st^st>>>15,2246822507)>>>0,(st&0xffff)/0x10000);
-  const [R,G,B]=f3rgb(hex).map(v=>v*255),p=[rnd()*6.3,rnd()*6.3,rnd()*6.3,rnd()*6.3],f=.06+rnd()*.05;
+  const [R,G,B]=f3rgb(hex).map(v=>v*255),p=[rnd()*6.3,rnd()*6.3,rnd()*6.3,rnd()*6.3],f=(.06+rnd()*.05)*bf;
   const fib=new Float32Array(S);for(let y=0;y<S;y++)fib[y]=rnd()-.5;
   for(let y=0;y<S;y++)for(let x=0;x<S;x++){
     const yy=y+5*Math.sin(x*.0123+p[0])+1.5*Math.sin(x*.041+p[1]);
-    const v=1+(Math.sin(yy*f+p[2])*.6+Math.sin(yy*f*2.7+p[3])*.3+Math.sin(yy*f*.37)*.4)*.055+fib[((yy|0)%S+S)%S]*.06;
+    const v=1+(Math.sin(yy*f+p[2])*.6+Math.sin(yy*f*2.7+p[3])*.3+Math.sin(yy*f*.37)*.4)*.055*gc+fib[((yy|0)%S+S)%S]*.06;
     const i=(y*S+x)*4;d[i]=R*v;d[i+1]=G*v;d[i+2]=B*v;d[i+3]=255;}
   g.putImageData(img,0,0);
   for(let i=0;i<900;i++){g.fillStyle=`rgba(${R*.45|0},${G*.4|0},${B*.35|0},${.1+rnd()*.18})`;g.fillRect(rnd()*S,rnd()*S,4+rnd()*18,.9)}
-  for(let i=0;i<6;i++){const y0=rnd()*S,ph=rnd()*6.3;g.strokeStyle=`rgba(${R*.5|0},${G*.42|0},${B*.36|0},.22)`;g.lineWidth=1+rnd();g.beginPath();
+  for(let i=0;i<Math.round(6*gc);i++){const y0=rnd()*S,ph=rnd()*6.3;g.strokeStyle=`rgba(${R*.5|0},${G*.42|0},${B*.36|0},${Math.min(.5,.22*gc)})`;g.lineWidth=1+rnd();g.beginPath();
     for(let x=0;x<=S;x+=8){const y=y0+5*Math.sin(x*.0123+p[0])+1.5*Math.sin(x*.041+p[1])+Math.sin(x*.02+ph)*2;x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;
 }
@@ -1799,47 +1979,69 @@ function f3init(){
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   addEventListener('resize',()=>{if(F3.phase!=='idle')f3size()});
 }
-function f3size(){F3.renderer.setSize(innerWidth,innerHeight,true);F3.camera.aspect=innerWidth/innerHeight;F3.camera.updateProjectionMatrix()}
-const f3unit=()=>2*F3_CAMZ*Math.tan(F3_FOV/2*Math.PI/180)/innerHeight;
+function f3box(){const r=$('#f3-canvas').getBoundingClientRect();return{l:r.left,t:r.top,w:r.width||innerWidth,h:r.height||innerHeight}}
+// sized from the canvas's real box on screen (phones can misreport the window size, and the address bar comes and goes)
+function f3size(){const b=f3box();F3.renderer.setSize(b.w,b.h,false);F3.camera.aspect=b.w/b.h;F3.camera.updateProjectionMatrix()}
+const f3unit=()=>2*F3_CAMZ*Math.tan(F3_FOV/2*Math.PI/180)/f3box().h;
+// where a card on screen sits in the 3D scene, and how big it is there
+function f3place(card){const r=card.getBoundingClientRect(),b=f3box(),u=f3unit();
+  return{pos:new THREE.Vector3((r.left+r.width/2-b.l-b.w/2)*u,-(r.top+r.height/2-b.t-b.h/2)*u,0),s:r.width*u}}
 // the frame, 1 unit wide. setMorph(0) = the cover card exactly; setMorph(1) = the framed photo
 function buildFrame3d(sh,cover){
-  const g=new THREE.Group(),D=.09,BEV=.012,color=cloth(sh.id),wood=woodFor(nm(sh),/^#[0-9a-f]{6}$/i.test(color)?color:'#555555');
+  const g=new THREE.Group(),BEV=.012,{wood,wood2,design,liner}=frameFor(sh),seed=f3hash(nm(sh));
+  // every design is built around the same opening, so the picture (and its narrow mat) is the same size in every frame;
+  // a wider frame simply reaches further out
+  const HOLE=.425,d0=Math.min(...design.L.map(l=>l.i)),L=design.L.map(l=>({...l,i:l.i-d0+HOLE,o:l.o-d0+HOLE}));
+  const OUT=Math.max(...L.map(l=>l.o));
+  const minI=Math.min(...L.map(l=>l.i)),fMax=Math.max(...L.map(l=>l.f)),bMin=Math.min(...L.map(l=>l.f-l.d)),D=fMax-bMin;
+  const inner=L.reduce((a,l)=>l.i<a.i?l:a,L[0]),innerF=inner.f;    // the rail nearest the picture
+  // while it morphs: one rounded piece in plain color, black to the wood's tone
   const woodMat=new THREE.MeshPhongMaterial({color:0x000000,specular:0x1c1812,shininess:18});
   const mould=new THREE.Mesh(new THREE.BufferGeometry(),woodMat);g.add(mould);
-  // once the corners are square: four mitered rails, grain running along each one
-  const FWF=.085,INF=.5-FWF,RB=.008;
-  const rs=new THREE.Shape();rs.moveTo(-.5,.5);rs.lineTo(-INF,INF);rs.lineTo(INF,INF);rs.lineTo(.5,.5);rs.lineTo(-.5,.5);
-  const railGeo=new THREE.ExtrudeGeometry(rs,{depth:D-RB*2,bevelEnabled:true,bevelThickness:RB,bevelSize:RB*.6,bevelOffset:-RB*.6,bevelSegments:2});railGeo.translate(0,0,-(D-RB*2)/2-RB);
-  const base=grainTexture(wood.c,f3hash(nm(sh)));
+  // once square: the design's rails, each mitered at the corners with grain running along its length
   const rails=new THREE.Group();rails.visible=false;g.add(rails);
-  for(let i=0;i<4;i++){const t=base.clone();t.needsUpdate=true;t.repeat.set(1.1,1.1);t.offset.set(i*.27,i*.31);
-    const m=new THREE.Mesh(railGeo,new THREE.MeshPhongMaterial({map:t,color:0xd2d2d2,specular:0x1c1812,shininess:18}));m.rotation.z=i*Math.PI/2;rails.add(m);}
-  const mat=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshLambertMaterial({color:0xf3eee3}));mat.position.z=D/2-.03;g.add(mat);
+  const tex1=grainTexture(wood.c,seed,wood.gc,wood.bf),tex2=grainTexture(wood2.c,seed^0x9e3779b9,wood2.gc,wood2.bf);
+  L.forEach((l,li)=>{
+    const rs=new THREE.Shape();rs.moveTo(-l.o,l.o);rs.lineTo(-l.i,l.i);rs.lineTo(l.i,l.i);rs.lineTo(l.o,l.o);rs.lineTo(-l.o,l.o);
+    const bt=Math.min(l.b,l.d/3),core=Math.max(.001,l.d-bt*2);
+    const geo=new THREE.ExtrudeGeometry(rs,{depth:core,bevelEnabled:true,bevelThickness:bt,bevelSize:l.b*.8,bevelOffset:-l.b*.8,bevelSegments:l.seg||2});
+    geo.translate(0,0,l.f-core-bt);
+    for(let i=0;i<4;i++){
+      let m;
+      if(l.m==='liner')m=new THREE.MeshPhongMaterial({color:liner.c,specular:liner.sp,shininess:liner.sh});
+      else{const t=(l.m==='wood2'?tex2:tex1).clone();t.needsUpdate=true;t.repeat.set(1.1,1.1);t.offset.set(i*.27+li*.13,i*.31+li*.17);
+        m=new THREE.MeshPhongMaterial({map:t,color:0xd2d2d2,specular:0x1c1812,shininess:18});}
+      const mesh=new THREE.Mesh(geo,m);mesh.rotation.z=i*Math.PI/2;rails.add(mesh);}
+  });
+  const mat=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshLambertMaterial({color:0xf3eee3}));mat.position.z=innerF-.03;g.add(mat);
   const tex=new THREE.CanvasTexture(cover);tex.anisotropy=8;
-  const pic=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshLambertMaterial({map:tex,color:0xb4b4b4}));pic.position.z=D/2-.029;g.add(pic);   // toned to match the card, lit face-on
-  const edge=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0}));edge.position.z=D/2-.0295;g.add(edge);
-  const glass=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshPhongMaterial({color:0xffffff,transparent:true,opacity:.06,specular:0xffffff,shininess:90}));glass.position.z=D/2-.016;g.add(glass);
+  const pic=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshLambertMaterial({map:tex,color:0xb4b4b4}));pic.position.z=innerF-.029;g.add(pic);   // toned to match the card, lit face-on
+  const edge=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0}));edge.position.z=innerF-.0295;g.add(edge);
+  const glass=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshPhongMaterial({color:0xffffff,transparent:true,opacity:.06,specular:0xffffff,shininess:90}));glass.position.z=innerF-.012;g.add(glass);
   // the back: plain kraft paper and a hanger
   const bc=document.createElement('canvas');bc.width=bc.height=256;const bg=bc.getContext('2d');
   bg.fillStyle='#a8865c';bg.fillRect(0,0,256,256);
   for(let i=0;i<1300;i++){bg.fillStyle=`rgba(${Math.random()<.5?'60,40,20':'255,240,210'},${Math.random()*.08})`;bg.fillRect(Math.random()*256,Math.random()*256,1+Math.random()*2,1)}
-  const back=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(bc)}));back.position.z=-D/2-.001;back.rotation.y=Math.PI;g.add(back);
-  const hang=new THREE.Mesh(new THREE.BoxGeometry(.16,.035,.012),new THREE.MeshPhongMaterial({color:0x9a9a9a,specular:0xffffff,shininess:60}));hang.position.set(0,.36,-D/2-.008);g.add(hang);
+  const back=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(bc)}));back.position.z=bMin-.001;back.rotation.y=Math.PI;g.add(back);
+  const hang=new THREE.Mesh(new THREE.BoxGeometry(.16,.035,.012),new THREE.MeshPhongMaterial({color:0x9a9a9a,specular:0xffffff,shininess:60}));hang.position.set(0,OUT-.14,bMin-.008);g.add(hang);
   const black=new THREE.Color(0x000000),tone=new THREE.Color(wood.c).multiplyScalar(.82);
   let lastK=-1,IN=.5;
   g.userData.setMorph=m=>{
     const k=f3smooth(0,.45,m),k2=f3smooth(.2,.9,m);   // corners square up and the border turns to wood; then the mat opens
     if(Math.abs(k-lastK)>.002||lastK<0){
       lastK=k;
-      const R=f3lerp(8/45,0,k),FW=f3lerp(3/45,FWF,k),Ri=f3lerp(5/45,0,k),bev=f3lerp(.004,BEV,k);IN=.5-FW;
-      const shp=rrPath(new THREE.Shape(),.5,R);shp.holes.push(rrPath(new THREE.Path(),IN,Ri));
+      const R=f3lerp(8/45,0,k),O=f3lerp(.5,OUT,k),Ri=f3lerp(5/45,0,k),bev=f3lerp(.004,BEV,k);IN=f3lerp(.5-3/45,minI,k);
+      const shp=rrPath(new THREE.Shape(),O,R);shp.holes.push(rrPath(new THREE.Path(),IN,Ri));
       const geo=new THREE.ExtrudeGeometry(shp,{depth:D-bev*2,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelOffset:-bev,bevelSegments:3,curveSegments:k<1?6:2});
-      geo.translate(0,0,-(D-bev*2)/2-bev);mould.geometry.dispose();mould.geometry=geo;
-      back.geometry.dispose();back.geometry=new THREE.ShapeGeometry(rrPath(new THREE.Shape(),.49,Math.max(0,R-.01)),k<1?6:2);
+      geo.translate(0,0,fMax-(D-bev*2)-bev);mould.geometry.dispose();mould.geometry=geo;
+      back.geometry.dispose();back.geometry=new THREE.ShapeGeometry(rrPath(new THREE.Shape(),O-.01,Math.max(0,R-.01)),k<1?6:2);
       woodMat.color.copy(black).lerp(tone,k);
       const sq=k>=.999;mould.visible=!sq;rails.visible=sq;
     }
-    const P=f3lerp(IN*2+.02,IN*2-.15,k2);
+    // the card shows the middle of its cover (the border sits over the edges), so the photo starts cropped exactly like that
+    // and opens out to the whole cover as the mat appears: same size and crop as the card at both ends, no jump
+    const P=f3lerp(IN*2+.004,HOLE*2-.07,k2),cf=f3lerp(1-6/45,1,k2);   // a narrow mat: 0.035 each side
+    tex.repeat.set(cf,cf);tex.offset.set((1-cf)/2,(1-cf)/2);
     pic.scale.set(P,P,1);edge.scale.set(P+.012,P+.012,1);edge.material.opacity=.18*k2;
     mat.scale.set(IN*2+.002,IN*2+.002,1);glass.scale.set(IN*2,IN*2,1);glass.material.opacity=.06*k2;
   };
@@ -1852,15 +2054,15 @@ async function openFrame3d(sh,card){
   let cover;try{cover=await coverCanvas(sh)}catch(e){F3.busy=false;return}
   if(view.name!=='show'||view.id!==sh.id||view.edit){F3.busy=false;return}   // moved on while it loaded
   if(!F3.renderer)f3init();
-  f3size();
+  $('#f3-canvas').classList.add('on');   // shown first, so its real size on screen can be measured
+  f3size();F3.renderer.clear();
   if(F3.frame){F3.scene.remove(F3.frame)}
   F3.frame=buildFrame3d(sh,cover);F3.scene.add(F3.frame);F3.card=card;
-  const r=card.getBoundingClientRect(),u=f3unit();
-  F3.startPos=new THREE.Vector3((r.left+r.width/2-innerWidth/2)*u,-(r.top+r.height/2-innerHeight/2)*u,0);
-  F3.startS=r.width*u;F3.endS=Math.min(innerWidth*.74,innerHeight*.5,520)*u;F3.endPos=new THREE.Vector3(0,innerHeight*.03*u,0);
+  const pl=f3place(card),b=f3box(),u=f3unit();
+  F3.startPos=pl.pos;F3.startS=pl.s;F3.endS=Math.min(b.w*.74,b.h*.5,520)*u;F3.endPos=new THREE.Vector3(0,b.h*.03*u,0);
   F3.rot=F3.vel=F3.tilt=F3.tvel=0;F3.lastDrag=0;
   F3.frame.position.copy(F3.startPos);F3.frame.scale.setScalar(F3.startS);
-  $('#f3-canvas').classList.add('on');document.body.classList.add('f3-open');
+  document.body.classList.add('f3-open');
   $('#f3-back').classList.remove('quick');$('#f3-back').classList.add('on');card.classList.add('lifted');
   F3.phase='opening';F3.t0=null;requestAnimationFrame(f3tick);
 }
@@ -1868,9 +2070,8 @@ function closeFrame3d(){
   if(F3.phase!=='open')return;
   const f=F3.frame;let d=f.rotation.y%(Math.PI*2);if(d>Math.PI)d-=Math.PI*2;if(d<-Math.PI)d+=Math.PI*2;   // the short way home
   F3.cRot=d;F3.cTilt=f.rotation.x;F3.cPos=f.position.clone();F3.cS=f.scale.x;
-  // fly back to wherever the card is now
-  if(F3.card&&F3.card.isConnected){const r=F3.card.getBoundingClientRect(),u=f3unit();
-    F3.startPos.set((r.left+r.width/2-innerWidth/2)*u,-(r.top+r.height/2-innerHeight/2)*u,0);F3.startS=r.width*u;}
+  // fly back to the card as it is on screen right now, measured the same way, so it lands exactly at its size
+  if(F3.card&&F3.card.isConnected){f3size();const pl=f3place(F3.card);F3.startPos=pl.pos;F3.startS=pl.s}
   $('#f3-back').classList.add('quick');$('#f3-back').classList.remove('on');
   F3.phase='closing';F3.t0=null;
 }
@@ -1890,7 +2091,7 @@ function f3tick(ts){
   }else if(F3.phase==='closing'){
     const q=Math.min((ts-F3.t0)/F3_CLOSE,1),e=f3ease(q),bump=Math.sin(e*Math.PI);
     f.position.lerpVectors(F3.cPos,F3.startPos,e);f.position.z+=bump*.55;f.position.y+=bump*.12;
-    f.scale.setScalar(F3.cS+(F3.startS-F3.cS)*e);
+    f.scale.setScalar(Math.max(F3.startS,F3.cS+(F3.startS-F3.cS)*e));   // never smaller than the card it lands in
     f.rotation.x=F3.cTilt*(1-e)+.2*Math.sin(Math.PI*e);f.rotation.y=F3.cRot*(1-e);
     f.userData.setMorph(1-e);
     if(q===1){F3.renderer.render(F3.scene,F3.camera);f3done();return}
@@ -1953,6 +2154,11 @@ function tagWidth(box){
   c.remove();
   return Math.ceil(w);
 }
+function fitTitles(el){
+  const list=el?[el]:document.querySelectorAll('#eps .ee-title');
+  list.forEach(t=>{t.classList.remove('two');if(t.scrollHeight>t.clientHeight+1)t.classList.add('two')});
+}
+document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('ee-title')){e.target.value=e.target.value.replace(/\n/g,' ');fitTitles(e.target)}});
 function fitTags(){
   const tt=$('#tagtabs');if(tt)tt.style.setProperty('--tw',tagWidth(tt)+'px');
   const eg=$('#eps .ee-tag');
@@ -1980,13 +2186,15 @@ function renderEpisodes(){
   if(view.edit){   // editing: every episode, newest or oldest first as last sorted, no filters
     const list=all.sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
     el.innerHTML=list.map(e=>`<div class="ep-ed ${e.edited?'edited':''}" data-id="${esc(e.id)}">
-      <div class="ee-top"><input class="ee-title" value="${esc(e.title)}" aria-label="Episode title" enterkeyhint="done"></div>
-      <label class="ee-guest"><span>with</span><input class="ee-guests" value="${esc(guestJoin(e.guests))}" placeholder="no guests" aria-label="Guests" enterkeyhint="done"></label>
+      <div class="ee-top"><textarea class="ee-title" rows="1" aria-label="Episode title" enterkeyhint="done">${esc(e.title)}</textarea></div>
+      <label class="ee-guest"><span>with:</span><input class="ee-guests" value="${esc(guestJoin(e.guests))}" placeholder="no guests" aria-label="Guests" enterkeyhint="done"></label>
       <div class="ee-bot"><input type="date" class="ee-date" value="${toDay(e.date)}" aria-label="Release date">
-        <div class="ee-len" aria-label="Length">${twHTML(e.dur||0)}</div></div>
+        <div class="ee-len" aria-label="Length">${twHTML(e.dur||0)}<button type="button" class="ee-fog">Tap to change time</button></div></div>
       <div class="ee-tagrow"><div class="seg ee-tag">${Object.entries(tagsOf(sh)).map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tag===k?'on':''}">${esc(v)}</button>`).join('')}</div>
-        <button type="button" class="ee-addtag" title="Add a new tag" aria-label="Add a new tag">+</button></div></div>`).join('');
-    fitTags();
+        <button type="button" class="ee-addtag" title="Add a new tag" aria-label="Add a new tag">+</button></div>
+      <div class="ee-se"><label class="ee-guest"><span>season:</span><input class="ee-num" data-f="season" inputmode="numeric" enterkeyhint="done" value="${e.season||''}" placeholder="none" aria-label="Season number"></label>
+        <label class="ee-guest"><span>episode:</span><input class="ee-num" data-f="ep" inputmode="numeric" enterkeyhint="done" value="${e.ep||''}" placeholder="none" aria-label="Episode number"></label></div></div>`).join('');
+    fitTags();fitTitles();
     return;
   }
   renderTagTabs(all);
@@ -2028,7 +2236,7 @@ function twHTML(secs){
   const v=[Math.min(99,Math.floor(secs/3600)),Math.floor(secs%3600/60),Math.round(secs%60)%60];
   return v.map((x,k)=>`<div class="tw-wheel" data-k="${k}" data-v="${x}">${twRows(k,x)}<span>${'HMS'[k]}</span></div>`).join('');
 }
-function twPaint(w,pos){
+function twPaint(w,pos){if(w.closest('.ee-len.active'))wheelIdle();
   const k=+w.dataset.k,c=Math.round(pos),rows=w.querySelectorAll('div');
   if(w._c!==undefined&&w._c!==c){try{navigator.vibrate&&navigator.vibrate(4)}catch(_){}}
   w._c=c;
@@ -2038,6 +2246,14 @@ function twPaint(w,pos){
     row.style.opacity=(1-Math.min(1,Math.abs(idx-pos))*.7).toFixed(2);});
 }
 // a wheel has settled: save the episode's length and mark the card edited (no re-render, so nothing jumps)
+// the time wheels fog back over after 5 seconds without being turned, or as soon as you tap anywhere else
+let fogTimer=0;
+function fogWheels(){clearTimeout(fogTimer);document.querySelectorAll('#eps .ee-len.active').forEach(x=>x.classList.remove('active'))}
+function wheelIdle(){clearTimeout(fogTimer);fogTimer=setTimeout(fogWheels,5000)}
+document.addEventListener('pointerdown',e=>{
+  const a=document.querySelector('#eps .ee-len.active');if(!a)return;
+  if(a.contains(e.target))wheelIdle();else if(!e.target.closest('.ee-fog'))fogWheels();
+},true);
 function twSave(w){
   const box=w.closest('.ep-ed'),sh=S.shows[view.id];if(!box||!sh)return;
   const v=[...box.querySelectorAll('.tw-wheel')].map(x=>+x.dataset.v);
@@ -2068,12 +2284,12 @@ function twSettle(w,pos,vel){
   if(Math.abs(vel)<2)snap();else w._af=requestAnimationFrame(glide);
 }
 $('#app').addEventListener('pointerdown',e=>{
-  const w=e.target.closest('.tw-wheel');if(!w||view.name!=='show'||!view.edit)return;
+  const w=e.target.closest('.tw-wheel');if(!w||view.name!=='show'||!view.edit||!w.closest('.ee-len.active'))return;
   cancelAnimationFrame(w._af);e.preventDefault();
   const k=+w.dataset.k,start=w._pos!=null?w._pos:+w.dataset.v,y0=e.clientY;let pos=start;
   const samples=[{t:e.timeStamp,y:e.clientY}];
   try{w.setPointerCapture(e.pointerId)}catch(_){}
-  const move=ev=>{pos=start-(ev.clientY-y0)/TW_ROW;if(!twWrap(k))pos=Math.max(0,Math.min(99,pos));twPaint(w,pos);
+  const move=ev=>{wheelIdle();pos=start-(ev.clientY-y0)/TW_ROW;if(!twWrap(k))pos=Math.max(0,Math.min(99,pos));twPaint(w,pos);
     samples.push({t:ev.timeStamp,y:ev.clientY});while(samples.length>1&&ev.timeStamp-samples[0].t>100)samples.shift()};
   const up=()=>{w.removeEventListener('pointermove',move);w.removeEventListener('pointerup',up);w.removeEventListener('pointercancel',up);
     const a=samples[0],b=samples[samples.length-1];
@@ -2081,7 +2297,7 @@ $('#app').addEventListener('pointerdown',e=>{
   w.addEventListener('pointermove',move);w.addEventListener('pointerup',up);w.addEventListener('pointercancel',up);
 });
 $('#app').addEventListener('wheel',e=>{           // mouse wheel: one notch at a time
-  const w=e.target.closest('.tw-wheel');if(!w||view.name!=='show'||!view.edit)return;
+  const w=e.target.closest('.tw-wheel');if(!w||view.name!=='show'||!view.edit||!w.closest('.ee-len.active'))return;
   e.preventDefault();cancelAnimationFrame(w._af);
   const p=(w._pos!=null?w._pos:+w.dataset.v)+(e.deltaY>0?1:-1);twSettle(w,p,0);
 },{passive:false});
@@ -2091,6 +2307,8 @@ $('#app').addEventListener('change',e=>{
   const sh=S.shows[view.id],id=box.dataset.id,orig=sh.episodes.find(x=>x.id===id);if(!orig)return;
   if(e.target.classList.contains('ee-title'))setEdit(sh,id,'title',e.target.value.trim());
   if(e.target.classList.contains('ee-guests'))setEdit(sh,id,'guests',guestJoin(guestParse(e.target.value)));
+  // season and episode numbers (optional): from the feed when it has them; clear the box to go back to the feed's
+  if(e.target.classList.contains('ee-num')){const v=parseInt(e.target.value.replace(/\D/g,''),10);setEdit(sh,id,e.target.dataset.f,v>0?v:null)}
   if(e.target.classList.contains('ee-date')){
     const v=e.target.value;
     if(!v)setEdit(sh,id,'date',null);
@@ -2099,13 +2317,15 @@ $('#app').addEventListener('change',e=>{
   }
   renderEpisodes();
 });
-$('#app').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('ee-title')||e.target.classList.contains('ee-guests')))e.target.blur()});
+$('#app').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('ee-title')||e.target.classList.contains('ee-guests')||e.target.classList.contains('ee-num')))e.target.blur()});
 $('#app').addEventListener('click',e=>{
   const box=e.target.closest('.ep-ed');if(!box||view.name!=='show')return;
   const sh=S.shows[view.id],id=box.dataset.id;
   const t=e.target.closest('.ee-tag [data-tag]');
   if(t){setEdit(sh,id,'tag',t.dataset.tag);renderEpisodes();return}
-  if(e.target.closest('.ee-addtag')){openTagPage(id);return}   // + : the tags window
+  if(e.target.closest('.ee-addtag')){openTagPage(id);return}
+  const fog=e.target.closest('.ee-fog');
+  if(fog){fogWheels();fog.parentElement.classList.add('active');wheelIdle();return}   // + : the tags window
 });
 $('#app').addEventListener('click',e=>{
   const row=e.target.closest('.ep');if(!row||view.name!=='show')return;
