@@ -175,12 +175,27 @@
     letter-spacing:.4px; text-transform:uppercase; vertical-align:1px;}
   .ep.done .tagpill{color:rgba(255,255,255,.85);}
   /* edit mode: each episode becomes a small form */
-  .ep-ed{display:flex; flex-direction:column; gap:4px; padding:6px; background:color-mix(in srgb, var(--cloth) 50%, transparent); border:3px solid #000; border-radius:8px;}   /* edit cards: the podcast's color at half opacity */
+  .ep-ed{display:flex; flex-direction:row; gap:4px; padding:4px; background:color-mix(in srgb, var(--cloth) 50%, transparent); border:3px solid #000; border-radius:8px;}   /* edit cards: the podcast's color at half opacity */
+  /* edit footer: the parts of an episode card, each one on or off for every card */
+  .ed-fields{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px;}   /* two rows of three, all the same width */
+  .ed-fields button{height:24px; margin:0; padding:0 4px; box-sizing:border-box; border:3px solid #000; border-radius:6px; background:#fff; color:var(--muted);
+    font:700 min(.66rem, 2.7vw)/1 Arial,sans-serif; letter-spacing:.3px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;}
+  .ed-fields button.on{background:var(--cloth); color:#fff;}
+  /* a part turned off disappears from every card; the other half of a pair then takes the whole row */
+  #eps.x-title .ee-top, #eps.x-guests .ee-body > .ee-guest, #eps.x-tags .ee-tagrow, #eps.x-date .ee-date, #eps.x-time .ee-len,
+  #eps.x-se .ee-se, #eps.x-date.x-time .ee-bot{display:none;}
+  #eps.x-date .ee-bot, #eps.x-time .ee-bot{grid-template-columns:minmax(0,1fr);}
+  .ee-body{justify-content:center;} .ep-ed{min-height:var(--edmin,46px);}   /* with nearly everything off, every card keeps room for the longest number (all the same height) */
+  .ed-chunk{display:flex; flex-direction:column; gap:4px; flex:none;}   /* a group of 20 edit cards (or an empty spacer of their height) */
+  .ee-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;}
+  .ee-no{flex:none; width:27px; margin:-4px 0 -4px -4px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; background:var(--cloth); border-right:3px solid #000;}   /* the episode's number, read sideways: a section of the card in the podcast's color */
+  .ee-no span{writing-mode:vertical-rl; transform:rotate(180deg); font:700 .78rem/1 Arial,Helvetica,sans-serif; letter-spacing:.6px; color:#fff; white-space:nowrap;}
+  .ep-ed{overflow:hidden;}   /* the number section's corners follow the card's rounding */
   .ee-top, .ee-bot{display:flex; gap:4px; height:34px;}
   .ee-bot{display:grid; grid-template-columns:1fr 1fr;}   /* date | length, even halves */
   .ee-title{flex:1; min-width:0; box-sizing:border-box; height:34px; border:3px solid #000; border-radius:6px; padding:6px 8px; background:#fff; font:600 .84rem/1.2 Georgia,serif; color:var(--ink); outline:none; resize:none; overflow:hidden; display:block;}
   .ee-title.two{padding:1px 8px; font-size:.7rem; line-height:1.12;}   /* a long title: two lines in the same height */
-  .ee-date{flex:1 1 0; box-sizing:border-box; min-width:0; border:3px solid #000; border-radius:6px; padding:0 6px; background:#fff; font:.78rem Arial,sans-serif; outline:none;}
+  .ee-date{flex:1 1 0; box-sizing:border-box; min-width:0; width:100%; cursor:pointer; border:3px solid #000; border-radius:6px; padding:0 6px; background:#fff; font:.78rem Arial,sans-serif; outline:none;}
   .ee-tagrow{display:flex; gap:4px; align-items:stretch;}   /* the + grows with the tag rows */
   .ep-ed .ee-tag{flex:1; min-width:0; height:auto; box-sizing:border-box; flex-wrap:wrap; gap:3px; background:#000; border-width:3px; border-radius:6px;}
   .ep-ed .ee-tag::-webkit-scrollbar{display:none;}
@@ -308,15 +323,25 @@
   /* the episode number: a section on the card's left, always the same width (room for four digits), sans-serif, equal-width digits */
   .row.ep{padding-left:0; background:color-mix(in srgb, var(--cloth) 30%, transparent);}   /* the podcast's color at 30% opacity (played cards: full color) */
   .ep-num{flex:none; align-self:stretch; width:52px; display:flex; align-items:center; justify-content:center; border-right:3px solid #000;
-    background:#d9d0be; color:var(--ink); font:700 .92rem/1 Arial,Helvetica,sans-serif; font-variant-numeric:tabular-nums; letter-spacing:-.2px;}
+    background:var(--cloth); color:#fff; font:700 .76rem/1 Arial,Helvetica,sans-serif; font-variant-numeric:tabular-nums; letter-spacing:-.3px;}   /* the podcast's color, white numbers; one size for every number, with or without a letter (1240.ab still fits) */
   .ep.done .ep-num{background:rgba(0,0,0,.22); color:#fff;}
-  .ep-num.long{font-size:.76rem;} .ep-num.xlong{font-size:.62rem; letter-spacing:-.4px;}   /* 123.12 and longer still fit the same width */
-  .ep .thru{flex:none; width:33px; height:31px; padding:0; border:3px solid #000; border-radius:6px; background:var(--panel);
-    font-family:Arial,sans-serif; font-size:.7rem; font-weight:700; color:var(--ink);}
+  /* with season data: the overall number on top, a short rounded bar, then season and episode */
+  .ep-num.se{flex-direction:column; gap:3px;} .ep-num.se b{font:inherit;}
+  .ep-num.se i{display:block; width:75%; height:2px; border-radius:1px; background:#fff;}
+  .ep-num.se small{font:700 .52rem/1 Arial,Helvetica,sans-serif; letter-spacing:.1px; white-space:nowrap;}
+  /* played through here: a square section on the card's right end, in the podcast's color, a play mark pointing left with chevrons trailing it.
+     First tap arms it (white, the icon in reds), a second tap within 3 seconds marks this and every older episode played */
+  .ep .thru{flex:none; align-self:stretch; width:42px; margin:0 -8px 0 0; padding:0; border:0; border-left:3px solid #000; border-radius:0;
+    background:var(--cloth); display:grid; place-items:center; cursor:pointer; transition:background .15s;}
+  .ep .thru svg{width:24px; height:24px; display:block; overflow:visible;}
+  .ep .thru path{fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; transition:stroke .15s;}
+  .ep .thru .c1{stroke:#fff;} .ep .thru .c2{stroke:#d6d0c6;} .ep .thru .c3{stroke:#a9a39a;} .ep .thru .tri{fill:#fff;}
+  .ep .thru.armed{background:#fff;}
+  .ep .thru.armed .tri{stroke:#a82c2c; fill:#a82c2c;} .ep .thru.armed .c2{stroke:#cf5d5d;} .ep .thru.armed .c3{stroke:#e8a0a0;}
   .ep.done{background:var(--cloth);}
   .ep.done .t{color:#fff; font-weight:400;}
   .ep.done .a{color:rgba(255,255,255,.7);}
-  .ep.done .thru{background:rgba(255,255,255,.18); color:#fff;}
+  .ep.done .thru:not(.armed){background:rgba(0,0,0,.22);}   /* on a played card (already the podcast's color): a shade darker */
 
   /* show heading */
   .show-head{display:flex; align-items:stretch; gap:10px; padding:0 10px 0 0; height:96px; overflow:hidden;}
@@ -481,7 +506,29 @@
     background:linear-gradient(to top, var(--cloth) calc(3px + (100% - 6px) * var(--f,0)), var(--unread) 0); background-origin:border-box; background-clip:border-box;}
   .v5 .rnd{width:24px; height:24px; box-sizing:border-box; display:grid; place-items:center; border:3px solid #000; border-radius:50%; background:var(--panel); color:var(--ink);}
   .v5 .rnd .ck{width:12px; height:12px; stroke-width:3.6;}
-  /* the Full | Simple switch under the search card */
+  /* list cards: two short lines (podcast name, then the episode), a check square on the right, and a thin progress bar along the bottom of the text side */
+  .v6{height:38px; flex-direction:row;}
+  .v6 .bd{position:relative; flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:0 8px 6px 10px; background:color-mix(in srgb, var(--cloth) 20%, var(--panel));}   /* the podcast's color at 20% */
+  .v6 .k{font-size:.56rem; line-height:1;}
+  .v6 .et{font:700 .76rem/1.05 Georgia,serif; color:var(--ink);}
+  .v6 .cks{flex:none; width:38px; margin:0; padding:0 3px 0 0; border:none; border-left:3px solid #000; border-radius:0; display:grid; place-items:center; background:#000;}   /* the check square stays black */
+  .v6 .rnd{width:22px; height:22px; box-sizing:border-box; display:grid; place-items:center; border:3px solid #000; border-radius:50%; background:var(--panel); color:var(--ink);}
+  .v6 .rnd .ck{width:11px; height:11px; stroke-width:3.8;}
+  .v6 .cks.gold{background:#000;}
+  .oc.v6 .cks.gold .rnd .ck2{width:15px; height:15px;}
+  /* the list's own check: the ended double check's thin style, single, white, on a circle in the podcast's color with a white rim */
+  .oc.v6 .cks:not(.gold) .rnd{width:22px; height:22px; border:2px solid #fff; background:var(--cloth); color:#fff;}
+  .oc.v6 .cks:not(.gold) .rnd.fresh{background:#fff; color:#2f8a45;}   /* new since you caught up: still white with a green check */
+  .oc.v6 .rnd .ck1{width:15px; height:15px; stroke-width:1.8;}
+  /* the left end: played over total, a short rounded bar between them; white on black, the same width as the check square, room for four digits */
+  .v6 .lst{flex:none; width:38px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:0 0 0 3px; border-right:3px solid #000; background:#000; font:700 .66rem/1 Arial,sans-serif; color:#fff; font-variant-numeric:tabular-nums;}
+  .v6 .lst i{display:block; width:75%; height:5px; border-top:2px solid #fff; border-radius:50% 50% 0 0 / 100% 100% 0 0;}   /* a thin arch between the numbers */
+  .v6 .bd{padding-left:9px;}
+  .v6 .lbar{position:absolute; left:0; right:0; bottom:0; height:9px; pointer-events:none; background:rgba(0,0,0,.2); border-radius:10px 10px 0 0 / 6px 6px 0 0; overflow:hidden;}   /* runs under the card's border so it always meets it; 6px shows */
+  /* how much you've played: a full dome from the first episode (its two round ends need 20px), then every episode adds its share of the rest */
+  .v6 .lbar .fl{position:absolute; left:0; top:0; bottom:0; width:calc(20px + var(--f,0) * (100% - 20px)); background:var(--cloth); border-radius:10px 10px 0 0 / 6px 6px 0 0;}
+  .v6 .lbar .fl:not(.on){display:none;}   /* nothing played, no fill */
+  /* the Full | Simple | List switch under the search card */
   .seg.view-seg{flex:none; height:21px; border-radius:6px;}
   .seg.view-seg button{font:700 min(.6rem,2.5vw)/1 Arial,sans-serif; text-transform:uppercase; letter-spacing:.4px;}
 
@@ -499,11 +546,39 @@
     font-size:.8rem; pointer-events:none; transition:opacity .2s, transform .2s; max-width:90vw; text-align:center;}
   .toast.show{opacity:1; transform:translate(-50%,0);}
 
+
+  /* ---- headers and footers, styled like Stack Tracker's (plain colors, no cloth textures) ---- */
+  :root{--band:#6b4a32; --hdr-cell:#d9d0be;}
+  /* the bars: walnut, boxed in black top and bottom, with a soft shadow cast onto the page */
+  #app-header{background:var(--band); border-top:3px solid #000;}
+  #app-footer{background:var(--band); border-bottom:3px solid #000; box-shadow:inset 0 calc(-1 * env(safe-area-inset-bottom)) 0 #000;}   /* the phone's home-bar strip stays black */
+  #app-header::after, #app-footer::before{content:''; position:absolute; left:0; right:0; height:16px; pointer-events:none;}   /* tucked 2px under the black edge, so no sliver of page shows between them on any screen */
+  #app-header::after{top:100%; margin-top:1px; background:linear-gradient(180deg, rgba(0,0,0,.32), rgba(0,0,0,.12) 40%, rgba(0,0,0,0));}
+  #app-footer::before{bottom:100%; margin-bottom:1px; background:linear-gradient(0deg, rgba(0,0,0,.32), rgba(0,0,0,.12) 40%, rgba(0,0,0,0));}
+  /* page tabs: one dark strip, no dividing lines; each tab a card on it, white when not picked,
+     its own color with white words when picked */
+  #ttl-bar, .so-head{background:#000;}
+  #tabs{gap:4px; padding:calc(4px + env(safe-area-inset-top)) 4px 4px; background:var(--ink); border-bottom:3px solid #000;}
+  #tabs .tab, #tabs .tab + .tab{height:34px; border:2.5px solid #000; border-radius:6px; background:#fff; color:var(--ink);
+    font:700 min(.74rem, 2.95vw)/1.1 Arial,sans-serif; letter-spacing:0; text-transform:uppercase;}
+  #tabs .tab.active{background:var(--cloth,#7a2f2b); color:#fff;}
+  /* page bars (a podcast, Settings, Tags, Sort): brick on the left, the title in tan, forest on the right */
+  #ttl-bar button, .so-head button{background:#7a2f2b; background-clip:padding-box; color:#fff; font:700 min(.74rem, 2.95vw)/1.1 Arial,sans-serif; letter-spacing:0; text-transform:uppercase;}
+  #ttl-bar #tb-edit{background:#2e4636;}
+  #ttl-bar #tb-edit.on{background:#5b6633;}
+  #ttl-bar #tb-back.cancel{background:var(--red);}
+  #ttl-bar h2, .so-head h2{background:var(--hdr-cell); font:700 min(.74rem, 2.95vw)/42px Arial,sans-serif; letter-spacing:0; text-transform:uppercase; color:var(--ink);}
+  /* Add New Podcast: olive, its words in the covers' serif, bold, in spaced capitals */
+  #app-footer .add-card{background:#5b6633; color:#fff; font:700 min(1rem, 4vw)/1 Georgia,'Times New Roman',serif; letter-spacing:.14em; text-transform:uppercase;}
+  #app-footer .add-card b{color:#fff; font-size:1.15em;}
+  #app-footer .add-card:active{filter:brightness(.92);}
+  #app-footer .cloth-btn{background-image:none;}   /* footer buttons in plain color, no weave */
 </style>
 </head>
 <body>
 <!-- the opening: picks up exactly where Android's own splash (the icon on tan) leaves off, then the three mics race:
-     up and out the top, back across the middle on a gentle climb, the middle one wiping in the name while the outer two peel away.
+     up and out the top with a stream of others in the app's colors, back across the middle on a gentle climb with a crowd,
+     the middle one wiping in the name while the outer ones peel away; last, a small one zips back under it leaving the tagline. 5 seconds.
      Plays every time the app opens, installed or in the browser; tap to skip -->
 <style>
   @font-face{font-family:'Bungee Shade';src:url(data:font/woff2;base64,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) format('woff2');font-display:block;}   /* just the title's letters */
@@ -511,10 +586,12 @@
   #spl.gone{opacity:0; pointer-events:none;}
   #spl .icon{position:relative; z-index:2; width:var(--icon); height:var(--icon); transform:translateY(var(--shift,0px));}
   #spl svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible;}
-  #spl-wake{position:absolute; z-index:1; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-8deg); visibility:hidden; white-space:nowrap; clip-path:inset(-20px 100% -20px 0);}
+  #spl-wake{position:absolute; z-index:1; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-8deg); visibility:hidden; white-space:nowrap; clip-path:inset(-20px 100% -200px 0);}
+  @font-face{font-family:'Spl Bangers';src:url(data:font/woff2;base64,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);}   /* just the tagline's letters */
+  #spl-wake .tl{position:absolute; left:50%; top:100%; margin-top:.55em; transform:translateX(-50%); font:400 calc(var(--fs,26px)*.42)/1 'Spl Bangers',Impact,sans-serif; letter-spacing:.18em; color:#2b2620; visibility:hidden;}   /* the tagline: brought in by the last little racer */
   #spl-wake .t{font:400 var(--fs,26px)/1 'Bungee Shade',Impact,sans-serif; color:var(--tc,#7a2f2b); -webkit-text-stroke:1.1px var(--tc,#7a2f2b);}
 </style>
-<div id="spl"><div class="icon"><svg id="spl-art" viewBox="0 0 512 512"></svg></div><div id="spl-wake"><div class="t">POD TRACER</div></div></div>
+<div id="spl"><div class="icon"><svg id="spl-art" viewBox="0 0 512 512"></svg></div><div id="spl-wake"><div class="t">POD TRACER</div><div class="tl" id="spl-tag"><span>P</span><span>L</span><span>A</span><span>Y</span><span>.</span> <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>.</span> <span>R</span><span>E</span><span>P</span><span>E</span><span>A</span><span>T</span><span>.</span></div></div></div>
 <script>
 (function(){
   try{
@@ -526,32 +603,93 @@ const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.set
 const defs=el('defs',{});
 const trailsG=el('g',{});   // the horizontal pass: trails drawn along the racers' actual paths, so they curve as the outer two veer
 // the grille: fine dark criss-cross lines
-const pat=el('pattern',{id:'mesh',patternUnits:'userSpaceOnUse',width:7.78,height:7.78,patternTransform:'rotate(45)'},defs);
+const pat=el('pattern',{id:'spl-mesh',patternUnits:'userSpaceOnUse',width:7.78,height:7.78,patternTransform:'rotate(45)'},defs);
 el('path',{d:'M0 0V7.78M0 0H7.78',stroke:'#0b0b0b',['stroke-width']:1.45,fill:'none'},pat);
-svg.appendChild(trailsG);
-const racers=MICS.map(([cx,top,h,f,c],i)=>{
-  const g=el('g',{}),cb=top+h;
+function makeRacer([cx,top,h,f,c],i,parent){
+  const g=el('g',{},parent),cb=top+h;
   // tapered motion streaks under the tail (drawn first, under the capsule)
   const streaks=el('g',{},g);
   // a racing streak in the racer's own color, trailing off behind it: only shown on the fast pass across the middle
-  const lg=el('linearGradient',{id:'rs'+i,x1:0,y1:0,x2:0,y2:1},defs);
+  const lg=el('linearGradient',{id:'spl-rs'+i,x1:0,y1:0,x2:0,y2:1},defs);
   el('stop',{offset:0,'stop-color':c,'stop-opacity':.9},lg);el('stop',{offset:.55,'stop-color':c,'stop-opacity':.45},lg);el('stop',{offset:1,'stop-color':c,'stop-opacity':0},lg);
-  const trail=el('path',{d:`M${cx-38} ${cb-30} L${cx+38} ${cb-30} L${cx+14} ${cb+190} L${cx-14} ${cb+190} Z`,fill:`url(#rs${i})`,opacity:0},streaks);
+  const trail=el('path',{d:`M${cx-38} ${cb-30} L${cx+38} ${cb-30} L${cx+14} ${cb+190} L${cx-14} ${cb+190} Z`,fill:`url(#spl-rs${i})`,opacity:0},streaks);
   [[-28,90],[0,130],[28,90]].forEach(([dx,L])=>{const y0=cb+18,y1=Math.min(470,y0+L),x=cx+dx;
     el('polygon',{points:`${x-8.5},${y0} ${x+8.5},${y0} ${x+1.5},${y1} ${x-1.5},${y1}`,fill:'#000'},streaks)});
   // capsule: light body, color filled up from the bottom, the grille over it, a thick black outline
-  el('clipPath',{id:'c'+i},defs).appendChild(Object.assign(document.createElementNS(NS,'rect'),{}));
+  el('clipPath',{id:'spl-c'+i},defs).appendChild(Object.assign(document.createElementNS(NS,'rect'),{}));
   const cp=defs.lastChild.firstChild;['x','y','width','height','rx'].forEach((k,j)=>cp.setAttribute(k,[cx-HALF,top,HALF*2,h,HALF][j]));
   el('rect',{x:cx-HALF,y:top,width:HALF*2,height:h,rx:HALF,fill:'#d9d0be'},g);
-  el('rect',{x:cx-HALF,y:cb-h*f,width:HALF*2,height:h*f,fill:c,'clip-path':`url(#c${i})`},g);
-  el('rect',{x:cx-HALF+9,y:top+9,width:HALF*2-18,height:h-18,rx:HALF-9,fill:'url(#mesh)',opacity:.92},g);
+  el('rect',{x:cx-HALF,y:cb-h*f,width:HALF*2,height:h*f,fill:c,'clip-path':`url(#spl-c${i})`},g);
+  el('rect',{x:cx-HALF+9,y:top+9,width:HALF*2-18,height:h-18,rx:HALF-9,fill:'url(#spl-mesh)',opacity:.92},g);
   el('rect',{x:cx-HALF+7,y:top+7,width:HALF*2-14,height:h-14,rx:HALF-7,fill:'none',stroke:'#000','stroke-width':14},g);
-  return {g,streaks,trail,cx,cb,top,h};
-});
+  return {g,streaks,trail,cx,cb,top,h,color:c};
+}
+const xTrailsG=el('g',{});                      // the extras' trails, under them
+const extrasG=el('g',{});                       // the extra racers fly behind the three
+svg.appendChild(trailsG);
+const racers=MICS.map((m,i)=>makeRacer(m,i));
+const smokeG=el('g',{}),glowG=el('g',{}),lateG=el('g',{}),sparkG=el('g',{});   // the straggler, its smoke under it and its sparks over it
+let late=null,lateSeed=0;
+/* the extra racers: every app color except the three originals', random fills and sizes */
+/* the app's own color picker: ten tones of each of its colors. The crowd uses every tone of the seven colors that aren't the three's */
+function hexToHsl(hex){
+  const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}
+  return[h,s*100,l*100];
+}
+function hslToHex(h,s,l){
+  s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1))));
+  return'#'+[f(0),f(8),f(4)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+const lumOf=hex=>{const n=parseInt(hex.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255].map(x=>{x/=255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)})
+  .reduce((t,v,i)=>t+v*[.2126,.7152,.0722][i],0)};
+// ten tones of one color, lightest to darkest. The lightest stops where white text would stop reading.
+// The row stays put while you pick from it (it's built from the color family, kept in sh.colorHS), and the ring shows where you are.
+function tonesFor(h,s){
+  let top=8;while(top<90&&lumOf(hslToHex(h,s,top+.5))<=.18)top+=.5;
+  return Array.from({length:10},(_,i)=>hslToHex(h,s,top-i*(top-8)/9));
+}
+const POOL=['#86452b','#8a6a3f','#5b6633','#2f5a3a','#234a5e','#3a2f52','#66304c'].flatMap(c=>{const [h,s]=hexToHsl(c);return tonesFor(h,s)});
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+let extras=[];
+function makeExtras(){
+  extrasG.innerHTML='';extras=[];
+  defs.querySelectorAll('[id^="spl-cx"],[id^="spl-rsx"]').forEach(d=>d.remove());   // drop the last crowd's clips, or the new ones clip to old shapes
+  // full size like the three (their lengths); any of the other seven colors, just never the same as the racer beside it
+  const mk=(id,c,h=pick(MICS)[2])=>{const r=makeRacer([256,256-h/2,h,.2+Math.random()*.7,c],'x'+id,extrasG);r.k=1;return r};
+  let deck=[];const next=()=>{if(!deck.length){deck=POOL.slice();for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}}return deck.pop()};   // no color twice
+  let n=0,prev=null;
+  // act 1: a steady stream up all five lanes (the two sides and the three's own paths), same speed for all, one every 280ms per lane.
+  // A middle lane starts as early as it safely can: its first racer comes up right behind its original's streaks
+  const box=document.querySelector('#spl .icon').getBoundingClientRect(),sc=box.width/512;
+  const topU=-box.top/sc,botU=(innerHeight-box.top)/sc,SPD=3,EVERY=280,LAST=1000;   // same speed on any screen, so the gaps hold on short ones too
+  const durOf=h=>(botU-topU+h+530)/SPD;
+  const earliest=(i,h)=>{const [cx,top,oh]=MICS[i],ocb=top+oh,st=ORDER.indexOf(i)*110;   // the original's take-off (as in frame)
+    for(let d=0;d<LAST;d+=10){let ok=true;
+      const DUR=durOf(h);for(let t=d;t<d+DUR&&ok;t+=8){const p=Math.max(0,Math.min(1,(t-st)/520));
+        const dy=-easeIn(p)*(box.top/sc+1250),tail=ocb+190*(1+p*2.4)+dy;          // bottom of its streaks
+        const y0=botU+h/2+20,y1=topU-(h/2+510),Y=y0+(y1-y0)*(t-d)/DUR;           // the follower's middle
+        if(tail>topU&&Y-h/2-tail<40)ok=false}   // only while the original's streaks are still on screen
+      if(ok)return d}
+    return LAST};
+  const slots=[];
+  [[-50,0],[562,3]].forEach(([x,ph])=>{for(let d=80+ph*EVERY/5;d<=LAST;d+=EVERY)slots.push([x,d,pick(MICS)[2]])});
+  [1,2,0].forEach(i=>{const h=pick(MICS)[2];for(let d=earliest(i,h);d<=LAST;d+=EVERY)slots.push([MICS[i][0],d,h])});
+  slots.sort((a,b)=>a[1]-b[1]);
+  slots.forEach(([x,d,h])=>{const r=mk('v'+n,next(),h);r.lane=x;r.dur=durOf(h);r.delay=d;r.act=1;extras.push(r);n++});
+  // the straggler: small, last, limping along under the name
+  lateSeed=Math.random()*1000;lateG.innerHTML='';late=makeRacer([256,256-82.5,165,.5,next()],'xs',lateG);late.f0=.5;late.fillEl=late.g.children[2];   // its fill, which runs down over the letters
+  // act 2: five lanes above and five below the three
+  prev=null;
+  [-708,-590,-472,-354,-236,236,354,472,590,708].forEach((v,j)=>{const r=mk('h'+j,next());r.n=v;r.delay=Math.random()*340;r.dur=850+Math.random()*250;r.act=2;extras.push(r)});
+}
 
 /* the race: a short rev, then each racer takes off upward, picking up speed, streaks stretching; the tallest leads */
 const splash=document.getElementById('spl');
-let raf=0,t0=0;const speed=1;
+let raf=0,t0=0,scrubT=null,SCALE=1,NAT=0;const speed=1;   // SCALE: the whole show is played faster or slower so it always lasts 5 seconds
 const ORDER=[1,2,0];                         // middle (tallest) goes first, then right, then left
 // matched to Chrome's own splash on your phone: the icon is 71.1% of the screen's width, centered on the whole screen.
 // Installed, the page starts below the status bar, so it shifts down to sit where Chrome's was (status bar ~24px)
@@ -563,79 +701,128 @@ function size(){
 }
 addEventListener('resize',size);size();
 const easeIn=t=>t*t*t;
+const mixC=(a,b,t)=>{const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);return'#'+[16,8,0].map(k=>Math.round(((A>>k)&255)*(1-t)+((B>>k)&255)*t).toString(16).padStart(2,'0')).join('')};
 function frame(ts){
-  if(!t0)t0=ts;const t=(ts-t0)*speed;
-  const REV=[250,650],GO=650,EACH=520,GAP=110;            // 1: rev, then up and out through the top
-  const ZOOM=GO+2*GAP+EACH+120,ZDUR=950,ZGAP=110;          // 2: back in from the left, across the middle, out the right
-  const HOLD=ZOOM+2*ZGAP+ZDUR,FADE=HOLD+650;               // 3: the name they left behind holds, then the splash fades
+  let tr;if(scrubT!==null)tr=scrubT;else{if(!t0)t0=ts;tr=(ts-t0)*speed}const t=tr*SCALE;
+  const REV=[250,650],GO=650,EACH=520,GAP=110;            // 1: rev, then up and out through the top (extras fly past alongside)
+  const ZOOM=Math.max(GO+2*GAP+EACH+120,GO+Math.max(0,...extras.filter(r=>r.act===1).map(r=>r.delay+r.dur))+80),ZDUR=950,ZGAP=110;   // the across pass waits until every racer going up has cleared the top          // 2: back in from the left, across the middle, out the right (with a crowd)
+  const PASS=ZOOM+Math.max(2*ZGAP+ZDUR,...extras.filter(r=>r.act===2).map(r=>r.delay+r.dur));   // the last of the crowd is gone
+  let HOLD,FADE;   // 3: set once the straggler's path is known (below): the name holds, then the splash fades
   const box=document.querySelector('#spl .icon').getBoundingClientRect(),sc=box.width/512;
   // the pass: a straight line through the middle of the screen, rising gently to the right (left a little low, right a little high)
   const TH=8*Math.PI/180,dx=Math.cos(TH),dy=-Math.sin(TH),nx=Math.sin(TH),ny=Math.cos(TH);
   const Cx=(innerWidth/2-box.left)/sc,Cy=(innerHeight/2-box.top)/sc;
   const nmEl=document.getElementById('spl-wake'),halfW=nmEl.offsetWidth/2/sc;   // the word's half-length along the line, in the icon's units
-  const reach=(innerWidth/2)/sc/dx+60;
-  let wipe=null,trailHTML='';
+  const reach=(innerWidth/2)/sc/dx+60, topU=-box.top/sc, botU=(innerHeight-box.top)/sc;
+  const K=3200;
+  // a lane across the screen: steady distance n0 from the middle line; outer lanes peel away once past the start of the word.
+  // Every lane on a side adds the same peel, so neighbors stay the same distance apart and never meet
+  // lanes farther out peel a little more (f), so the gaps between neighbors only ever widen as they curve
+  const laneAt=(n0,side,f=1)=>sv=>{const past=Math.max(0,sv+halfW),nn=n0+side*f*past*past/K;return[Cx+sv*dx+nn*nx,Cy+sv*dy+nn*ny]};
+  const laneAng=(side,sv,f=1)=>side*Math.atan(2*f*Math.max(0,sv+halfW)/K)*180/Math.PI;
+  const place=(r,X,Y,a,k)=>r.g.setAttribute('transform',`translate(${X.toFixed(1)} ${Y.toFixed(1)}) rotate(${a.toFixed(2)}) scale(${k}) translate(${-r.cx} ${-(r.top+r.h/2)})`);
+  const stretchOf=(r,v)=>r.streaks.setAttribute('transform',`translate(0 ${r.cb}) scale(1 ${v.toFixed(3)}) translate(0 ${-r.cb})`);
+  // trails drawn along a path: ribbons that follow where the racer has been, so a veering one leaves a curved wake
+  const ribbon=(at,sp,off,d0,L,w0,w1,fill,op0,op1,steps)=>{let out='';
+    for(let j=0;j<steps;j++){const pts=[];
+      for(const jj of [j,j+1]){const dd=d0+L*jj/steps,sv=sp-dd,[x,y]=at(sv),[x2,y2]=at(sv+1),[x1,y1]=at(sv-1);
+        let tx=x2-x1,ty=y2-y1;const m=Math.hypot(tx,ty)||1;tx/=m;ty/=m;const Nx=-ty,Ny=tx,w=(w0+(w1-w0)*jj/steps)/2;
+        pts.push([x+Nx*(off+w),y+Ny*(off+w)],[x+Nx*(off-w),y+Ny*(off-w)]);}
+      out+=`<polygon points="${pts[0]} ${pts[2]} ${pts[3]} ${pts[1]}" fill="${fill}" fill-opacity="${(op0+(op1-op0)*(j+.5)/steps).toFixed(3)}"/>`;}
+    return out};
+  const wake=(r,at,sp,k,p,stretch)=>{const sA=Math.min(1,Math.sin(p*Math.PI)*1.6),tail=r.h/2*k;
+    let o=ribbon(at,sp,0,tail-30*k,220*k*stretch/1.6,76*k,28*k,r.color,.9*sA,0,14);
+    [[-28,90],[0,130],[28,90]].forEach(([oo,Ln])=>{o+=ribbon(at,sp,oo*k,tail+18*k,Ln*k*stretch,17*k,3*k,'#000',1,1,10)});return o};
+  const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+  let wipe=null,trailHTML='',xTrailHTML='';
   racers.forEach((r,i)=>{
     const k=ORDER.indexOf(i),start=GO+k*GAP,cyc=r.top+r.h/2;
-    let tf='',stretch=1;
+    let stretch=1;
     if(t<ZOOM){
       r.trail.setAttribute('opacity',0);r.streaks.setAttribute('opacity',1);
       let dy=0,shake=0;
       if(t>REV[0]&&t<start){const p=Math.min(1,(t-REV[0])/(REV[1]-REV[0]));shake=Math.sin(t/18+i*2)*1.6*p;stretch=1+.18*p*(.5+.5*Math.sin(t/40+i))}
       if(t>=start){const p=Math.min(1,(t-start)/EACH);dy=-easeIn(p)*(box.top/sc+1250);stretch=1+p*2.4}
-      tf=`translate(${shake.toFixed(2)} ${dy.toFixed(1)})`;
+      r.g.setAttribute('transform',`translate(${shake.toFixed(2)} ${dy.toFixed(1)})`);
     }else{
       // on their sides, nose forward along the line, in three lanes; the leader is the one that left first.
       // Once the outer two have cleared the start of the word they peel away from the middle one, which keeps straight on
-      const zs=ZOOM+k*ZGAP,p=Math.max(0,Math.min(1,(t-zs)/ZDUR)),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      const zs=ZOOM+k*ZGAP,p=Math.max(0,Math.min(1,(t-zs)/ZDUR)),e=ease(p);
       const len=r.h/2+170,s0=-reach-len*.6,s1=reach+len,sp=s0+(s1-s0)*e;
-      const side=[-1,0,1][i],K=3200;
-      const at=sv=>{const past=Math.max(0,sv+halfW),nn=side*(118+past*past/K);return[Cx+sv*dx+nn*nx,Cy+sv*dy+nn*ny]};   // the racer's path
-      const past=Math.max(0,sp+halfW),ang=side*Math.atan(2*past/K)*180/Math.PI;   // the veer: off the lane and turning outward
-      const [X,Y]=at(sp);
-      tf=`translate(${(X-r.cx).toFixed(1)} ${(Y-cyc).toFixed(1)}) rotate(${(90-8+ang).toFixed(2)} ${r.cx} ${cyc})`;
+      const side=[-1,0,1][i],at=laneAt(side*118,side);
+      const [X,Y]=at(sp);place(r,X,Y,90-8+laneAng(side,sp),1);
       stretch=1.6+Math.sin(p*Math.PI)*1.6;
-      // trails follow where the racer has been (not stuck to its body), so a veering racer leaves a curved wake
-      const speedA=Math.min(1,Math.sin(p*Math.PI)*1.6);
-      if(p>0&&p<1){
-        const tail=r.h/2;
-        const ribbon=(off,d0,L,w0,w1,fill,op0,op1,steps)=>{let out='';
-          for(let j=0;j<steps;j++){const pts=[];
-            for(const jj of [j,j+1]){const dd=d0+L*jj/steps,sv=sp-dd,[x,y]=at(sv),[x2,y2]=at(sv+1),[x1,y1]=at(sv-1);
-              let tx=x2-x1,ty=y2-y1;const m=Math.hypot(tx,ty)||1;tx/=m;ty/=m;const Nx=-ty,Ny=tx,w=(w0+(w1-w0)*jj/steps)/2;
-              pts.push([x+Nx*(off+w),y+Ny*(off+w)],[x+Nx*(off-w),y+Ny*(off-w)]);}
-            const op=(op0+(op1-op0)*(j+.5)/steps);
-            out+=`<polygon points="${pts[0]} ${pts[2]} ${pts[3]} ${pts[1]}" fill="${fill}" fill-opacity="${op.toFixed(3)}"/>`;}
-          return out};
-        trailHTML+=ribbon(0,tail-30,220*stretch/1.6,76,28,MICS[i][4],.9*speedA,0,14);   // the color streak
-        [[-28,90],[0,130],[28,90]].forEach(([o,Ln])=>{trailHTML+=ribbon(o,tail+18,Ln*stretch,17,3,'#000',1,1,10)});   // the black speed lines
-      }
+      if(p>0&&p<1)trailHTML+=wake(r,at,sp,1,p,stretch);
       r.trail.setAttribute('opacity',0);r.streaks.setAttribute('opacity',0);
       if(i===1)wipe=p>0?sp+halfW:-1e4;   // the middle mic wipes the name in: it shows up to the mic's middle, so new letters appear only under it
     }
-    r.g.setAttribute('transform',tf);
-    r.streaks.setAttribute('transform',`translate(0 ${r.cb}) scale(1 ${stretch.toFixed(3)}) translate(0 ${-r.cb})`);
+    stretchOf(r,stretch);
   });
-  trailsG.innerHTML=trailHTML;
-  if(t>GO)splash.classList.add('racing');
+  // the crowd
+  extras.forEach(r=>{
+    if(r.act===1){   // straight up past the three, each in its own lane, quick
+      const p=Math.max(0,Math.min(1,(t-GO-r.delay)/r.dur));
+      if(p<=0||p>=1||t>=ZOOM){r.g.setAttribute('opacity',0);return}
+      r.g.setAttribute('opacity',1);r.streaks.setAttribute('opacity',1);r.trail.setAttribute('opacity',0);
+      const y0=botU+r.h/2+20,y1=topU-(r.h/2+510),Y=y0+(y1-y0)*p;   // ends with its streaks off the top too
+      place(r,r.lane,Y,0,r.k);stretchOf(r,2.6);
+    }else{           // across with the three, in the outer lanes, peeling away the same way as the one on their side
+      const p=Math.max(0,Math.min(1,(t-ZOOM-r.delay)/r.dur));
+      if(t<ZOOM||p<=0||p>=1){r.g.setAttribute('opacity',0);return}
+      r.g.setAttribute('opacity',1);r.streaks.setAttribute('opacity',0);r.trail.setAttribute('opacity',0);
+      const len=(r.h/2+170)*r.k,s0=-reach-len*.6,s1=reach+len,sp=s0+(s1-s0)*ease(p),side=Math.sign(r.n),f=1+(Math.abs(r.n)-118)/600,at=laneAt(r.n,side,f);
+      const [X,Y]=at(sp);place(r,X,Y,90-8+laneAng(side,sp,f),r.k);
+      xTrailHTML+=wake(r,at,sp,r.k,p,1.6+Math.sin(p*Math.PI)*1.6);
+    }
+  });
+  trailsG.innerHTML=trailHTML;xTrailsG.innerHTML=xTrailHTML;
+  // the straggler: once the crowd is gone, one small racer zips back the other way under the name with the same trail as the rest,
+  // leaving the tagline behind it in its own color, its fill running down a little as it goes over the letters, and is gone off the left
+  const tagEl=document.getElementById('spl-tag'),tagHalf=tagEl.offsetWidth/2/sc,tagOff=(tagEl.offsetTop+tagEl.offsetHeight/2-nmEl.offsetHeight/2)/sc;
+  const LK=.45,S0=PASS+150,SD=650,fwd=laneAt(tagOff,0),at=v=>fwd(-v);   // at: measured right to left
+  const slen=(late.h/2+170)*LK,ss0=-reach-slen*.6,ss1=reach+slen;
+  const S1=S0+SD;HOLD=S1+300;FADE=HOLD+650;
+  const sp_=Math.max(0,Math.min(1,(t-S0)/SD)),ssp=ss0+(ss1-ss0)*ease(sp_);
+  let lateTrail='';
+  if(t>S0&&t<S1){late.g.setAttribute('opacity',1);late.streaks.setAttribute('opacity',0);late.trail.setAttribute('opacity',0);
+    const [X,Y]=at(ssp);place(late,X,Y,270-8,LK);lateTrail=wake(late,at,ssp,LK,sp_,1.6+Math.sin(sp_*Math.PI)*1.6)}
+  else late.g.setAttribute('opacity',0);
+  glowG.innerHTML=lateTrail;smokeG.innerHTML='';sparkG.innerHTML='';
+  // its fill runs down a little, only while it's over the letters
+  const over=Math.max(0,Math.min(1,(ssp+tagHalf)/(2*tagHalf))),fl=late.f0-.12*(t>S0?over:0);
+  late.fillEl.setAttribute('y',(late.cb-late.h*fl).toFixed(1));late.fillEl.setAttribute('height',(late.h*fl).toFixed(1));
+  // the tagline shows from the racer's middle back to where it came in (the right), in the racer's color
+  if(t>S0){const px=(t>=S1?-1:1-(ssp+tagHalf)/(2*tagHalf))*tagEl.offsetWidth-18;   // not clamped, so the soft edge carries on off the first letter instead of lingering on it
+    tagEl.style.visibility='visible';tagEl.style.color=late.color;
+    const m=`linear-gradient(90deg,transparent ${px.toFixed(1)}px,#000 ${(px+18).toFixed(1)}px)`;tagEl.style.webkitMaskImage=m;tagEl.style.maskImage=m;
+    tagEl.querySelectorAll('span').forEach(sp=>sp.style.color='')}
+  else tagEl.style.visibility='hidden';
+  
   // the name, wiped in by the middle mic as it passes over it
   if(t>=ZOOM){const W=nmEl.offsetWidth,w=Math.max(0,Math.min(W,(wipe===null?-1e4:wipe)*sc));
-    nmEl.style.clipPath=`inset(-20px ${(W-w).toFixed(1)}px -20px 0)`;nmEl.style.visibility='visible'}
+    nmEl.style.clipPath=`inset(-20px ${(W-w).toFixed(1)}px -200px 0)`;nmEl.style.visibility='visible'}else nmEl.style.visibility='hidden';
+  NAT=FADE;if(scrubT!==null)return;   // (a measuring pass: just learning how long the show runs)
   if(t>FADE&&!splash.classList.contains('gone')){splash.classList.add('gone');setTimeout(done,500)}
   if(t<FADE+600)raf=requestAnimationFrame(frame);else done();
 }
-
-
 function done(){cancelAnimationFrame(raf);if(splash.isConnected)splash.remove()}
-{const w=document.getElementById('spl-wake');
-  const C=['#7a2f2b','#86452b','#8a6a3f','#5b6633','#2f5a3a','#2b5752','#234a5e','#303d66','#3a2f52','#66304c'];   // a new one of the app's colors each launch
+function play(){
+  const w=document.getElementById('spl-wake');w.style.visibility='hidden';w.style.clipPath='inset(-20px 100% -200px 0)';
+  // a new color from the app's ten for the title, every launch
+  const C=['#7a2f2b','#86452b','#8a6a3f','#5b6633','#2f5a3a','#2b5752','#234a5e','#303d66','#3a2f52','#66304c'];
   w.style.setProperty('--tc',C[Math.floor(Math.random()*C.length)]);
-  const ic=document.querySelector('#spl .icon').getBoundingClientRect();
-  w.style.setProperty('--fs',(ic.width/512*100*.92).toFixed(1)+'px');}
+  const ic=document.querySelector('#spl .icon').getBoundingClientRect();   // the mic is 100 units thick, 14 of them outline
+  w.style.setProperty('--fs',(ic.width/512*100*.92).toFixed(1)+'px');   // about the mic's full thickness
+  makeExtras();
+  // fit it to 5 seconds: work out its natural length, then play it at whatever pace ends the fade-out right at 5s
+  SCALE=1;scrubT=0;frame(0);scrubT=null;SCALE=NAT/(5000-450);splash.classList.remove('racing');
+  raf=requestAnimationFrame(frame);
+}
 splash.addEventListener('click',()=>{splash.classList.add('gone');setTimeout(done,450)});   // tap skips
-// wait for the title's font (bundled below, so it's quick and works offline) before the race starts
-(document.fonts&&document.fonts.load?document.fonts.load('10px "Bungee Shade"').catch(()=>{}):Promise.resolve()).then(()=>{raf=requestAnimationFrame(frame)});
-setTimeout(done,9000);   // never in the way for long, whatever happens
+// wait for the title and tagline fonts (bundled below, so it's quick and works offline) before the race starts
+const fl=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('10px "Bungee Shade"'),document.fonts.load('10px "Spl Bangers"')]).catch(()=>{}):Promise.resolve();
+fl.then(play);
+setTimeout(done,7000);   // never in the way for long, whatever happens
 
   }catch(e){const s=document.getElementById('spl');if(s)s.remove()}
 })();
@@ -643,8 +830,8 @@ setTimeout(done,9000);   // never in the way for long, whatever happens
 
 <div id="app-header">
   <div id="tabs">
-    <div class="tab" data-v="lib">Library</div>
-    <div class="tab" data-v="data">Data</div>
+    <div class="tab" data-v="lib" style="--cloth:#7a2f2b"><span>Library</span></div>
+    <div class="tab" data-v="data" style="--cloth:#8a6a3f"><span>Data</span></div>
   </div>
   <div id="ttl-bar" hidden><button type="button" id="tb-back">Back</button><h2 id="tb-title"></h2><button type="button" id="tb-edit">Edit</button></div>
   <div class="hdr-row" id="hdr-row"></div>
@@ -803,7 +990,7 @@ const isPlaceholder=sh=>!!(sh&&sh.demo);
 const DEMO_POOL=[
   ['d1','The Long Middle','Placeholder Audio',64],['d2','Kitchen Table Physics','Demo Network',38],
   ['d3','Night Shift Stories','Sample Studios',120],['d4','Small Town Ledger','Placeholder Audio',22],
-  ['d5','Folk Roots Hour','Demo Network',85],
+  ['d5','Folk Roots Hour','Demo Network',1240],   // a big daily show, for trying out long lists
 ].map(([id,title,author,count])=>({id,title,author,art:'',feedUrl:'',count,demo:true}));
 const TOPICS=['What we got wrong about the long winter, and what comes after it','The first draft','A conversation with the people who still repair old radios by hand','Why it broke','Listener mail','A long walk','The archive','Behind the counter','Old maps','Low tide','The second take','Odds and ends','Season finale','Starting over'];
 // guests written the ways real feeds do it (every 4th episode), so the guest line shows up
@@ -818,16 +1005,21 @@ function demoEpisodes(p){
     if(n>1&&(n+off)%4===0)title+=GUEST_FORMS[(n+off)%GUEST_FORMS.length](GUEST_POOL[(n*3+off)%GUEST_POOL.length]);
     if(n>1&&n%9===0){type='bonus';title='Bonus: '+title}                                // some bonus episodes
     if((p.id==='d1'||p.id==='d3')&&n===20){type='trailer';title='Coming up next season'} // and a promo, so tag tabs show
-    return {id:`${p.id}-e${n}`,title,date:now-(i*7+3)*DAY,dur:1500+(n*977)%3600,
+    return {id:`${p.id}-e${n}`,title,date:now-(i*(p.id==='d5'?1:7)+3)*DAY,dur:1500+(n*977)%3600,
       ep:seasons?((n-1)%20)+1:n,season:seasons?Math.ceil(n/20):0,type};});
 }
 // on: add any placeholder that's missing (0 played). Off: remove them. Your own shows are never touched.
 function syncPlaceholders(){
   let changed=false;
   if(PLACEHOLDERS){
-    for(const p of DEMO_POOL)if(!S.shows[p.id]){
-      S.shows[p.id]={...p,episodes:demoEpisodes(p),played:{},source:'rss',addedAt:Date.now(),updatedAt:Date.now()};
-      S.order.push(p.id);changed=true;
+    for(const p of DEMO_POOL){const ex=S.shows[p.id];
+      if(!ex){
+        S.shows[p.id]={...p,episodes:demoEpisodes(p),played:{},source:'rss',addedAt:Date.now(),updatedAt:Date.now()};
+        S.order.push(p.id);changed=true;
+      }else if(isPlaceholder(ex)&&ex.count!==p.count){   // a placeholder whose size changed: new episode list, your played marks and edits kept
+        ex.count=p.count;ex.episodes=demoEpisodes(p);const ids=new Set(ex.episodes.map(e=>e.id));
+        for(const k in ex.played)if(!ids.has(k))delete ex.played[k];changed=true;
+      }
     }
   }else{
     const before=S.order.length;
@@ -1097,7 +1289,7 @@ function listenNext(id,ev){
   sh.played[nx.id]=Date.now();save();
   const before=libPositions();
   const oldCard=document.querySelector(`#liblist [data-show="${CSS.escape(id)}"]`);
-  const oldBd=oldCard?['.bd','.cks'].map(q=>{const x=oldCard.querySelector(q);return[q,x?x.outerHTML:'']}):null;   // its text and check square, to crossfade
+  const oldBd=oldCard?['.bd','.cks','.lst'].map(q=>{const x=oldCard.querySelector(q);return[q,x?x.outerHTML:'']}):null;   // its text and check square, to crossfade
   renderLibList();   // straight to the next episode: no fade, no message
   slideLib(before,id,oldBd);
 }
@@ -1151,7 +1343,7 @@ function slideLib(before,movedId,oldBd){
       const r=now.getBoundingClientRect(),tmp=document.createElement('div');tmp.innerHTML=html;const old=tmp.firstElementChild;
       old.style.position='absolute';old.style.left=(r.left-c.left)+'px';old.style.top=(r.top-c.top)+'px';old.style.width=r.width+'px';old.style.height=r.height+'px';
       old.style.boxSizing='border-box';old.style.zIndex='2';old.style.pointerEvents='none';old.style.transition=`opacity ${fl.toFixed(3)}s linear ${fd.toFixed(3)}s`;
-      if(q==='.bd')old.style.background='var(--panel)';
+      if(q==='.bd'){const bg=getComputedStyle(now).backgroundColor;old.style.background=bg&&bg!=='rgba(0, 0, 0, 0)'?bg:'var(--panel)'}   // its own tint, if it has one
       old.removeAttribute('onclick');old.classList.add('bd-old');mv[0].appendChild(old);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{old.style.opacity='0'}));
       setTimeout(()=>old.remove(),960);});}
@@ -1230,10 +1422,18 @@ function toggleEp(epId){
   if(row){row.classList.toggle('done',!!sh.played[epId]);if(view.filter!=='all')row.remove()}
   updateProgress();
 }
+const THRU_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path class="c3" d="M7 6.5L2.5 12 7 17.5"/><path class="c2" d="M12.5 6.5L8 12l4.5 5.5"/><path class="c1 tri" d="M21.5 5.5v13L14 12z"/></svg>';   // a play mark pointing left at the right, chevrons trailing off to its left: back through everything to here
+// played through here, within the tag tab you're on (All: every episode).
+// On an unplayed episode: it and every older one get marked played. On one already played: it and every newer one get unmarked (an undo)
 function playedThrough(epId){
-  const sh=S.shows[view.id];const all=eps(sh);const target=all.find(e=>e.id===epId);if(!target)return;
-  let n=0;all.forEach(e=>{if(e.date<=target.date&&!sh.played[e.id]){sh.played[e.id]=Date.now();n++}});
-  save();toast(`Marked ${n} episode${n===1?'':'s'} played`);renderEpisodes();updateProgress();
+  const sh=S.shows[view.id];let all=eps(sh);const target=all.find(e=>e.id===epId);if(!target)return;
+  if(view.tag&&view.tag!=='all')all=all.filter(e=>e.tag===view.tag);
+  let n=0;
+  if(!sh.played[epId]){all.forEach(e=>{if(e.date<=target.date&&!sh.played[e.id]){sh.played[e.id]=Date.now();n++}});
+    toast(`Marked ${n} episode${n===1?'':'s'} played`)}
+  else{all.forEach(e=>{if(e.date>=target.date&&sh.played[e.id]){delete sh.played[e.id];n++}});
+    toast(`Unmarked ${n} episode${n===1?'':'s'}`)}
+  save();renderEpisodes();updateProgress();
 }
 function markAll(val){
   const sh=S.shows[view.id];
@@ -1423,7 +1623,7 @@ function render(){
 function renderLib(){
   // second header: search + sort/filter (half height) over Full cards | Simple cards, together the same 45px
   $('#hdr-row').innerHTML=S.order.length?`<div class="show-col">${sfCard(true)}<div class="seg view-seg" id="lib-view">${
-    [['full','Full cards'],['simple','Simple cards']].map(([k,v])=>`<button type="button" data-v="${k}" class="${(S.libView||'full')===k?'on':''}">${v}</button>`).join('')}</div></div>`:'';
+    [['full','Full cards'],['simple','Simple cards'],['list','List']].map(([k,v])=>`<button type="button" data-v="${k}" class="${(S.libView||'full')===k?'on':''}">${v}</button>`).join('')}</div></div>`:'';
   wireSfCard();
   const lv=$('#lib-view');if(lv)lv.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;
     if(b.dataset.v==='full')delete S.libView;else S.libView=b.dataset.v;save();
@@ -1509,6 +1709,7 @@ function fillHeight(f){
 }
 const CHK='<svg class="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 // an ended show you've finished: two checks stacked, the front one casting a soft shadow onto the back one
+const CHK1='<svg class="ck ck1" viewBox="0 0 24 24"><path d="M5.5 12.6l3.9 3.9L17.5 8.2" stroke="rgba(0,0,0,.4)" transform="translate(-.8 .8)"/><path d="M5.5 12.6l3.9 3.9L17.5 8.2"/></svg>';   // the list's single check, drawn like the white one of the pair
 const CHK2='<svg class="ck ck2" viewBox="0 0 24 24"><path d="M2.6 12.6l3.9 3.9L14.6 8.2" stroke="#f0cf6e"/>'+
   '<path d="M8.4 12.6l3.9 3.9L20.4 8.2" stroke="rgba(0,0,0,.4)" transform="translate(-.8 .8)"/><path d="M8.4 12.6l3.9 3.9L20.4 8.2"/></svg>';   // gold behind, white in front
 function info(sh){const p=playedCount(sh),t=totalCount(sh),f=t?p/t:0;return{p,t,f,left:t-p,done:t>0&&p===t,nx:upNext(sh)}}
@@ -1555,9 +1756,12 @@ function showListenNext(){
 function libCards(shows){
   const go=shows.filter(sh=>upNext(sh)), done=shows.filter(sh=>!upNext(sh));
   let h='';
-  const simple=S.libView==='simple';
+  const simple=S.libView==='simple',list=S.libView==='list';
   if(go.length)h+=go.map(sh=>{
     const {p,t,f,left,nx}=info(sh);
+    // list: podcast name over the episode, check square, thin progress bar along the bottom of the text side
+    if(list)return `<div class="oc v6" ${onCard(sh.id)}><span class="lst"><b>${p}</b><i></i><b>${t}</b></span><div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell">${esc(nx.title)}</span><span class="lbar" style="--f:${f.toFixed(4)}"><span class="fl ${p?'on':''}"></span></span></div>
+      <span class="cks" onclick="event.stopPropagation()"><button type="button" class="rnd ${isFresh(sh,nx)?'fresh':''}" ${onChk(sh.id)} aria-label="${isFresh(sh,nx)?'New episode: mark listened':'Mark listened'}">${CHK1}</button></span></div>`;
     // simple: one standard 45px card, square art | podcast, episode (one line), guests | square check that fills
     if(simple)return `<div class="oc v5" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
       <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell">${esc(nx.title)}</span><span class="mt ell">${nx.label} · ${fmtDate(nx.date)}${nx.dur?' · '+fmtDur(nx.dur):''} · ${p}/${t} (${left})</span></div>
@@ -1579,6 +1783,7 @@ function libCards(shows){
     const chk=`<span class="cks gold ${sh.ended?'end':''}" aria-label="${sh.ended?'Ended and finished':'Caught up'}"><span class="rnd">${sh.ended?CHK2:CHK}</span></span>`;
     // no episode names here: a finished, ended show just says so; a caught-up one is waiting for what's next
     const say=sh.ended?'Completed':'Coming soon…';
+    if(list)return `<div class="oc v6 cu" ${onCard(sh.id)}><span class="lst"><b>${p}</b><i></i><b>${t}</b></span><div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell cu-say">${say}</span><span class="lbar" style="--f:1"><span class="fl on"></span></span></div>${sh.ended?chk:chk.replace(CHK,CHK1)}</div>`;   // caught up: the same thin check, in gold
     if(simple)return `<div class="oc v5 cu" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
       <div class="bd"><span class="k ell">${esc(nm(sh))}</span><span class="et ell cu-say">${say}</span><span class="mt ell">${sh.ended?'Ended':'Caught up'} · ${fmtDate(lt.date)} · ${p}/${t} (0)${lp?' · '+ago(lp):''}</span></div>${chk}</div>`;
     return `<div class="oc v4 cu" ${onCard(sh.id)}>${artSec(sh.art,sh.id,nm(sh))}
@@ -1838,8 +2043,13 @@ function renderShow(){
   };
 
   if(view.edit){
-    // edit mode: just the show's name and publisher, then every episode. No filters, tabs, search, stats or footer
-    $('#hdr-row').innerHTML='';$('#app-footer').innerHTML='';
+    // edit mode: just the show's name and publisher, then every episode. No filters, tabs, search or stats.
+    // The footer picks which parts every episode card shows (all of them to start)
+    $('#hdr-row').innerHTML='';
+    if(S.edHide){delete S.edHide;save()}   // (the choice used to be shared by every podcast; now each keeps its own)
+    const hid=new Set(sh.edHide||[]);   // which parts this podcast's edit cards leave out
+    $('#app-footer').innerHTML=`<div class="ed-fields" id="ed-fields" style="${colorVars(sh.id)}">${ED_FIELDS.map(([k,v])=>`<button type="button" data-f="${k}" class="${hid.has(k)?'':'on'}" aria-pressed="${!hid.has(k)}">${v}</button>`).join('')}</div>`;
+    $('#ed-fields').onclick=e=>{const b=e.target.closest('[data-f]');if(b)toggleEdField(b.dataset.f,b)};
     const renamed=!!sh.rename;
     $('#app').innerHTML=`<div class="card show-head show-ed ${renamed?'edited':''}">${artSec(sh.art,sh.id,nm(sh))}
         <div class="main"><input class="se-title" value="${esc(nm(sh))}" placeholder="${esc(sh.title)}" aria-label="Podcast name" enterkeyhint="done">
@@ -2301,7 +2511,8 @@ document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.
 function fitTags(){
   const tt=$('#tagtabs');if(tt)tt.style.setProperty('--tw',tagWidth(tt)+'px');
   const eg=$('#eps .ee-tag');
-  if(eg){const tw=tagWidth(eg),W=eg.clientWidth,per=Math.max(1,Math.floor((W+3)/(tw+3)));
+  if(eg){const E=$('#eps');E.classList.remove('half');   // measure at full size every time (measured half-size, the answer flipped on each tap)
+    const tw=tagWidth(eg),W=eg.clientWidth,per=Math.max(1,Math.floor((W+3)/(tw+3)));
     $('#eps').style.setProperty('--tw',tw+'px');
     $('#eps').classList.toggle('half',eg.children.length>per)}
 }
@@ -2319,12 +2530,36 @@ function renderTagTabs(all){
   fitTags();
   $('#tagtabs').onclick=e=>{const t=e.target.closest('[data-tag]');if(!t)return;view.tag=t.dataset.tag;renderEpisodes()};
 }
+// each card's number, by release date (oldest first), whatever numbering the feed uses:
+// Main episodes count 1, 2, 3 …; anything else after Main 4 (Bonus, Promo, or a tag you've added) is 4.a, 4.b, 4.c … in order (before Main 1: 0.a)
+function epPositions(all){
+  const pos={};let m=0,nx=0;
+  const letters=n=>{let t='';for(;n>0;n=Math.floor((n-1)/26))t=String.fromCharCode(97+(n-1)%26)+t;return t};   // 1→a … 26→z, 27→aa
+  all.slice().sort((a,b)=>a.date-b.date).forEach(e=>{
+    if(e.tag==='main'){m++;nx=0;pos[e.id]=String(m)}
+    else pos[e.id]=`${m}.${letters(++nx)}`;
+  });
+  return pos;
+}
+const ED_FIELDS=[['title','Name'],['guests','Guests'],['tags','Tags'],['date','Date'],['time','Time'],['se','Season · Ep']];
+let edObs=null,edRelayout=null;
+function toggleEdField(k,btn){
+  const el=$('#eps');if(!el)return;
+  const hb=$('#app-header').getBoundingClientRect().bottom,anchor=[...el.querySelectorAll('.ep-ed')].find(c=>c.getBoundingClientRect().bottom>hb+4);
+  const top0=anchor?anchor.getBoundingClientRect().top:0;
+  const sh=S.shows[view.id];if(!sh)return;
+  const hid=new Set(sh.edHide||[]);hid.has(k)?hid.delete(k):hid.add(k);sh.edHide=[...hid];if(!sh.edHide.length)delete sh.edHide;save();   // just this podcast
+  btn.classList.toggle('on',!hid.has(k));btn.setAttribute('aria-pressed',String(!hid.has(k)));
+  el.classList.toggle('x-'+k,hid.has(k));
+  fitTags();fitTitles();if(edRelayout)edRelayout();
+  if(anchor&&anchor.isConnected)scrollBy(0,anchor.getBoundingClientRect().top-top0);   // the card you were looking at stays put
+}
 function renderEpisodes(){
   const sh=S.shows[view.id];const el=$('#eps');if(!sh||!el)return;
   const all=eps(sh);
   if(view.edit){   // editing: every episode, newest or oldest first as last sorted, no filters
-    const list=all.sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
-    el.innerHTML=list.map(e=>`<div class="ep-ed ${e.edited?'edited':''}" data-id="${esc(e.id)}">
+    const pos=epPositions(all),list=all.sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
+    const card=e=>`<div class="ep-ed ${e.edited?'edited':''}" data-id="${esc(e.id)}"><div class="ee-no"><span>${pos[e.id]}</span></div><div class="ee-body">
       <div class="ee-top"><textarea class="ee-title" rows="1" aria-label="Episode title" enterkeyhint="done">${esc(e.title)}</textarea></div>
       <label class="ee-guest"><span>with:</span><input class="ee-guests" value="${esc(guestJoin(e.guests))}" placeholder="no guests" aria-label="Guests" enterkeyhint="done"></label>
       <div class="ee-bot"><input type="date" class="ee-date" value="${toDay(e.date)}" aria-label="Release date">
@@ -2332,8 +2567,35 @@ function renderEpisodes(){
       <div class="ee-tagrow"><div class="seg ee-tag">${Object.entries(tagsOf(sh)).map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tag===k?'on':''}">${esc(v)}</button>`).join('')}</div>
         <button type="button" class="ee-addtag" title="Add a new tag" aria-label="Add a new tag">+</button></div>
       <div class="ee-se"><label class="ee-guest"><span>season:</span><input class="ee-num" data-f="season" inputmode="numeric" enterkeyhint="done" value="${e.season||''}" placeholder="none" aria-label="Season number"></label>
-        <label class="ee-guest"><span>episode:</span><input class="ee-num" data-f="ep" inputmode="numeric" enterkeyhint="done" value="${e.ep||''}" placeholder="none" aria-label="Episode number"></label></div></div>`).join('');
-    fitTags();fitTitles();
+        <label class="ee-guest"><span>episode:</span><input class="ee-num" data-f="ep" inputmode="numeric" enterkeyhint="done" value="${e.ep||''}" placeholder="none" aria-label="Episode number"></label></div></div></div>`;
+    // the list is cut into chunks of 20. Only chunks near the screen hold real cards; the rest are empty spacers of the
+    // same height, so the scroll bar is right from the start and the phone only ever carries a few dozen cards.
+    // Chunks fill in well before you reach them, and empty out again once they're far behind you
+    if(edObs)edObs.disconnect();
+    ED_FIELDS.forEach(([k])=>el.classList.toggle('x-'+k,(sh.edHide||[]).includes(k)));
+    {let lg='';for(const k in pos)if(pos[k].length>lg.length)lg=pos[k];   // the longest number, measured on its side
+      el.innerHTML=`<div class="ee-no" style="position:absolute;visibility:hidden"><span>${lg}</span></div>`;
+      el.style.setProperty('--edmin',Math.ceil(el.firstChild.firstChild.getBoundingClientRect().height+14)+'px')}
+    const CH=20,nC=Math.ceil(list.length/CH),NEAR=1500;
+    el.innerHTML=Array.from({length:nC},(_,k)=>`<div class="ed-chunk" data-c="${k}"></div>`).join('');
+    const chunks=[...el.children];
+    const fill=c=>{if(c._full)return;const k=+c.dataset.c;c.innerHTML=list.slice(k*CH,k*CH+CH).map(card).join('');c.style.height='';c._full=true;
+      c.querySelectorAll('.ee-title').forEach(t=>fitTitles(t))};
+    const empty=c=>{if(!c._full||c.contains(document.activeElement)||c.querySelector('.ee-len.active'))return;   // never one you're working in
+      c.style.height=c.offsetHeight+'px';c.innerHTML='';c._full=false};
+    // every card is the same height, so one measured card sizes every spacer
+    fill(chunks[0]);fitTags();fitTitles();
+    const gap=parseFloat(getComputedStyle(chunks[0]).rowGap)||4;let one=chunks[0].firstElementChild.offsetHeight;
+    const hOf=k=>{const n=Math.min(CH,list.length-k*CH);return n*one+(n-1)*gap};
+    chunks.forEach((c,k)=>{if(!c._full)c.style.height=hOf(k)+'px'});
+    edRelayout=()=>{const f=chunks.find(c=>c._full&&c.firstElementChild);if(f)one=f.firstElementChild.offsetHeight;   // a part shown or hidden: every card changed height
+      chunks.forEach((c,k)=>{if(!c._full)c.style.height=hOf(k)+'px'})};
+    // after a redraw (a tag or date change) the place you were stays filled straight away, no blank flash
+    const near=c=>{const r=c.getBoundingClientRect();return r.bottom>-NEAR&&r.top<innerHeight+NEAR};
+    chunks.forEach(c=>{if(near(c))fill(c)});
+    if(!near(chunks[0]))empty(chunks[0]);
+    edObs=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting)fill(x.target);else empty(x.target)}),{rootMargin:NEAR+'px 0px'});
+    chunks.forEach(c=>edObs.observe(c));
     return;
   }
   renderTagTabs(all);
@@ -2346,19 +2608,11 @@ function renderEpisodes(){
     return !q||(e.title+' '+e.guests.join(' ')).toLowerCase().includes(q);
   }).sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
   if(!list.length){el.innerHTML='<div class="empty">Nothing here.</div>';return}
-  // each card's number, by release date (oldest first), whatever numbering the feed uses:
-  // Main episodes count 1, 2, 3 …; a Bonus after Main 4 is 4.1, 4.2 …; a Promo after it is 4.a, 4.b … (before Main 1: 0.1, 0.a)
-  const pos={};let m=0,nb=0,np=0;
-  const letters=n=>{let t='';for(;n>0;n=Math.floor((n-1)/26))t=String.fromCharCode(97+(n-1)%26)+t;return t};   // 1→a … 26→z, 27→aa
-  all.slice().sort((a,b)=>a.date-b.date).forEach(e=>{
-    if(e.tag==='main'){m++;nb=0;np=0;pos[e.id]=String(m)}
-    else if(e.tag==='promo')pos[e.id]=`${m}.${letters(++np)}`;
-    else pos[e.id]=`${m}.${++nb}`;               // Bonus, and any tag you've added
-  });
+  const pos=epPositions(all);
   el.innerHTML=list.map(e=>`<div class="row ep ${sh.played[e.id]?'done':''} ${e.guests.length?'has-g':''}" data-id="${esc(e.id)}">
-    <div class="ep-num ${pos[e.id].length>6?'xlong':pos[e.id].length>4?'long':''}">${pos[e.id]}</div>
+    <div class="ep-num ${e.season?'se':''}">${e.season?`<b>${pos[e.id]}</b><i></i><small>S${pad2(e.season)} E${pad2(e.ep||0)}</small>`:pos[e.id]}</div>
     ${(()=>{const sg=e;return `<div class="main"><span class="t">${esc(sg.title)}</span>${sg.guests.length?`<span class="a">${esc(guestText(sg.guests))}</span>`:''}<span class="a">${e.tag!=='main'?`<span class="tagpill">${esc(tagsOf(sh)[e.tag]||'')}</span>`:''}${fmtDate(e.date)}${e.dur?' · '+fmtDur(e.dur):''}</span></div>`})()}
-    <button class="thru" title="Mark this and every older episode played">≤</button></div>`).join('');
+    <button class="thru" title="${sh.played[e.id]?'Unmark this and every newer episode':'Mark this and every older episode played'} (tap twice)" aria-label="${sh.played[e.id]?'Unmark this and every newer episode':'Mark this and every older episode played'}">${THRU_ICON}</button></div>`).join('');
 }
 /* ---------- length wheels: hours (0–99, stops at the ends), minutes and seconds (0–59, wrap round) ---------- */
 const TW_ROW=16,TW_TOP=6;                      // row height; where the middle row sits in the 28px window
@@ -2459,6 +2713,7 @@ $('#app').addEventListener('change',e=>{
 $('#app').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('ee-title')||e.target.classList.contains('ee-guests')||e.target.classList.contains('ee-num')))e.target.blur()});
 $('#app').addEventListener('click',e=>{
   const box=e.target.closest('.ep-ed');if(!box||view.name!=='show')return;
+  const dt=e.target.closest('.ee-date');if(dt){try{dt.showPicker&&dt.showPicker()}catch(_){}return}   // anywhere on the date opens the calendar
   const sh=S.shows[view.id],id=box.dataset.id;
   const t=e.target.closest('.ee-tag [data-tag]');
   if(t){setEdit(sh,id,'tag',t.dataset.tag);renderEpisodes();return}
@@ -2468,7 +2723,11 @@ $('#app').addEventListener('click',e=>{
 });
 $('#app').addEventListener('click',e=>{
   const row=e.target.closest('.ep');if(!row||view.name!=='show')return;
-  if(e.target.closest('.thru'))playedThrough(row.dataset.id);
+  const th=e.target.closest('.thru');
+  if(th){   // two taps: the first arms it, the second (within 3 seconds) does it
+    if(th.classList.contains('armed')){th.classList.remove('armed');playedThrough(row.dataset.id);return}
+    document.querySelectorAll('#eps .thru.armed').forEach(x=>x.classList.remove('armed'));
+    th.classList.add('armed');clearTimeout(th._t);th._t=setTimeout(()=>th.classList.remove('armed'),3000);return}
   else toggleEp(row.dataset.id);
 });
 
