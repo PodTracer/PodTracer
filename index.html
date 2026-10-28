@@ -2572,10 +2572,12 @@ function renderEpisodes(){
     // same height, so the scroll bar is right from the start and the phone only ever carries a few dozen cards.
     // Chunks fill in well before you reach them, and empty out again once they're far behind you
     if(edObs)edObs.disconnect();
+    // a redraw (after a tag or date change) must not move the page: hold the list's height while it's rebuilt, then put the scroll back
+    const sy=scrollY;el.style.minHeight=el.offsetHeight+'px';
     ED_FIELDS.forEach(([k])=>el.classList.toggle('x-'+k,(sh.edHide||[]).includes(k)));
     {let lg='';for(const k in pos)if(pos[k].length>lg.length)lg=pos[k];   // the longest number, measured on its side
-      el.innerHTML=`<div class="ee-no" style="position:absolute;visibility:hidden"><span>${lg}</span></div>`;
-      el.style.setProperty('--edmin',Math.ceil(el.firstChild.firstChild.getBoundingClientRect().height+14)+'px')}
+      const m=document.createElement('div');m.className='ee-no';m.style.cssText='position:absolute;visibility:hidden';m.innerHTML=`<span>${esc(lg)}</span>`;
+      el.appendChild(m);el.style.setProperty('--edmin',Math.ceil(m.firstChild.getBoundingClientRect().height+14)+'px');m.remove()}
     const CH=20,nC=Math.ceil(list.length/CH),NEAR=1500;
     el.innerHTML=Array.from({length:nC},(_,k)=>`<div class="ed-chunk" data-c="${k}"></div>`).join('');
     const chunks=[...el.children];
@@ -2590,6 +2592,7 @@ function renderEpisodes(){
     chunks.forEach((c,k)=>{if(!c._full)c.style.height=hOf(k)+'px'});
     edRelayout=()=>{const f=chunks.find(c=>c._full&&c.firstElementChild);if(f)one=f.firstElementChild.offsetHeight;   // a part shown or hidden: every card changed height
       chunks.forEach((c,k)=>{if(!c._full)c.style.height=hOf(k)+'px'})};
+    el.style.minHeight='';if(Math.abs(scrollY-sy)>1)scrollTo(0,sy);
     // after a redraw (a tag or date change) the place you were stays filled straight away, no blank flash
     const near=c=>{const r=c.getBoundingClientRect();return r.bottom>-NEAR&&r.top<innerHeight+NEAR};
     chunks.forEach(c=>{if(near(c))fill(c)});
