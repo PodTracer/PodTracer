@@ -78,16 +78,22 @@
     background:linear-gradient(to right, var(--l) 0 27px, var(--panel) 27px calc(100% - 27px), var(--r) calc(100% - 27px)) border-box;}
   #sf-card.compact .sl{gap:4px;}
   #sf-card.compact #sf-search, #sf-card.compact #sf-close{width:24px;}
-  #sf-card.compact #sf-search svg, #sf-card.compact #sf-close svg{width:11px; height:11px;}
+  #sf-card.compact #sf-close svg{width:11px; height:11px;} #sf-card.compact #sf-search svg{width:14px; height:14px;}
+  /* opening search: the glass zooms in on its lens until the lens fills the square (the rim gone past the edges), then settles back;
+     never drawn outside its square */
+  #sf-search{overflow:hidden;}
+  #sf-search svg{transform-origin:42.5% 42.5%;}
+  #sf-search.zoom svg{animation:sfzoom .75s cubic-bezier(.45,0,.4,1);}
+  @keyframes sfzoom{0%{transform:scale(1)} 42%,58%{transform:scale(12)} 100%{transform:scale(1)}}
   #sf-card.compact #sfq{left:24px; right:24px; padding:0 6px; font-size:.74rem;}
   #sf-search, #sf-close{position:absolute; top:0; bottom:0; width:36px; display:flex; align-items:center; justify-content:center;}
   #sf-search{left:0; border-right:3px solid #000;} #sf-close{right:0; border-left:3px solid #000; display:none;}
   #sf-search svg, #sf-close svg{width:16px; height:16px; display:block;}
   #sfq{position:absolute; left:36px; right:36px; top:0; bottom:0; display:none; margin:0; padding:0 8px; border:0; outline:0; background:transparent;
     font:600 .9rem Georgia,serif; text-transform:none;}
+  #sf-card{--l:var(--ink);} #sf-card.pod{--l:var(--cloth);}   /* the search glass's square: dark in the Library, the podcast's color in a podcast */
   #sf-card.searching{--l:var(--ink); --r:#7a2f2b; cursor:text;}
   #sf-card.searching .sk, #sf-card.searching .sv{visibility:hidden;}
-  #sf-card.searching #sf-search svg{stroke:#fff;}
   #sf-card.searching #sf-close{display:flex;}
   #sf-card.searching #sfq{display:block;}
   /* the Sort and Filter page */
@@ -102,7 +108,7 @@
   #f3-canvas.on{display:block;}
   body.f3-open{overflow:hidden; touch-action:none;}
   .photo-card{cursor:pointer;} .photo-card.lifted{visibility:hidden;}
-  .gear-card{flex:none; width:45px; height:45px; margin:0; padding:5px; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:var(--panel); cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .gear-card{flex:none; width:45px; height:45px; margin:0; padding:4px 5px 6px; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:var(--cloth); cursor:pointer; display:flex; align-items:center; justify-content:center;}
   .gear-card svg{width:100%; height:100%; display:block; transition:transform .25s;}
   .gear-card:active svg{transform:rotate(30deg);}
   #st-page{position:fixed; inset:0; z-index:40; background:var(--bg); overflow-y:auto;}
@@ -140,6 +146,9 @@
   /* two-tap: the first tap turns the row red and asks, the second does it */
   .sr-row.armed{background:var(--red);} .sr-row.armed b,.sr-row.armed small{color:#fff;} .sr-row.armed .sr-sq{background:#7f2424;} .sr-row.armed .sr-sq svg{stroke:#fff;}
   .sr-row.danger b{color:var(--red);} .sr-row.danger .sr-sq svg{stroke:var(--red);} .sr-row.danger.armed b{color:#fff;} .sr-row.danger.armed .sr-sq svg{stroke:#fff;}
+  /* the action rows' icons: white and greys with a soft shadow on the podcast's color (Remove on red) */
+  .sr-sq.sr-ic{background:var(--cloth);} .sr-row.danger .sr-sq.sr-ic{background:#a83232;} .sr-row.armed .sr-sq.sr-ic{background:#7f2424;}
+  .sr-sq.sr-ic svg{width:30px; height:30px; overflow:visible;} .sr-shd{filter:drop-shadow(0 1.4px 1.1px rgba(0,0,0,.5));}
   .sr-row.busy .sr-sq svg{transform-origin:50% 50%; animation:srspin .9s linear infinite;} @keyframes srspin{to{transform:rotate(360deg)}}
   #tg-page{position:fixed; inset:0; z-index:40; background:var(--bg); overflow-y:auto;}
   #tg-page[hidden]{display:none;}
@@ -329,15 +338,15 @@
   .ep-num.se{flex-direction:column; gap:3px;} .ep-num.se b{font:inherit;}
   .ep-num.se i{display:block; width:75%; height:2px; border-radius:1px; background:#fff;}
   .ep-num.se small{font:700 .52rem/1 Arial,Helvetica,sans-serif; letter-spacing:.1px; white-space:nowrap;}
-  /* played through here: a square section on the card's right end, in the podcast's color, a play mark pointing left with chevrons trailing it.
+  /* played through here: a square section on the card's right end, in the podcast's color, the scroll-to triangles pointing left.
      First tap arms it (white, the icon in reds), a second tap within 3 seconds marks this and every older episode played */
   .ep .thru{flex:none; align-self:stretch; width:42px; margin:0 -8px 0 0; padding:0; border:0; border-left:3px solid #000; border-radius:0;
     background:var(--cloth); display:grid; place-items:center; cursor:pointer; transition:background .15s;}
-  .ep .thru svg{width:24px; height:24px; display:block; overflow:visible;}
-  .ep .thru path{fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; transition:stroke .15s;}
-  .ep .thru .c1{stroke:#fff;} .ep .thru .c2{stroke:#d6d0c6;} .ep .thru .c3{stroke:#a9a39a;} .ep .thru .tri{fill:#fff;}
+  .ep .thru svg{width:32px; height:32px; display:block; overflow:visible;}
+  .ep .thru polygon{stroke-width:1.6; stroke-linejoin:round; filter:drop-shadow(0 1.6px 1.2px rgba(0,0,0,.5)); transition:fill .15s, stroke .15s;}
+  .ep .thru .c1{fill:#fff; stroke:#fff;} .ep .thru .c2{fill:#d6d3ce; stroke:#d6d3ce;} .ep .thru .c3{fill:#a9a59e; stroke:#a9a59e;}
   .ep .thru.armed{background:#fff;}
-  .ep .thru.armed .tri{stroke:#a82c2c; fill:#a82c2c;} .ep .thru.armed .c2{stroke:#cf5d5d;} .ep .thru.armed .c3{stroke:#e8a0a0;}
+  .ep .thru.armed .c1{fill:#a82c2c; stroke:#a82c2c;} .ep .thru.armed .c2{fill:#cf5d5d; stroke:#cf5d5d;} .ep .thru.armed .c3{fill:#e8a0a0; stroke:#e8a0a0;} .ep .thru.armed polygon{filter:drop-shadow(0 1.6px 1.2px rgba(0,0,0,.25));}
   .ep.done{background:var(--cloth);}
   .ep.done .t{color:#fff; font-weight:400;}
   .ep.done .a{color:rgba(255,255,255,.7);}
@@ -558,6 +567,7 @@
   /* page tabs: one dark strip, no dividing lines; each tab a card on it, white when not picked,
      its own color with white words when picked */
   #ttl-bar, .so-head{background:#000;}
+  .so-head{border-top:3px solid #000;}   /* Settings, Tags and Sort pages: boxed top and bottom like the main header */
   #tabs{gap:4px; padding:calc(4px + env(safe-area-inset-top)) 4px 4px; background:var(--ink); border-bottom:3px solid #000;}
   #tabs .tab, #tabs .tab + .tab{height:34px; border:2.5px solid #000; border-radius:6px; background:#fff; color:var(--ink);
     font:700 min(.74rem, 2.95vw)/1.1 Arial,sans-serif; letter-spacing:0; text-transform:uppercase;}
@@ -573,6 +583,32 @@
   #app-footer .add-card b{color:#fff; font-size:1.15em;}
   #app-footer .add-card:active{filter:brightness(.92);}
   #app-footer .cloth-btn{background-image:none;}   /* footer buttons in plain color, no weave */
+
+  /* ---- icon animations: each plays when its icon is used, and loops cleanly while it's waiting on you ---- */
+  /* gear: turns two teeth (it looks the same after every tooth, so it lands seamlessly) as Settings opens */
+  .gear-card:active svg{transform:none;}
+  .gear-card .gt{transform-box:fill-box; transform-origin:center;}   /* each layer turns on its own center, so the grey edge stays underneath */
+  .gear-card.turn .gt{animation:gearturn .45s cubic-bezier(.45,0,.4,1);}
+  @keyframes gearturn{to{transform:rotate(90deg)}}
+  /* scroll-to triangles: a wave runs down through them, twice */
+  .tri-sec.go polygon{animation:triwave .42s ease-in-out 2;}
+  .tri-sec.go polygon:nth-child(2){animation-delay:.07s;} .tri-sec.go polygon:nth-child(1){animation-delay:.14s;}
+  @keyframes triwave{50%{transform:translateY(3px)}}
+  /* played through here: while armed, a wave keeps running leftward through the triangles */
+  .ep .thru.armed polygon{animation:thruwave .7s ease-in-out infinite;}
+  .ep .thru.armed .c2{animation-delay:.1s;} .ep .thru.armed .c3{animation-delay:.2s;}
+  @keyframes thruwave{0%,60%,100%{transform:none} 30%{transform:translateX(-3px)}}
+  /* Mark all played, armed: the ticks draw in one after another, over and over */
+  #st-all.armed .sr-shd > path:nth-child(odd){stroke-dasharray:13; animation:tickdraw 1.5s ease-in-out infinite backwards;}
+  #st-all.armed .sr-shd > path:nth-child(3){animation-delay:.18s;} #st-all.armed .sr-shd > path:nth-child(5){animation-delay:.36s;}
+  @keyframes tickdraw{0%{stroke-dashoffset:13} 35%,80%{stroke-dashoffset:0} 100%{stroke-dashoffset:-13}}
+  /* Clear all, armed: the slash keeps striking through the list */
+  #st-clear.armed .sr-shd > path:nth-child(4){stroke-dasharray:32; animation:strike 1.3s ease-in-out infinite;}
+  @keyframes strike{0%{stroke-dashoffset:32} 40%,80%{stroke-dashoffset:0} 100%{stroke-dashoffset:-32}}
+  /* Remove, armed: the bin's lid keeps lifting and dropping back */
+  #st-rm.armed .sr-shd > path:nth-child(2), #st-rm.armed .sr-shd > path:nth-child(3){transform-box:view-box; transform-origin:7px 13px; animation:lidhop .8s ease-in-out infinite;}
+  @keyframes lidhop{0%,55%,100%{transform:none} 25%{transform:translateY(-3px) rotate(-12deg)}}
+  @media (prefers-reduced-motion:reduce){.gear-card.turn .gt, .tri-sec.go polygon, .ep .thru.armed polygon, #st-all.armed path, #st-clear.armed path, #st-rm.armed path, #sf-search.zoom svg{animation:none!important;}}
 </style>
 </head>
 <body>
@@ -982,7 +1018,12 @@ function countedEps(sh){const a=eps(sh),sk=sh.skipTags;return sk&&sk.length?a.fi
 function playedCount(sh){return countedEps(sh).reduce((n,e)=>n+(sh.played[e.id]?1:0),0)}
 function totalCount(sh){return countedEps(sh).length}
 async function fetchTimeout(url,ms=12000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{return await fetch(url,{signal:c.signal})}finally{clearTimeout(t)}}
-const SEARCH_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="#2b2620" stroke-width="3.4" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>';
+const SEARCH_DARK='<svg viewBox="0 0 24 24" fill="none" stroke="#2b2620" stroke-width="3.4" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>';
+// the search glass: a white ring and handle with a soft shadow, a light grey lens, and one curved gleam inside it, well clear of the rim
+const SEARCH_ICON='<svg viewBox="0 0 40 40" aria-hidden="true" style="overflow:visible">'+
+  '<g style="filter:drop-shadow(0 1.3px 1px rgba(0,0,0,.5))"><circle cx="17" cy="17" r="10.5" fill="#d6d3ce" fill-opacity=".55"/><circle cx="17" cy="17" r="10.5" fill="none" stroke="#fff" stroke-width="5"/>'+
+  '<path d="M25 25L34 34" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g>'+
+  '<path d="M12.17 15.71A5 5 0 0 1 16.56 12.02" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>';
 
 /* ---------- placeholder podcasts (switch at the top of the script) ----------
    Marked demo:true. They never fetch anything, and they're left out of every export, backup and import. */
@@ -1227,6 +1268,22 @@ const pad2=n=>String(n).padStart(2,'0');
 const TAGS={main:'Main',bonus:'Bonus',promo:'Promo'};
 // a show's tags: the three built in, then any you've added (sh.tags: {id: name})
 const tagsOf=sh=>Object.assign({},TAGS,(sh&&sh.tags)||{});
+// a short letter code for each tag, all different: one word gives its first letter (Bonus → B); two or more words give
+// the first letters of up to three of them (Live Show → LS). When tags would share a code, every one of them adds a letter —
+// the next letter of its own name that keeps it unique (Promo, Patreon → PR, PA)
+function tagCodes(sh){
+  const T=Object.entries(tagsOf(sh)).map(([k,name])=>{const words=String(name).toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim().split(/\s+/).filter(Boolean);
+    const flat=words.join('')||'T';return {k,flat,base:words.length>1?words.slice(0,3).map(w=>w[0]).join(''):flat[0]}});
+  const n={};T.forEach(t=>n[t.base]=(n[t.base]||0)+1);
+  const out={},used=new Set(T.filter(t=>n[t.base]===1).map(t=>t.base));
+  for(const t of T){
+    if(n[t.base]===1){out[t.k]=t.base;continue}
+    let c=null;for(let i=1;i<t.flat.length&&!c;i++){const x=t.base+t.flat[i];if(!used.has(x))c=x}
+    for(let m=2;!c;m++){const x=t.base+m;if(!used.has(x))c=x}
+    used.add(c);out[t.k]=c;
+  }
+  return out;
+}
 const feedTag=e=>e.type==='bonus'?'bonus':(e.type==='trailer'||e.type==='promo')?'promo':'main';
 // the episodes as you see them: your title, date and tag over the feed's. Edits live in sh.edits, so a feed refresh never undoes them
 // each episode's title split into the title and its guests (kept, so long lists don't re-parse every time)
@@ -1422,7 +1479,7 @@ function toggleEp(epId){
   if(row){row.classList.toggle('done',!!sh.played[epId]);if(view.filter!=='all')row.remove()}
   updateProgress();
 }
-const THRU_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path class="c3" d="M7 6.5L2.5 12 7 17.5"/><path class="c2" d="M12.5 6.5L8 12l4.5 5.5"/><path class="c1 tri" d="M21.5 5.5v13L14 12z"/></svg>';   // a play mark pointing left at the right, chevrons trailing off to its left: back through everything to here
+const THRU_ICON='<svg viewBox="0 0 40 40" aria-hidden="true">'+[['c3',18.5],['c2',25],['c1',31.5]].map(([c,x])=>`<polygon class="${c}" points="${x},7.5 ${x},32.5 ${x-12},20"/>`).join('')+'</svg>';   // the scroll-to triangles, turned to point left
 // played through here, within the tag tab you're on (All: every episode).
 // On an unplayed episode: it and every older one get marked played. On one already played: it and every newer one get unmarked (an undo)
 function playedThrough(epId){
@@ -1670,7 +1727,7 @@ function renderSearch(){
   $('#tb-title').textContent='Add Podcast';
   $('#tb-back').onclick=()=>go('lib');
   $('#tb-edit').textContent='';$('#tb-edit').onclick=null;
-  $('#hdr-row').innerHTML=`<form class="field-card" id="sform">${SEARCH_ICON}<input id="q" placeholder="Podcast name" autocomplete="off" enterkeyhint="search" value="${esc(view.lastTerm)}"></form>
+  $('#hdr-row').innerHTML=`<form class="field-card" id="sform">${SEARCH_DARK}<input id="q" placeholder="Podcast name" autocomplete="off" enterkeyhint="search" value="${esc(view.lastTerm)}"></form>
     <button class="ink-btn" id="sgo">Search</button>`;
   $('#sform').onsubmit=doSearch;$('#sgo').onclick=doSearch;
   $('#app-footer').innerHTML='';
@@ -1727,6 +1784,7 @@ const TRI_SEC=`<button type="button" class="tri-sec" onclick="goToNext()" aria-l
 // bring the next episode into view, centered between the header and the bottom of the screen (or as near as scrolling allows);
 // if a filter, tab or search is hiding it, those are cleared first
 function goToNext(){
+  document.querySelectorAll('.tri-sec').forEach(t=>{t.classList.remove('go');void t.offsetWidth;t.classList.add('go');setTimeout(()=>t.classList.remove('go'),1000)});
   const sh=S.shows[view.id];const nx=sh&&upNext(sh);if(!nx)return;
   const find=()=>document.querySelector(`#eps .ep[data-id="${CSS.escape(nx.id)}"]`);
   let row=find();
@@ -1982,7 +2040,8 @@ const SF={
 const sfNow=()=>SF[view.name==='show'?'show':'lib'];
 function sfCard(compact){
   const c=sfNow();
-  return `<div id="sf-card" class="${c.q?'searching':''} ${compact?'compact':''}">
+  const pod=view.name==='show'&&view.id;
+  return `<div id="sf-card" class="${c.q?'searching':''} ${compact?'compact':''} ${pod?'pod':''}" ${pod?`style="${colorVars(view.id)}"`:''}>
     <span id="sf-search" aria-label="Search">${SEARCH_ICON}</span>
     <input id="sfq" aria-label="Search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" value="${esc(c.q)}">
     <span id="sf-close" aria-label="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
@@ -1992,7 +2051,8 @@ let sfTimer=0;
 function wireSfCard(){
   const card=$('#sf-card'),q=$('#sfq');if(!card)return;
   card.onclick=()=>{if(card.classList.contains('searching')){q.focus();return}openSortPage()};
-  $('#sf-search').onclick=e=>{e.stopPropagation();card.classList.add('searching');q.focus()};
+  $('#sf-search').onclick=e=>{e.stopPropagation();const g=$('#sf-search');g.classList.remove('zoom');void g.offsetWidth;g.classList.add('zoom');
+    g.addEventListener('animationend',()=>g.classList.remove('zoom'),{once:true});card.classList.add('searching');q.focus()};
   q.oninput=()=>{clearTimeout(sfTimer);sfTimer=setTimeout(()=>{const c=sfNow();c.q=q.value;c.redraw()},200)};
   q.onkeydown=e=>{if(e.key==='Enter')q.blur()};
   $('#sf-close').onclick=e=>{e.stopPropagation();clearTimeout(sfTimer);card.classList.remove('searching');q.value='';q.blur();const c=sfNow();if(c.q){c.q='';c.redraw()}};
@@ -2068,7 +2128,7 @@ function renderShow(){
     <div class="show-col"><div class="title-card"><span class="t">${esc(nm(sh))}</span></div>${sfCard(true)}</div>
     <button type="button" class="gear-card" id="st-open" style="${colorVars(sh.id)}" title="Settings for this podcast" aria-label="Settings for this podcast">${GEAR}</button>`;
   wireSfCard();
-  $('#st-open').onclick=openSettings;
+  $('#st-open').onclick=()=>{const g=$('#st-open');g.classList.remove('turn');void g.offsetWidth;g.classList.add('turn');setTimeout(openSettings,220)};   // the gear turns, then Settings opens
   $('#hdr-row .photo-card').onclick=()=>openFrame3d(sh,$('#hdr-row .photo-card'));
 
   $('#app-footer').innerHTML='';   // no footer in a show's window
@@ -2122,22 +2182,29 @@ function updateProgress(){
 }
 const toDay=ms=>{if(!ms)return'';const d=new Date(ms);return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`};
 /* ---------- a podcast's settings (the gear): what counts toward progress, mark all / clear all, remove ---------- */
-const GEAR=(()=>{   // a chunky cartoon gear: eight rounded teeth, thick outline, the podcast's color
-  const pts=[],N=8;
-  for(let i=0;i<N;i++){const a=i*2*Math.PI/N;
-    for(const [d,r] of [[-.30,33],[-.20,45],[.20,45],[.30,33]])pts.push([50+r*Math.cos(a+d),50+r*Math.sin(a+d)]);}
-  const path='M'+pts.map(p=>p.map(v=>v.toFixed(1)).join(' ')).join('L')+'Z';
-  return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${path}" fill="color-mix(in srgb, var(--cloth) 62%, #fff)" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
-    <circle cx="50" cy="50" r="13" fill="#efeadf" stroke="#000" stroke-width="6"/><path d="M33 38 A20 20 0 0 1 44 31" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="5" stroke-linecap="round"/></svg>`;
+const GEAR=(()=>{   // the settings gear: white on the podcast's color, a solid-looking piece drawn flat — a grey edge under it for its thickness,
+                    // a light grey ring round the hub, and the hole showing its inside wall
+  const gear=(n,r0,r1,w0,w1,cy)=>{const p=[];for(let i=0;i<n;i++){const a=i*2*Math.PI/n;
+    for(const [d,r] of [[-w0,r0],[-w1,r1],[w1,r1],[w0,r0]])p.push([50+r*Math.cos(a+d),cy+r*Math.sin(a+d)]);}
+    return 'M'+p.map(q=>q.map(v=>v.toFixed(1)).join(' ')).join('L')+'Z'};
+  const ring=(r,cy)=>`M${50-r} ${cy}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0Z`;
+  const cy=46,T=6,g=gear(8,33,45,.30,.20,cy),hole=11;
+  let side='';for(let d=T;d>0;d--)side+=`<g transform="translate(0 ${d})"><path class="gt" d="${g+ring(hole,cy)}" fill="${d===T?'#8f8a82':'#a9a59e'}" fill-rule="evenodd" stroke="${d===T?'#8f8a82':'#a9a59e'}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true" style="overflow:visible"><defs><clipPath id="gear-hole"><circle cx="50" cy="${cy}" r="${hole}"/></clipPath></defs>
+    <g style="filter:drop-shadow(0 2px 1.6px rgba(0,0,0,.45))">${side}
+    <path class="gt" d="${g+ring(hole,cy)}" fill="#fff" fill-rule="evenodd" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></g>
+    <path d="${ring(19,cy)+ring(hole,cy)}" fill="#d6d3ce" fill-rule="evenodd"/>
+    <path d="${ring(19,cy)}" fill="none" stroke="#c4c0b9" stroke-width="1.6"/>
+    <g clip-path="url(#gear-hole)"><circle cx="50" cy="${cy}" r="${hole}" fill="#8f8a82"/><circle cx="50" cy="${cy+T}" r="${hole}" fill="var(--cloth)"/></g></svg>`;
 })();
 function openSettings(){paintSettings();$('#st-page').hidden=false;$('#st-page').scrollTop=0}
 function closeSettings(){$('#st-page').hidden=true;if(view.name==='show')renderShow()}
 const SR_IC={
-  refresh:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>',
-  all:'<svg viewBox="0 0 24 24"><path d="M2.5 12.5l4 4L15 8"/><path d="M9 12.5l4 4L21.5 8"/></svg>',
-  clear:'<svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>',
+  refresh:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M9.66 16.24A11 11 0 0 1 29.53 14.50" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M33.68 12.10L33.13 20.74L25.37 16.90Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"></path><path d="M30.34 23.76A11 11 0 0 1 10.47 25.50" fill="none" stroke="#d6d3ce" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.32 27.90L6.87 19.26L14.63 23.10Z" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1.4" stroke-linejoin="round"></path></g></svg>',   // two arrows chasing each other (white and light grey)
+  all:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M5 9l2.6 2.6 5-5.4" fill="none" stroke="#d6d3ce" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 10H35" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 19l2.6 2.6 5-5.4" fill="none" stroke="#d6d3ce" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 20H35" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 29l2.6 2.6 5-5.4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 30H35" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>',   // a checked list
+  clear:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M6 10H34" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 20H34" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 30H34" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 31L31 9" fill="none" stroke="#ffffff" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>',   // a list struck through
   check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-  remove:'<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg>',
+  remove:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M10 13h20l-1.6 19.5a2.5 2.5 0 0 1-2.5 2.3H14.1a2.5 2.5 0 0 1-2.5-2.3z" fill="#ffffff" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"></path><path d="M7 9.5h26v3.5H7z" fill="#ffffff" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"></path><path d="M16 6h8v3.5h-8z" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1.4" stroke-linejoin="round"></path><path d="M16.5 18v12M23.5 18v12" fill="none" stroke="#a9a59e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>',   // a bin
 };
 const srCheck=on=>on?`<span class="sr-rnd">${SR_IC.check}</span>`:'';
 const srTagSub=(n,on)=>`${n} episode${n===1?'':'s'} · ${on?'counts':'not counted'}`;
@@ -2155,12 +2222,12 @@ function paintSettings(){
         return `<button type="button" class="sr-row ${on?'on':''}" data-count="${esc(k)}"><span class="tx"><b>${esc(v)}</b><small>${srTagSub(n,on)}</small></span><span class="sr-sq">${srCheck(on)}</span></button>`}).join('')}
       <div class="sr-prog"><span class="n"></span><span class="track"><span class="sr-fill"></span></span></div>
       <div class="sr-sec">Episodes<span id="st-checked">checked ${sh.updatedAt?ago(sh.updatedAt):'never'}</span></div>
-      <button type="button" class="sr-row" id="st-refresh"><span class="tx"><b>Refresh episodes</b><small>Look for new episodes now</small></span><span class="sr-sq">${SR_IC.refresh}</span></button>
-      <button type="button" class="sr-row" id="st-all" data-two="all"><span class="tx"><b>Mark all played</b><small>Every episode, ${all.length} in all</small></span><span class="sr-sq">${SR_IC.all}</span></button>
-      <button type="button" class="sr-row" id="st-clear" data-two="clear"><span class="tx"><b>Clear all</b><small>Every episode back to unplayed</small></span><span class="sr-sq">${SR_IC.clear}</span></button>
+      <button type="button" class="sr-row" id="st-refresh"><span class="tx"><b>Refresh episodes</b><small>Look for new episodes now</small></span><span class="sr-sq sr-ic">${SR_IC.refresh}</span></button>
+      <button type="button" class="sr-row" id="st-all" data-two="all"><span class="tx"><b>Mark all played</b><small>Every episode, ${all.length} in all</small></span><span class="sr-sq sr-ic">${SR_IC.all}</span></button>
+      <button type="button" class="sr-row" id="st-clear" data-two="clear"><span class="tx"><b>Clear all</b><small>Every episode back to unplayed</small></span><span class="sr-sq sr-ic">${SR_IC.clear}</span></button>
       <div class="sr-sec">Podcast</div>
       <button type="button" class="sr-row ${sh.ended?'on':''}" id="st-ended"><span class="tx"><b>Ended show</b><small>${sh.ended?'No more episodes expected':'Still releasing episodes'}</small></span><span class="sr-sq">${srCheck(sh.ended)}</span></button>
-      <button type="button" class="sr-row danger" id="st-rm" data-two="remove"><span class="tx"><b>Remove this podcast</b><small>And its played history</small></span><span class="sr-sq">${SR_IC.remove}</span></button>
+      <button type="button" class="sr-row danger" id="st-rm" data-two="remove"><span class="tx"><b>Remove this podcast</b><small>And its played history</small></span><span class="sr-sq sr-ic">${SR_IC.remove}</span></button>
     </div>`;
   srProg(sh);
 }
@@ -2611,7 +2678,10 @@ function renderEpisodes(){
     return !q||(e.title+' '+e.guests.join(' ')).toLowerCase().includes(q);
   }).sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
   if(!list.length){el.innerHTML='<div class="empty">Nothing here.</div>';return}
-  const pos=epPositions(all);
+  let pos=epPositions(all);
+  // in a tag's own tab, each episode is numbered within that tag (oldest first), with the tag's code: B•1, B•2 …
+  if(view.tag&&view.tag!=='all'){const code=tagCodes(sh)[view.tag]||'?';pos={...pos};
+    all.filter(e=>e.tag===view.tag).sort((a,b)=>a.date-b.date).forEach((e,i)=>pos[e.id]=`${code}•${i+1}`)}
   el.innerHTML=list.map(e=>`<div class="row ep ${sh.played[e.id]?'done':''} ${e.guests.length?'has-g':''}" data-id="${esc(e.id)}">
     <div class="ep-num ${e.season?'se':''}">${e.season?`<b>${pos[e.id]}</b><i></i><small>S${pad2(e.season)} E${pad2(e.ep||0)}</small>`:pos[e.id]}</div>
     ${(()=>{const sg=e;return `<div class="main"><span class="t">${esc(sg.title)}</span>${sg.guests.length?`<span class="a">${esc(guestText(sg.guests))}</span>`:''}<span class="a">${e.tag!=='main'?`<span class="tagpill">${esc(tagsOf(sh)[e.tag]||'')}</span>`:''}${fmtDate(e.date)}${e.dur?' · '+fmtDur(e.dur):''}</span></div>`})()}
