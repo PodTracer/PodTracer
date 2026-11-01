@@ -149,7 +149,7 @@
   /* the action rows' icons: white and greys with a soft shadow on the podcast's color (Remove on red) */
   .sr-sq.sr-ic{background:var(--cloth);} .sr-row.danger .sr-sq.sr-ic{background:#a83232;} .sr-row.armed .sr-sq.sr-ic{background:#7f2424;}
   .sr-sq.sr-ic svg{width:30px; height:30px; overflow:visible;} .sr-shd{filter:drop-shadow(0 1.4px 1.1px rgba(0,0,0,.5));}
-  .sr-row.busy .sr-sq svg{transform-origin:50% 50%; animation:srspin .9s linear infinite;} @keyframes srspin{to{transform:rotate(360deg)}}
+  .sr-row.busy .sr-sq svg{transform-origin:50% 50%; animation:srspin .8s cubic-bezier(.65,0,.3,1) infinite;} @keyframes srspin{to{transform:rotate(720deg)}}
   #tg-page{position:fixed; inset:0; z-index:40; background:var(--bg); overflow-y:auto;}
   #tg-page[hidden]{display:none;}
   #tg-body{display:flex; flex-direction:column; gap:4px; padding:4px 4px calc(16px + env(safe-area-inset-bottom)); max-width:760px; margin:0 auto;}
@@ -594,21 +594,43 @@
   .tri-sec.go polygon{animation:triwave .42s ease-in-out 2;}
   .tri-sec.go polygon:nth-child(2){animation-delay:.07s;} .tri-sec.go polygon:nth-child(1){animation-delay:.14s;}
   @keyframes triwave{50%{transform:translateY(3px)}}
-  /* played through here: while armed, a wave keeps running leftward through the triangles */
-  .ep .thru.armed polygon{animation:thruwave .7s ease-in-out infinite;}
-  .ep .thru.armed .c2{animation-delay:.1s;} .ep .thru.armed .c3{animation-delay:.2s;}
-  @keyframes thruwave{0%,60%,100%{transform:none} 30%{transform:translateX(-3px)}}
-  /* Mark all played, armed: the ticks draw in one after another, over and over */
-  #st-all.armed .sr-shd > path:nth-child(odd){stroke-dasharray:13; animation:tickdraw 1.5s ease-in-out infinite backwards;}
-  #st-all.armed .sr-shd > path:nth-child(3){animation-delay:.18s;} #st-all.armed .sr-shd > path:nth-child(5){animation-delay:.36s;}
-  @keyframes tickdraw{0%{stroke-dashoffset:13} 35%,80%{stroke-dashoffset:0} 100%{stroke-dashoffset:-13}}
-  /* Clear all, armed: the slash keeps striking through the list */
-  #st-clear.armed .sr-shd > path:nth-child(4){stroke-dasharray:32; animation:strike 1.3s ease-in-out infinite;}
-  @keyframes strike{0%{stroke-dashoffset:32} 40%,80%{stroke-dashoffset:0} 100%{stroke-dashoffset:-32}}
-  /* Remove, armed: the bin's lid keeps lifting and dropping back */
-  #st-rm.armed .sr-shd > path:nth-child(2), #st-rm.armed .sr-shd > path:nth-child(3){transform-box:view-box; transform-origin:7px 13px; animation:lidhop .8s ease-in-out infinite;}
-  @keyframes lidhop{0%,55%,100%{transform:none} 25%{transform:translateY(-3px) rotate(-12deg)}}
-  @media (prefers-reduced-motion:reduce){.gear-card.turn .gt, .tri-sec.go polygon, .ep .thru.armed polygon, #st-all.armed path, #st-clear.armed path, #st-rm.armed path, #sf-search.zoom svg{animation:none!important;}}
+  /* played through here: while armed a wave runs leftward through the triangles; when it ends each triangle finishes its wave so it stops cleanly,
+     and on confirm the outer two slide in onto the middle one and back */
+  .ep .thru polygon{transition:fill .25s, stroke .25s;}
+  .ep .thru.wave polygon{animation:thruwave .9s ease-in-out infinite;} .ep .thru.wave .c2{animation-delay:-.78s;} .ep .thru.wave .c3{animation-delay:-.66s;}
+  @keyframes thruwave{0%,100%{transform:translateX(0)} 50%{transform:translateX(-4px)}}
+  .ep .thru.stack .c1{animation:stk1 .9s ease-in-out;} .ep .thru.stack .c3{animation:stk3 .9s ease-in-out;}
+  @keyframes stk1{0%,100%{transform:none} 38%,58%{transform:translateX(-6.5px)}}
+  @keyframes stk3{0%,100%{transform:none} 38%,58%{transform:translateX(6.5px)}}
+  /* Mark all played: done on the first tap, the ticks draw in one by one; tapped again (undo) they draw back out */
+  #st-all .ckm{stroke-dasharray:10; stroke-dashoffset:10;}
+  #st-all .sr-sq.armed .ckm{animation:tickin .35s ease-out forwards;} #st-all .sr-sq.armed .ckm2{animation-delay:.45s;} #st-all .sr-sq.armed .ckm3{animation-delay:.9s;}
+  @keyframes tickin{to{stroke-dashoffset:0}}
+  #st-all .sr-sq.undo .ckm{animation:tickout .3s ease-in both;} #st-all .sr-sq.undo .ckm3{animation-delay:0s;} #st-all .sr-sq.undo .ckm2{animation-delay:.35s;} #st-all .sr-sq.undo .ckm1{animation-delay:.7s;}
+  @keyframes tickout{from{stroke-dashoffset:0} to{stroke-dashoffset:10}}
+  /* Clear all: an eraser rubs the three lines out, row by row; undo brings them back */
+  #st-clear .cl{stroke-dasharray:22 30;} #st-clear .er{opacity:0;}
+  #st-clear .sr-sq.armed .cl1{animation:e1 2.8s ease-in-out forwards;} #st-clear .sr-sq.armed .cl2{animation:e2 2.8s ease-in-out forwards;} #st-clear .sr-sq.armed .cl3{animation:e3 2.8s ease-in-out forwards;}
+  #st-clear .sr-sq.armed .er{animation:erase 2.8s ease-in-out forwards;}
+  #st-clear .sr-sq.armed .rb{animation:rub .14s ease-in-out infinite alternate;}
+  @keyframes e1{0%,3%{stroke-dashoffset:0} 29%,100%{stroke-dashoffset:22}}
+  @keyframes e2{0%,35%{stroke-dashoffset:0} 61%,100%{stroke-dashoffset:22}}
+  @keyframes e3{0%,67%{stroke-dashoffset:0} 93%,100%{stroke-dashoffset:22}}
+  @keyframes erase{0%{transform:translate(34px,12px);opacity:0} 3%{transform:translate(31px,12px);opacity:1} 29%{transform:translate(9px,12px)} 35%{transform:translate(9px,20px)} 61%{transform:translate(31px,20px)} 67%{transform:translate(31px,28px)} 93%{transform:translate(9px,28px);opacity:1} 100%{transform:translate(6px,30px);opacity:0}}
+  @keyframes rub{from{transform:translate(-1.5px,.8px)} to{transform:translate(1.5px,-.8px)}}
+  #st-clear .sr-sq.undo .cl{animation:linesback .45s ease-out both;} #st-clear .sr-sq.undo .er, #st-clear .sr-sq.undo .rb{animation:none; opacity:0;}
+  @keyframes linesback{from{opacity:0;stroke-dashoffset:0} to{opacity:1;stroke-dashoffset:0}}
+  /* Remove: the can steps aside and a bag drops in; confirmed, the lid opens and the bag goes in; left alone, the bag goes some other way */
+  #st-body .sr-sq.sr-ic svg{stroke:none;} #st-rm .sr-sq{overflow:hidden;} #st-rm .sr-sq svg{width:39px; height:39px;}
+  #st-rm .can{transform-origin:20px 34.8px;} #st-rm .lid{transform-origin:7px 13px;} #st-rm .bag{opacity:0;}
+  #st-rm .sr-sq.armed .can{animation:canin .45s ease-in-out forwards;}
+  #st-rm .streaks{opacity:0;} #st-rm .streaks path{stroke-dasharray:2.5 4; animation:skup .3s linear infinite;}
+  @keyframes skup{to{stroke-dashoffset:-13}}
+  #st-rm .sr-sq.confirm .lid{animation:lidseq 2.4s ease-in-out both;} #st-rm .sr-sq.confirm .can{animation:canput 2.4s ease-in-out both;}
+  @keyframes canin{from{transform:none} to{transform:translate(-11px,0) scale(.62)}}
+  @keyframes lidseq{0%{transform:rotate(0deg)} 14%{transform:rotate(-94deg)} 18%{transform:rotate(-90deg)} 56%{transform:rotate(-90deg)} 70%{transform:rotate(4deg)} 76%,100%{transform:rotate(0deg)}}
+  @keyframes canput{0%,75%{transform:translate(-11px,0) scale(.62)} 100%{transform:none}}
+  @media (prefers-reduced-motion:reduce){.gear-card.turn .gt, .tri-sec.go polygon, .ep .thru polygon, #st-body .sr-sq *, #sf-search.zoom svg, .sr-row.busy .sr-sq svg{animation:none!important;} #st-all .ckm{stroke-dashoffset:0;} #st-all .sr-sq:not(.armed) .ckm{opacity:0;} #st-clear .sr-sq.armed .cl{opacity:0;}}
 </style>
 </head>
 <body>
@@ -629,6 +651,7 @@
 </style>
 <div id="spl"><div class="icon"><svg id="spl-art" viewBox="0 0 512 512"></svg></div><div id="spl-wake"><div class="t">POD TRACER</div><div class="tl" id="spl-tag"><span>P</span><span>L</span><span>A</span><span>Y</span><span>.</span> <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>.</span> <span>R</span><span>E</span><span>P</span><span>E</span><span>A</span><span>T</span><span>.</span></div></div></div>
 <script>
+let splDone;window.__splDone=new Promise(r=>splDone=r);setTimeout(()=>splDone(),9500);   // the app's background jobs wait for the splash (never longer than 9s)
 (function(){
   try{
 
@@ -690,7 +713,7 @@ function tonesFor(h,s){
 }
 const POOL=['#86452b','#8a6a3f','#5b6633','#2f5a3a','#234a5e','#3a2f52','#66304c'].flatMap(c=>{const [h,s]=hexToHsl(c);return tonesFor(h,s)});
 const pick=a=>a[Math.floor(Math.random()*a.length)];
-let extras=[];
+let extras=[],END1=0,END2=0;
 function makeExtras(){
   extrasG.innerHTML='';extras=[];
   defs.querySelectorAll('[id^="spl-cx"],[id^="spl-rsx"]').forEach(d=>d.remove());   // drop the last crowd's clips, or the new ones clip to old shapes
@@ -700,7 +723,7 @@ function makeExtras(){
   let n=0,prev=null;
   // act 1: a steady stream up all five lanes (the two sides and the three's own paths), same speed for all, one every 280ms per lane.
   // A middle lane starts as early as it safely can: its first racer comes up right behind its original's streaks
-  const box=document.querySelector('#spl .icon').getBoundingClientRect(),sc=box.width/512;
+  const box=LY.box,sc=LY.sc;
   const topU=-box.top/sc,botU=(innerHeight-box.top)/sc,SPD=3,EVERY=280,LAST=1000;   // same speed on any screen, so the gaps hold on short ones too
   const durOf=h=>(botU-topU+h+530)/SPD;
   const earliest=(i,h)=>{const [cx,top,oh]=MICS[i],ocb=top+oh,st=ORDER.indexOf(i)*110;   // the original's take-off (as in frame)
@@ -721,11 +744,12 @@ function makeExtras(){
   // act 2: five lanes above and five below the three
   prev=null;
   [-708,-590,-472,-354,-236,236,354,472,590,708].forEach((v,j)=>{const r=mk('h'+j,next());r.n=v;r.delay=Math.random()*340;r.dur=850+Math.random()*250;r.act=2;extras.push(r)});
+  END1=Math.max(0,...extras.filter(r=>r.act===1).map(r=>r.delay+r.dur));END2=Math.max(0,...extras.filter(r=>r.act===2).map(r=>r.delay+r.dur));
 }
 
 /* the race: a short rev, then each racer takes off upward, picking up speed, streaks stretching; the tallest leads */
 const splash=document.getElementById('spl');
-let raf=0,t0=0,scrubT=null,SCALE=1,NAT=0;const speed=1;   // SCALE: the whole show is played faster or slower so it always lasts 5 seconds
+let raf=0,t0=0,lastTs=0,scrubT=null,SCALE=1,NAT=0;const speed=1;   // SCALE: the whole show is played faster or slower so it always lasts 5 seconds
 const ORDER=[1,2,0];                         // middle (tallest) goes first, then right, then left
 // matched to Chrome's own splash on your phone: the icon is 71.1% of the screen's width, centered on the whole screen.
 // Installed, the page starts below the status bar, so it shifts down to sit where Chrome's was (status bar ~24px)
@@ -735,20 +759,33 @@ function size(){
   const shift=app?Math.max(0,(screen.height-innerHeight)/2-24):0;
   splash.style.setProperty('--shift',shift.toFixed(1)+'px');
 }
-addEventListener('resize',size);size();
+let LY=null;   // the splash's measurements, read once (and again on a resize) instead of every frame, so frames never force a layout
+function measure(){const box=document.querySelector('#spl .icon').getBoundingClientRect(),nm=document.getElementById('spl-wake'),tg=document.getElementById('spl-tag');
+  LY={box,sc:box.width/512,nmW:nm.offsetWidth,nmH:nm.offsetHeight,tgW:tg.offsetWidth,tgH:tg.offsetHeight,tgTop:tg.offsetTop}}
+addEventListener('resize',()=>{size();if(LY)measure()});size();
 const easeIn=t=>t*t*t;
+const pools=new Map();
+function poolStart(g){let P=pools.get(g);if(!P){P={g,els:[],n:0};pools.set(g,P)}P.n=0;return P}
+function poly(P,pts,fill,op){let e=P.els[P.n++];
+  if(!e){e=document.createElementNS(NS,'polygon');P.g.appendChild(e);P.els.push(e)}
+  if(e._f!==fill){e.setAttribute('fill',fill);e._f=fill}
+  if(e._o!==op){e.setAttribute('fill-opacity',op);e._o=op}
+  e.setAttribute('points',pts);if(e._h){e.removeAttribute('display');e._h=0}}
+function poolEnd(P){for(let i=P.n;i<P.els.length;i++){const e=P.els[i];if(!e._h){e.setAttribute('display','none');e._h=1}}}
+const setA=(e,k,v)=>{const c='_'+k;if(e[c]!==v){e.setAttribute(k,v);e[c]=v}};   // write only on change
+const showR=(r,on)=>{if(r._on!==on){r._on=on;if(on)r.g.removeAttribute('display');else r.g.setAttribute('display','none')}};
 const mixC=(a,b,t)=>{const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);return'#'+[16,8,0].map(k=>Math.round(((A>>k)&255)*(1-t)+((B>>k)&255)*t).toString(16).padStart(2,'0')).join('')};
 function frame(ts){
-  let tr;if(scrubT!==null)tr=scrubT;else{if(!t0)t0=ts;tr=(ts-t0)*speed}const t=tr*SCALE;
+  let tr;if(scrubT!==null)tr=scrubT;else{if(!t0){t0=ts;lastTs=ts}t0+=Math.max(0,ts-lastTs-50);lastTs=ts;tr=(ts-t0)*speed}const t=tr*SCALE;
   const REV=[250,650],GO=650,EACH=520,GAP=110;            // 1: rev, then up and out through the top (extras fly past alongside)
-  const ZOOM=Math.max(GO+2*GAP+EACH+120,GO+Math.max(0,...extras.filter(r=>r.act===1).map(r=>r.delay+r.dur))+80),ZDUR=950,ZGAP=110;   // the across pass waits until every racer going up has cleared the top          // 2: back in from the left, across the middle, out the right (with a crowd)
-  const PASS=ZOOM+Math.max(2*ZGAP+ZDUR,...extras.filter(r=>r.act===2).map(r=>r.delay+r.dur));   // the last of the crowd is gone
+  const ZOOM=Math.max(GO+2*GAP+EACH+120,GO+END1+80),ZDUR=950,ZGAP=110;   // the across pass waits until every racer going up has cleared the top          // 2: back in from the left, across the middle, out the right (with a crowd)
+  const PASS=ZOOM+Math.max(2*ZGAP+ZDUR,END2);   // the last of the crowd is gone
   let HOLD,FADE;   // 3: set once the straggler's path is known (below): the name holds, then the splash fades
-  const box=document.querySelector('#spl .icon').getBoundingClientRect(),sc=box.width/512;
+  const box=LY.box,sc=LY.sc;
   // the pass: a straight line through the middle of the screen, rising gently to the right (left a little low, right a little high)
   const TH=8*Math.PI/180,dx=Math.cos(TH),dy=-Math.sin(TH),nx=Math.sin(TH),ny=Math.cos(TH);
   const Cx=(innerWidth/2-box.left)/sc,Cy=(innerHeight/2-box.top)/sc;
-  const nmEl=document.getElementById('spl-wake'),halfW=nmEl.offsetWidth/2/sc;   // the word's half-length along the line, in the icon's units
+  const nmEl=document.getElementById('spl-wake'),halfW=LY.nmW/2/sc;   // the word's half-length along the line, in the icon's units
   const reach=(innerWidth/2)/sc/dx+60, topU=-box.top/sc, botU=(innerHeight-box.top)/sc;
   const K=3200;
   // a lane across the screen: steady distance n0 from the middle line; outer lanes peel away once past the start of the word.
@@ -759,23 +796,22 @@ function frame(ts){
   const place=(r,X,Y,a,k)=>r.g.setAttribute('transform',`translate(${X.toFixed(1)} ${Y.toFixed(1)}) rotate(${a.toFixed(2)}) scale(${k}) translate(${-r.cx} ${-(r.top+r.h/2)})`);
   const stretchOf=(r,v)=>r.streaks.setAttribute('transform',`translate(0 ${r.cb}) scale(1 ${v.toFixed(3)}) translate(0 ${-r.cb})`);
   // trails drawn along a path: ribbons that follow where the racer has been, so a veering one leaves a curved wake
-  const ribbon=(at,sp,off,d0,L,w0,w1,fill,op0,op1,steps)=>{let out='';
-    for(let j=0;j<steps;j++){const pts=[];
-      for(const jj of [j,j+1]){const dd=d0+L*jj/steps,sv=sp-dd,[x,y]=at(sv),[x2,y2]=at(sv+1),[x1,y1]=at(sv-1);
-        let tx=x2-x1,ty=y2-y1;const m=Math.hypot(tx,ty)||1;tx/=m;ty/=m;const Nx=-ty,Ny=tx,w=(w0+(w1-w0)*jj/steps)/2;
-        pts.push([x+Nx*(off+w),y+Ny*(off+w)],[x+Nx*(off-w),y+Ny*(off-w)]);}
-      out+=`<polygon points="${pts[0]} ${pts[2]} ${pts[3]} ${pts[1]}" fill="${fill}" fill-opacity="${(op0+(op1-op0)*(j+.5)/steps).toFixed(3)}"/>`;}
-    return out};
-  const wake=(r,at,sp,k,p,stretch)=>{const sA=Math.min(1,Math.sin(p*Math.PI)*1.6),tail=r.h/2*k;
-    let o=ribbon(at,sp,0,tail-30*k,220*k*stretch/1.6,76*k,28*k,r.color,.9*sA,0,14);
-    [[-28,90],[0,130],[28,90]].forEach(([oo,Ln])=>{o+=ribbon(at,sp,oo*k,tail+18*k,Ln*k*stretch,17*k,3*k,'#000',1,1,10)});return o};
+  const ribbon=(P,at,sp,off,d0,L,w0,w1,fill,op0,op1,steps)=>{const A=[],B=[];
+    for(let jj=0;jj<=steps;jj++){const dd=d0+L*jj/steps,sv=sp-dd,[x,y]=at(sv),[x2,y2]=at(sv+1),[x1,y1]=at(sv-1);
+      let tx=x2-x1,ty=y2-y1;const m=Math.hypot(tx,ty)||1;tx/=m;ty/=m;const Nx=-ty,Ny=tx,w=(w0+(w1-w0)*jj/steps)/2;
+      A.push((x+Nx*(off+w)).toFixed(1)+','+(y+Ny*(off+w)).toFixed(1));B.push((x+Nx*(off-w)).toFixed(1)+','+(y+Ny*(off-w)).toFixed(1));}
+    if(op0===op1){poly(P,A.join(' ')+' '+B.reverse().join(' '),fill,op0);return}   // even all along: one shape
+    for(let j=0;j<steps;j++)poly(P,A[j]+' '+A[j+1]+' '+B[j+1]+' '+B[j],fill,(op0+(op1-op0)*(j+.5)/steps).toFixed(3))};
+  const wake=(P,r,at,sp,k,p,stretch)=>{const sA=Math.min(1,Math.sin(p*Math.PI)*1.6),tail=r.h/2*k;
+    ribbon(P,at,sp,0,tail-30*k,220*k*stretch/1.6,76*k,28*k,r.color,.9*sA,0,14);
+    [[-28,90],[0,130],[28,90]].forEach(([oo,Ln])=>ribbon(P,at,sp,oo*k,tail+18*k,Ln*k*stretch,17*k,3*k,'#000',1,1,10))};
   const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
-  let wipe=null,trailHTML='',xTrailHTML='';
+  let wipe=null;const TP=poolStart(trailsG),XP=poolStart(xTrailsG),GP=poolStart(glowG);
   racers.forEach((r,i)=>{
     const k=ORDER.indexOf(i),start=GO+k*GAP,cyc=r.top+r.h/2;
     let stretch=1;
     if(t<ZOOM){
-      r.trail.setAttribute('opacity',0);r.streaks.setAttribute('opacity',1);
+      setA(r.trail,'opacity',0);setA(r.streaks,'opacity',1);
       let dy=0,shake=0;
       if(t>REV[0]&&t<start){const p=Math.min(1,(t-REV[0])/(REV[1]-REV[0]));shake=Math.sin(t/18+i*2)*1.6*p;stretch=1+.18*p*(.5+.5*Math.sin(t/40+i))}
       if(t>=start){const p=Math.min(1,(t-start)/EACH);dy=-easeIn(p)*(box.top/sc+1250);stretch=1+p*2.4}
@@ -788,8 +824,8 @@ function frame(ts){
       const side=[-1,0,1][i],at=laneAt(side*118,side);
       const [X,Y]=at(sp);place(r,X,Y,90-8+laneAng(side,sp),1);
       stretch=1.6+Math.sin(p*Math.PI)*1.6;
-      if(p>0&&p<1)trailHTML+=wake(r,at,sp,1,p,stretch);
-      r.trail.setAttribute('opacity',0);r.streaks.setAttribute('opacity',0);
+      if(p>0&&p<1)wake(TP,r,at,sp,1,p,stretch);
+      setA(r.trail,'opacity',0);setA(r.streaks,'opacity',0);
       if(i===1)wipe=p>0?sp+halfW:-1e4;   // the middle mic wipes the name in: it shows up to the mic's middle, so new letters appear only under it
     }
     stretchOf(r,stretch);
@@ -798,50 +834,49 @@ function frame(ts){
   extras.forEach(r=>{
     if(r.act===1){   // straight up past the three, each in its own lane, quick
       const p=Math.max(0,Math.min(1,(t-GO-r.delay)/r.dur));
-      if(p<=0||p>=1||t>=ZOOM){r.g.setAttribute('opacity',0);return}
-      r.g.setAttribute('opacity',1);r.streaks.setAttribute('opacity',1);r.trail.setAttribute('opacity',0);
+      if(p<=0||p>=1||t>=ZOOM){showR(r,false);return}
+      showR(r,true);setA(r.streaks,'opacity',1);setA(r.trail,'opacity',0);
       const y0=botU+r.h/2+20,y1=topU-(r.h/2+510),Y=y0+(y1-y0)*p;   // ends with its streaks off the top too
       place(r,r.lane,Y,0,r.k);stretchOf(r,2.6);
     }else{           // across with the three, in the outer lanes, peeling away the same way as the one on their side
       const p=Math.max(0,Math.min(1,(t-ZOOM-r.delay)/r.dur));
-      if(t<ZOOM||p<=0||p>=1){r.g.setAttribute('opacity',0);return}
-      r.g.setAttribute('opacity',1);r.streaks.setAttribute('opacity',0);r.trail.setAttribute('opacity',0);
+      if(t<ZOOM||p<=0||p>=1){showR(r,false);return}
+      showR(r,true);setA(r.streaks,'opacity',0);setA(r.trail,'opacity',0);
       const len=(r.h/2+170)*r.k,s0=-reach-len*.6,s1=reach+len,sp=s0+(s1-s0)*ease(p),side=Math.sign(r.n),f=1+(Math.abs(r.n)-118)/600,at=laneAt(r.n,side,f);
       const [X,Y]=at(sp);place(r,X,Y,90-8+laneAng(side,sp,f),r.k);
-      xTrailHTML+=wake(r,at,sp,r.k,p,1.6+Math.sin(p*Math.PI)*1.6);
+      wake(XP,r,at,sp,r.k,p,1.6+Math.sin(p*Math.PI)*1.6);
     }
   });
-  trailsG.innerHTML=trailHTML;xTrailsG.innerHTML=xTrailHTML;
+  poolEnd(TP);poolEnd(XP);
   // the straggler: once the crowd is gone, one small racer zips back the other way under the name with the same trail as the rest,
   // leaving the tagline behind it in its own color, its fill running down a little as it goes over the letters, and is gone off the left
-  const tagEl=document.getElementById('spl-tag'),tagHalf=tagEl.offsetWidth/2/sc,tagOff=(tagEl.offsetTop+tagEl.offsetHeight/2-nmEl.offsetHeight/2)/sc;
+  const tagEl=document.getElementById('spl-tag'),tagHalf=LY.tgW/2/sc,tagOff=(LY.tgTop+LY.tgH/2-LY.nmH/2)/sc;
   const LK=.45,S0=PASS+150,SD=650,fwd=laneAt(tagOff,0),at=v=>fwd(-v);   // at: measured right to left
   const slen=(late.h/2+170)*LK,ss0=-reach-slen*.6,ss1=reach+slen;
   const S1=S0+SD;HOLD=S1+300;FADE=HOLD+650;
   const sp_=Math.max(0,Math.min(1,(t-S0)/SD)),ssp=ss0+(ss1-ss0)*ease(sp_);
-  let lateTrail='';
-  if(t>S0&&t<S1){late.g.setAttribute('opacity',1);late.streaks.setAttribute('opacity',0);late.trail.setAttribute('opacity',0);
-    const [X,Y]=at(ssp);place(late,X,Y,270-8,LK);lateTrail=wake(late,at,ssp,LK,sp_,1.6+Math.sin(sp_*Math.PI)*1.6)}
-  else late.g.setAttribute('opacity',0);
-  glowG.innerHTML=lateTrail;smokeG.innerHTML='';sparkG.innerHTML='';
+  if(t>S0&&t<S1){showR(late,true);setA(late.streaks,'opacity',0);setA(late.trail,'opacity',0);
+    const [X,Y]=at(ssp);place(late,X,Y,270-8,LK);wake(GP,late,at,ssp,LK,sp_,1.6+Math.sin(sp_*Math.PI)*1.6)}
+  else showR(late,false);
+  poolEnd(GP);
   // its fill runs down a little, only while it's over the letters
   const over=Math.max(0,Math.min(1,(ssp+tagHalf)/(2*tagHalf))),fl=late.f0-.12*(t>S0?over:0);
   late.fillEl.setAttribute('y',(late.cb-late.h*fl).toFixed(1));late.fillEl.setAttribute('height',(late.h*fl).toFixed(1));
   // the tagline shows from the racer's middle back to where it came in (the right), in the racer's color
-  if(t>S0){const px=(t>=S1?-1:1-(ssp+tagHalf)/(2*tagHalf))*tagEl.offsetWidth-18;   // not clamped, so the soft edge carries on off the first letter instead of lingering on it
-    tagEl.style.visibility='visible';tagEl.style.color=late.color;
+  if(t>S0){const px=(t>=S1?-1:1-(ssp+tagHalf)/(2*tagHalf))*LY.tgW-18;   // not clamped, so the soft edge carries on off the first letter instead of lingering on it
+    if(tagEl.style.visibility!=='visible'){tagEl.style.visibility='visible';tagEl.style.color=late.color}
     const m=`linear-gradient(90deg,transparent ${px.toFixed(1)}px,#000 ${(px+18).toFixed(1)}px)`;tagEl.style.webkitMaskImage=m;tagEl.style.maskImage=m;
-    tagEl.querySelectorAll('span').forEach(sp=>sp.style.color='')}
-  else tagEl.style.visibility='hidden';
+}
+  else if(tagEl.style.visibility!=='hidden')tagEl.style.visibility='hidden';
   
   // the name, wiped in by the middle mic as it passes over it
-  if(t>=ZOOM){const W=nmEl.offsetWidth,w=Math.max(0,Math.min(W,(wipe===null?-1e4:wipe)*sc));
-    nmEl.style.clipPath=`inset(-20px ${(W-w).toFixed(1)}px -200px 0)`;nmEl.style.visibility='visible'}else nmEl.style.visibility='hidden';
+  if(t>=ZOOM){const W=LY.nmW,w=Math.max(0,Math.min(W,(wipe===null?-1e4:wipe)*sc));
+    const cpv=`inset(-20px ${(W-w).toFixed(1)}px -200px 0)`;if(nmEl._cp!==cpv){nmEl.style.clipPath=cpv;nmEl._cp=cpv}if(nmEl.style.visibility!=='visible')nmEl.style.visibility='visible'}else if(nmEl.style.visibility!=='hidden')nmEl.style.visibility='hidden';
   NAT=FADE;if(scrubT!==null)return;   // (a measuring pass: just learning how long the show runs)
   if(t>FADE&&!splash.classList.contains('gone')){splash.classList.add('gone');setTimeout(done,500)}
   if(t<FADE+600)raf=requestAnimationFrame(frame);else done();
 }
-function done(){cancelAnimationFrame(raf);if(splash.isConnected)splash.remove()}
+function done(){cancelAnimationFrame(raf);if(splash.isConnected)splash.remove();splDone()}
 function play(){
   const w=document.getElementById('spl-wake');w.style.visibility='hidden';w.style.clipPath='inset(-20px 100% -200px 0)';
   // a new color from the app's ten for the title, every launch
@@ -849,7 +884,7 @@ function play(){
   w.style.setProperty('--tc',C[Math.floor(Math.random()*C.length)]);
   const ic=document.querySelector('#spl .icon').getBoundingClientRect();   // the mic is 100 units thick, 14 of them outline
   w.style.setProperty('--fs',(ic.width/512*100*.92).toFixed(1)+'px');   // about the mic's full thickness
-  makeExtras();
+  measure();makeExtras();
   // fit it to 5 seconds: work out its natural length, then play it at whatever pace ends the fade-out right at 5s
   SCALE=1;scrubT=0;frame(0);scrubT=null;SCALE=NAT/(5000-450);splash.classList.remove('racing');
   raf=requestAnimationFrame(frame);
@@ -857,10 +892,11 @@ function play(){
 splash.addEventListener('click',()=>{splash.classList.add('gone');setTimeout(done,450)});   // tap skips
 // wait for the title and tagline fonts (bundled below, so it's quick and works offline) before the race starts
 const fl=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('10px "Bungee Shade"'),document.fonts.load('10px "Spl Bangers"')]).catch(()=>{}):Promise.resolve();
-fl.then(play);
-setTimeout(done,7000);   // never in the way for long, whatever happens
+const ready=document.readyState==='loading'?new Promise(r=>addEventListener('DOMContentLoaded',r)):Promise.resolve();
+Promise.all([fl,ready]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(play)));
+setTimeout(done,9000);   // never in the way for long, whatever happens
 
-  }catch(e){const s=document.getElementById('spl');if(s)s.remove()}
+  }catch(e){const s=document.getElementById('spl');if(s)s.remove();splDone()}
 })();
 </script>
 
@@ -1482,6 +1518,16 @@ function toggleEp(epId){
 const THRU_ICON='<svg viewBox="0 0 40 40" aria-hidden="true">'+[['c3',18.5],['c2',25],['c1',31.5]].map(([c,x])=>`<polygon class="${c}" points="${x},7.5 ${x},32.5 ${x-12},20"/>`).join('')+'</svg>';   // the scroll-to triangles, turned to point left
 // played through here, within the tag tab you're on (All: every episode).
 // On an unplayed episode: it and every older one get marked played. On one already played: it and every newer one get unmarked (an undo)
+// played-through icon: the colors go back at once, but each triangle finishes its current wave so it stops seamlessly
+function thruArm(el){el._tok=(el._tok||0)+1;el.classList.remove('stack');el.querySelectorAll('polygon').forEach(p=>p.style.animation='');el.classList.add('armed','wave')}
+function thruRelease(el,then){
+  el.classList.remove('armed');
+  const tok=el._tok,ps=[...el.querySelectorAll('polygon')];let left=ps.length;
+  if(!el.classList.contains('wave')||!el.isConnected||document.hidden||reducedMotion()){el.classList.remove('wave');if(then)then();return}
+  ps.forEach(p=>{const done=()=>{p.removeEventListener('animationiteration',done);if(el._tok!==tok)return;p.style.animation='none';
+    if(--left===0){el.classList.remove('wave');ps.forEach(q=>q.style.animation='');if(then)then()}};
+    p.addEventListener('animationiteration',done)});
+}
 function playedThrough(epId){
   const sh=S.shows[view.id];let all=eps(sh);const target=all.find(e=>e.id===epId);if(!target)return;
   if(view.tag&&view.tag!=='all')all=all.filter(e=>e.tag===view.tag);
@@ -2184,15 +2230,12 @@ const toDay=ms=>{if(!ms)return'';const d=new Date(ms);return `${d.getFullYear()}
 /* ---------- a podcast's settings (the gear): what counts toward progress, mark all / clear all, remove ---------- */
 const GEAR=(()=>{   // the settings gear: white on the podcast's color, a solid-looking piece drawn flat — a grey edge under it for its thickness,
                     // a light grey ring round the hub, and the hole showing its inside wall
-  const gear=(n,r0,r1,w0,w1,cy)=>{const p=[];for(let i=0;i<n;i++){const a=i*2*Math.PI/n;
-    for(const [d,r] of [[-w0,r0],[-w1,r1],[w1,r1],[w0,r0]])p.push([50+r*Math.cos(a+d),cy+r*Math.sin(a+d)]);}
-    return 'M'+p.map(q=>q.map(v=>v.toFixed(1)).join(' ')).join('L')+'Z'};
   const ring=(r,cy)=>`M${50-r} ${cy}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0Z`;
-  const cy=46,T=6,g=gear(8,33,45,.30,.20,cy),hole=11;
-  let side='';for(let d=T;d>0;d--)side+=`<g transform="translate(0 ${d})"><path class="gt" d="${g+ring(hole,cy)}" fill="${d===T?'#8f8a82':'#a9a59e'}" fill-rule="evenodd" stroke="${d===T?'#8f8a82':'#a9a59e'}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+  const cy=46,T=6,hole=11,D="M81.5 36.2L94.1 37.1L94.1 54.9L81.5 55.8L79.2 61.4L87.5 70.9L74.9 83.5L65.4 75.2L59.8 77.5L58.9 90.1L41.1 90.1L40.2 77.5L34.6 75.2L25.1 83.5L12.5 70.9L20.8 61.4L18.5 55.8L5.9 54.9L5.9 37.1L18.5 36.2L20.8 30.6L12.5 21.1L25.1 8.5L34.6 16.8L40.2 14.5L41.1 1.9L58.9 1.9L59.8 14.5L65.4 16.8L74.9 8.5L87.5 21.1L79.2 30.6ZM39 46a11 11 0 1 0 22 0a11 11 0 1 0 -22 0Z";   // the outline, hole included
+  let side='';for(let d=T;d>0;d--)side+=`<g transform="translate(0 ${d})"><path class="gt" d="${D}" fill="${d===T?'#8f8a82':'#a9a59e'}" fill-rule="evenodd" stroke="${d===T?'#8f8a82':'#a9a59e'}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
   return `<svg viewBox="0 0 100 100" aria-hidden="true" style="overflow:visible"><defs><clipPath id="gear-hole"><circle cx="50" cy="${cy}" r="${hole}"/></clipPath></defs>
     <g style="filter:drop-shadow(0 2px 1.6px rgba(0,0,0,.45))">${side}
-    <path class="gt" d="${g+ring(hole,cy)}" fill="#fff" fill-rule="evenodd" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></g>
+    <path class="gt" d="${D}" fill="#fff" fill-rule="evenodd" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></g>
     <path d="${ring(19,cy)+ring(hole,cy)}" fill="#d6d3ce" fill-rule="evenodd"/>
     <path d="${ring(19,cy)}" fill="none" stroke="#c4c0b9" stroke-width="1.6"/>
     <g clip-path="url(#gear-hole)"><circle cx="50" cy="${cy}" r="${hole}" fill="#8f8a82"/><circle cx="50" cy="${cy+T}" r="${hole}" fill="var(--cloth)"/></g></svg>`;
@@ -2201,11 +2244,180 @@ function openSettings(){paintSettings();$('#st-page').hidden=false;$('#st-page')
 function closeSettings(){$('#st-page').hidden=true;if(view.name==='show')renderShow()}
 const SR_IC={
   refresh:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M9.66 16.24A11 11 0 0 1 29.53 14.50" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M33.68 12.10L33.13 20.74L25.37 16.90Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"></path><path d="M30.34 23.76A11 11 0 0 1 10.47 25.50" fill="none" stroke="#d6d3ce" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.32 27.90L6.87 19.26L14.63 23.10Z" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1.4" stroke-linejoin="round"></path></g></svg>',   // two arrows chasing each other (white and light grey)
-  all:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M5 9l2.6 2.6 5-5.4" fill="none" stroke="#d6d3ce" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 10H35" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 19l2.6 2.6 5-5.4" fill="none" stroke="#d6d3ce" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 20H35" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 29l2.6 2.6 5-5.4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 30H35" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>',   // a checked list
-  clear:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M6 10H34" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 20H34" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 30H34" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 31L31 9" fill="none" stroke="#ffffff" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>',   // a list struck through
+  all:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><rect x="4" y="3.5" width="9" height="9" rx="2" fill="#fff"/><path d="M17 8H35" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round"/><path class="ckm ckm1" d="M6.4 8.2l2 2 3.4-4" fill="none" stroke="#8f8a82" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="15.5" width="9" height="9" rx="2" fill="#fff"/><path d="M17 20H35" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round"/><path class="ckm ckm2" d="M6.4 20.2l2 2 3.4-4" fill="none" stroke="#8f8a82" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="27.5" width="9" height="9" rx="2" fill="#fff"/><path d="M17 32H35" fill="none" stroke="#d6d3ce" stroke-width="3" stroke-linecap="round"/><path class="ckm ckm3" d="M6.4 32.2l2 2 3.4-4" fill="none" stroke="#8f8a82" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>',   // a checked list
+  clear:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><rect x="2" y="2" width="36" height="36" rx="7" fill="none" stroke="#d6d3ce" stroke-width="3"/><path d="M9 12H31" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width="3.6" stroke-linecap="round"/><path d="M31 20H9" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width="3.6" stroke-linecap="round"/><path d="M9 28H31" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width="3.6" stroke-linecap="round"/><path class="cl cl1" d="M9 12H31" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><path class="cl cl2" d="M31 20H9" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><path class="cl cl3" d="M9 28H31" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><g class="er"><g class="rb"><g transform="rotate(-28)"><rect x="-4.5" y="-3" width="9" height="6" rx="1.5" fill="#8f8a82"/><rect x="0.5" y="-3" width="4" height="6" rx="1.2" fill="#a9a59e"/></g></g></g></g></svg>',   // a list struck through
   check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-  remove:'<svg viewBox="0 0 40 40" aria-hidden="true"><g class="sr-shd"><path d="M10 13h20l-1.6 19.5a2.5 2.5 0 0 1-2.5 2.3H14.1a2.5 2.5 0 0 1-2.5-2.3z" fill="#ffffff" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"></path><path d="M7 9.5h26v3.5H7z" fill="#ffffff" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"></path><path d="M16 6h8v3.5h-8z" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1.4" stroke-linejoin="round"></path><path d="M16.5 18v12M23.5 18v12" fill="none" stroke="#a9a59e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>',   // a bin
+  remove:'<svg viewBox="0 0 40 40" aria-hidden="true"><defs><clipPath id="suckclip"><rect x="-30" y="18.5" width="100" height="60"/></clipPath><clipPath id="bagclip"><rect x="-30" y="-50" width="100" height="71.5"/><path d="M10 13h20l-1.6 19.5a2.5 2.5 0 0 1-2.5 2.3H14.1a2.5 2.5 0 0 1-2.5-2.3z" transform="translate(-3.4 13.224) scale(.62)"/></clipPath></defs><g class="sr-shd"><g class="bagwrap"><g class="bag"><path class="bp" transform="translate(0 1.4)" fill="#a9a59e" stroke="#a9a59e" stroke-width="1.2" stroke-linejoin="round"/><path class="bp" transform="translate(0 .7)" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1.2" stroke-linejoin="round"/><path class="bp" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><path class="bh" fill="none" stroke="#d6d3ce" stroke-width="1" stroke-linecap="round"/></g></g><g class="tube" transform="translate(0 -60)"><rect x="23.5" y="-60" width="8" height="72" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1"/><rect x="29.4" y="-60" width="2.1" height="72" fill="#a9a59e"/><path d="M23.5 12L21 18H34L31.5 12Z" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1" stroke-linejoin="round"/><rect x="20.8" y="16.2" width="13.4" height="2.3" rx="1.1" fill="#fff"/></g><g class="streaks"><path d="M25 32V21M27.5 33V20M30 32V21" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></g><g class="can"><path d="M10 13h20l-1.6 19.5a2.5 2.5 0 0 1-2.5 2.3H14.1a2.5 2.5 0 0 1-2.5-2.3z" fill="#fff" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/><path d="M16.5 18v12M23.5 18v12" fill="none" stroke="#a9a59e" stroke-width="2.4" stroke-linecap="round"/><g class="lid"><path d="M7 9.5h26v3.5H7z" fill="#fff" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/><path d="M16 6h8v3.5h-8z" fill="#d6d3ce" stroke="#d6d3ce" stroke-width="1.4" stroke-linejoin="round"/></g></g></g></svg>',   // a bin
 };
+/* the Remove icon's trash bag: its shape morphs along smooth curves through keyframes, frame by frame (from the style sheet) */
+const BAG=(()=>{
+// ---- trash bag: a teardrop that morphs, driven by smooth (monotone cubic) curves through keyframes ----
+const mono=ks=>{
+  const n=ks.length,t=ks.map(k=>k[0]),v=ks.map(k=>k[1]),d=[],m=new Array(n).fill(0);
+  for(let i=0;i<n-1;i++)d[i]=(v[i+1]-v[i])/(t[i+1]-t[i]);
+  m[0]=d[0];m[n-1]=d[n-2];
+  for(let i=1;i<n-1;i++)m[i]=d[i-1]*d[i]<=0?0:(d[i-1]+d[i])/2;
+  for(let i=0;i<n-1;i++){
+    if(d[i]===0){m[i]=m[i+1]=0;continue;}
+    const a=m[i]/d[i],b=m[i+1]/d[i],q=a*a+b*b;
+    if(q>9){const k=3/Math.sqrt(q);m[i]=k*a*d[i];m[i+1]=k*b*d[i];}
+  }
+  return x=>{
+    if(x<=t[0])return v[0];if(x>=t[n-1])return v[n-1];
+    let i=0;while(x>t[i+1])i++;
+    const h=t[i+1]-t[i],u=(x-t[i])/h,u2=u*u,u3=u2*u;
+    return (2*u3-3*u2+1)*v[i]+(u3-2*u2+u)*h*m[i]+(-2*u3+3*u2)*v[i+1]+(u3-u2)*h*m[i+1];
+  };
+};
+const lin=ks=>x=>{
+  if(x<=ks[0][0])return ks[0][1];
+  for(let i=1;i<ks.length;i++)if(x<=ks[i][0]){const u=(x-ks[i-1][0])/(ks[i][0]-ks[i-1][0]);return ks[i-1][1]+u*(ks[i][1]-ks[i-1][1]);}
+  return ks[ks.length-1][1];
+};
+// hops: [t0,t1,yFrom,yTo,lift] -> parabolic arcs, holding the last landing between them
+const arc=(hops,y0)=>t=>{
+  let y=y0;
+  for(const [a,b,ya,yb,l] of hops){
+    if(t<a)return y;
+    if(t<=b){const u=(t-a)/(b-a);return ya+(yb-ya)*u-4*l*u*(1-u);}
+    y=yb;
+  }
+  return y;
+};
+const zero=()=>0;
+const SEQ={
+  // dropped, pulled taut by the tie (teardrop); on contact it squashes and the tie flops over. No bounce.
+  enter:{dur:1.25,end:'keep',
+    x:mono([[0,33],[.62,28.2],[1.25,27.5]]),
+    y:t=>t<.62?-8+42.2*Math.pow(t/.62,2):34.2,
+    rot:()=>0,
+    w:mono([[0,3.3],[.45,3.1],[.62,3.2],[.7,4.6],[.8,5.5],[.98,4.9],[1.25,4.6]]),
+    c:mono([[0,3.8],[.45,3.9],[.62,3.8],[.7,3],[.8,2.2],[.98,2.8],[1.25,3]]),
+    H:mono([[0,12.5],[.45,14],[.62,13.6],[.7,10.2],[.8,7.8],[.98,7],[1.25,6.6]]),
+    tx:mono([[0,0],[.62,0],[.8,.9],[.98,1.5],[1.25,1.9]]),
+    ta:mono([[0,0],[.62,0],[.7,6],[.8,14],[.98,28],[1.25,38]]),
+    f:mono([[0,0],[.62,0],[.7,1.6],[.8,3.2],[.98,2.2],[1.25,1.6]])},
+  // 1. a tube comes down and sucks the bag up, then goes back up
+  suck:{dur:2.1,end:'hide',hide:1.4,clip:.5,clipId:'suckclip',
+    x:()=>27.5,y:mono([[0,34.2],[.55,34.2],[.85,32.5],[1.1,26],[1.3,17],[1.4,10]]),
+    rot:mono([[0,0],[.55,0],[.85,3],[1.1,0],[1.4,0]]),
+    w:mono([[0,4.6],[.55,4.6],[.85,3.6],[1.1,3],[1.4,2.4]]),
+    c:mono([[0,3],[.55,3],[.85,3.5],[1.1,3.8],[1.4,3.8]]),
+    H:mono([[0,6.6],[.55,6.6],[.85,10.5],[1.1,14.5],[1.4,16]]),
+    tx:mono([[0,1.9],[.55,1.9],[.85,.6],[1.1,0],[1.4,0]]),
+    ta:mono([[0,38],[.55,38],[.85,10],[1.1,0],[1.4,0]]),
+    f:mono([[0,1.6],[.55,1.6],[.85,.4],[1.1,0],[1.4,0]]),
+    sc:mono([[0,1],[1.1,1],[1.4,.8]]),
+    tube:{ty:mono([[0,-45],[.05,-45],[.5,0],[1.4,0],[1.95,-45]]),st:mono([[0,0],[.55,0],[.7,1],[1.3,1],[1.4,0]])},
+    can:{cx:mono([[0,9],[1.5,9],[2.1,20]]),cy:()=>34.8,s:mono([[0,.62],[1.5,.62],[2.1,1]]),r:zero,q:zero}},
+  // 2. the ground goes away and it just falls off the bottom
+  fall:{dur:1.45,end:'hide',hide:.9,
+    x:mono([[0,27.5],[.3,27.5],[.9,26.5]]),
+    y:t=>t<.22?34.2:34.2+85*Math.pow(t-.22,2),
+    rot:mono([[0,0],[.35,0],[.9,28]]),
+    w:mono([[0,4.6],[.2,5],[.35,3.4],[.9,3]]),
+    c:mono([[0,3],[.2,2.8],[.35,3.8],[.9,3.8]]),
+    H:mono([[0,6.6],[.2,6],[.35,11],[.9,14]]),
+    tx:mono([[0,1.9],[.35,.4],[.9,0]]),
+    ta:mono([[0,38],[.2,38],[.35,-20],[.9,-35]]),
+    f:mono([[0,1.6],[.2,1.6],[.35,0],[.9,0]]),
+    can:{cx:mono([[0,9],[.8,9],[1.45,20]]),cy:()=>34.8,s:mono([[0,.62],[.8,.62],[1.45,1]]),r:zero,q:zero}},
+  // 3. the can floats up, winds up to the left, then swings right and its bottom-right corner clips the bag away
+  knock:{dur:1.65,end:'hide',hide:1.55,
+    x:mono([[0,27.5],[1,27.5],[1.09,31],[1.57,62]]),
+    y:mono([[0,34.2],[1,34.2],[1.12,29],[1.57,22]]),
+    rot:mono([[0,0],[1,0],[1.57,260]]),
+    w:mono([[0,4.6],[.97,4.6],[1.06,6.2],[1.17,4.2],[1.57,3.2]]),
+    c:mono([[0,3],[.97,3],[1.06,2.2],[1.17,3.3],[1.57,3.7]]),
+    H:mono([[0,6.6],[.97,6.6],[1.06,5.6],[1.17,9.5],[1.57,12]]),
+    tx:mono([[0,1.9],[1.06,1.2],[1.57,0]]),
+    ta:mono([[0,38],[1.06,25],[1.57,-20]]),
+    f:mono([[0,1.6],[.97,1.6],[1.06,3.4],[1.17,.6],[1.57,0]]),
+    can:{cx:mono([[0,9],[.3,9],[.45,8.8],[.8,3.5],[1.02,19],[1.6,20]]),
+         cy:mono([[0,34.8],[.3,26.5],[.45,26],[.8,28.5],[1.02,33.5],[1.6,34.8]]),
+         s:mono([[0,.62],[1.02,.62],[1.6,1]]),
+         r:mono([[0,0],[.3,7],[.45,6],[.8,24],[1.02,-34],[1.6,0]]),q:zero}},
+  // 4. the can hops on the bag like a desk lamp, flattening it more each time; on the last landing it just settles on the ground, hiding what is left while the bag fades; then it slides home (no more hopping)
+  hop:{dur:2.85,end:'hide',hide:2.1,
+    x:()=>27.5,y:()=>34.2,rot:zero,
+    op:mono([[0,1],[1.84,1],[2.05,0]]),
+    w:mono([[0,4.6],[.74,4.6],[.82,4.4],[1,4.2],[1.33,4.2],[1.4,4.4],[1.6,4.3],[1.84,4.3],[1.95,4.4]]),
+    c:mono([[0,3],[.74,3],[.82,2],[1,2.3],[1.33,2.3],[1.4,1.2],[1.6,1.5],[1.84,1.5],[1.95,.8]]),
+    H:mono([[0,6.6],[.74,6.6],[.82,4.2],[1,5],[1.33,5],[1.4,2.5],[1.6,3],[1.84,3],[1.95,1.4]]),
+    tx:mono([[0,1.9],[.74,1.9],[.9,2.2],[1.84,2.6],[1.95,2.8]]),
+    ta:mono([[0,38],[.74,38],[.9,48],[1.84,62],[1.95,66]]),
+    f:mono([[0,1.6],[.74,1.6],[.82,2.8],[1,2.5],[1.33,2.5],[1.4,3.6],[1.84,3.4],[1.95,3.9]]),
+    can:{cx:(()=>{const l=lin([[0,9],[.25,9],[.75,27.5],[2.2,27.5]]);return t=>{if(t<2.2)return l(t);const u=Math.min((t-2.2)/.55,1);return 27.5-7.5*u*u*(3-2*u);};})(),
+         cy:arc([[.25,.75,34.8,30,14],[.9,1.34,30,32.2,9],[1.45,1.85,32.2,34.8,7]],34.8),
+         s:mono([[0,.62],[2.2,.62],[2.75,1]]),
+         r:mono([[0,0],[.25,-6],[.5,12],[.75,4],[.9,-5],[1.1,8],[1.34,2],[1.5,-5],[1.65,8],[1.85,2],[2,0],[2.85,0]]),
+         q:mono([[0,0],[.2,.2],[.28,-.14],[.5,-.06],[.72,-.12],[.79,.24],[.88,.14],[.93,-.14],[1.12,-.05],[1.3,-.12],[1.38,.26],[1.45,.1],[1.5,-.14],[1.65,-.05],[1.8,-.12],[1.88,.3],[2.05,.02],[2.2,0],[2.85,0]])}},
+  // confirmed: lifted by the tie, carried over the can, lowered in, settles on the floor (same size throughout)
+  put:{dur:1.78,end:'hide',clip:1,clipId:'bagclip',
+    x:mono([[0,27.5],[.3,27.5],[.62,23],[1.05,9.5],[1.4,9]]),
+    y:mono([[0,34.2],[.3,34.2],[.75,16],[1.05,15],[1.22,24],[1.34,34.2],[1.78,34.2]]),
+    rot:mono([[0,0],[.3,0],[.55,-5],[.8,-13],[1,-5],[1.15,4],[1.32,0],[1.78,0]]),
+    w:mono([[0,4.6],[.3,4.6],[.55,3.9],[.8,3.3],[1.22,3.3],[1.34,3.4],[1.46,4.4],[1.58,4.4],[1.74,4.2],[1.78,4.2]]),
+    c:mono([[0,3],[.3,3],[.55,3.4],[.8,3.8],[1.22,3.8],[1.34,3.8],[1.46,2.6],[1.58,2.5],[1.74,2.8],[1.78,2.8]]),
+    H:mono([[0,6.6],[.3,6.6],[.55,11.5],[.8,13.2],[1.22,13.2],[1.34,13],[1.46,9.4],[1.58,8.2],[1.74,7.4],[1.78,7.4]]),
+    tx:mono([[0,1.9],[.3,1.9],[.55,.8],[.8,0],[1.34,0],[1.58,.6],[1.74,1],[1.78,1]]),
+    ta:mono([[0,38],[.3,38],[.55,12],[.8,0],[1.34,0],[1.46,8],[1.58,16],[1.74,28],[1.78,28]]),
+    f:mono([[0,1.6],[.3,1.6],[.55,.4],[.8,0],[1.34,0],[1.46,1.4],[1.58,2],[1.74,1.4],[1.78,1.4]])}
+};
+const ctxOf=el=>{const bag=el.querySelector('.bag');return{can:el.querySelector('.can'),tube:el.querySelector('.tube'),streak:el.querySelector('.streaks'),wrap:el.querySelector('.bagwrap'),bag:bag,bp:[...bag.querySelectorAll('.bp')],bh:bag.querySelector('.bh')};};
+const q=v=>v.toFixed(2);
+const drawBag=(t,S,K)=>{
+  const sc=S.sc?S.sc(t):1,sy=S.sy?S.sy(t):1,x=S.x(t),y=S.y(t),rot=S.rot(t),w=S.w(t),c=S.c(t),H=S.H(t),tx=S.tx(t),ta=S.ta(t),f=Math.min(S.f(t),w-.3),s=H-c,ex=f+.5523*(w-f);
+  const a=ta*Math.PI/180,co=Math.cos(a),si=Math.sin(a);
+  const ears=[[0,.4],[-2.3,-3.1],[-.5,-2.1],[0,-4.4],[.5,-2.1],[2.3,-3.1]].map(([u,v])=>q(tx+u*co-v*si)+' '+q(-H+u*si+v*co));
+  const d='M'+q(tx)+' '+q(-H)+'C'+q(tx+.12*w)+' '+q(-H+.35*s)+' '+q(w)+' '+q(-c-.55*s)+' '+q(w)+' '+q(-c)
+    +'C'+q(w)+' '+q(-.4477*c)+' '+q(ex)+' 0 '+q(f)+' 0L'+q(-f)+' 0C'+q(-ex)+' 0 '+q(-w)+' '+q(-.4477*c)+' '+q(-w)+' '+q(-c)
+    +'C'+q(-w)+' '+q(-c-.55*s)+' '+q(tx-.12*w)+' '+q(-H+.35*s)+' '+q(tx)+' '+q(-H)+'Z'
+    +'M'+ears[0]+'L'+ears.slice(1).join('L')+'Z';
+  K.bp.forEach(p=>p.setAttribute('d',d));
+  K.bh.setAttribute('d','M'+q(-.5*w)+' '+q(-.35*c)+'Q'+q(-.62*w)+' '+q(-1.15*c)+' '+q(-.25*w)+' '+q(-1.6*c));
+  K.bag.setAttribute('transform','translate('+q(x)+' '+q(y)+') scale(1 '+q(sy)+') translate('+q(tx)+' '+q(-H)+') rotate('+q(rot)+') scale('+q(sc)+') translate('+q(-tx)+' '+q(H)+')');
+};
+const drawCan=(t,S,K)=>{
+  const C=S.can;if(!C)return;
+  const sz=C.s(t),sq=C.q(t);
+  K.can.style.transformOrigin='0 0';
+  K.can.style.transform='translate('+q(C.cx(t))+'px,'+q(C.cy(t))+'px) rotate('+q(C.r(t))+'deg) scale('+q(sz*(1+sq))+','+q(sz*(1-sq))+') translate(-20px,-34.8px)';
+};
+const drawTube=(t,S,K)=>{
+  if(!S.tube)return;
+  K.tube.setAttribute('transform','translate(0 '+q(S.tube.ty(t))+')');
+  K.streak.style.opacity=Math.max(0,Math.min(1,S.tube.st(t)));
+};
+const resetExtras=K=>{K.can.style.transform='';K.can.style.transformOrigin='';K.tube.setAttribute('transform','translate(0 -60)');K.streak.style.opacity=0;};
+let bagRaf=0;
+let lastK=null;
+const runBag=(S,el)=>{
+  cancelAnimationFrame(bagRaf);
+  const K=ctxOf(el);
+  if(lastK&&lastK!==K){lastK.bag.style.opacity=0;resetExtras(lastK);}
+  lastK=K;
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){K.bag.style.opacity=0;return;}
+  K.wrap.removeAttribute('clip-path');let clipOn=false;
+  const t0=performance.now();K.bag.style.opacity=1;
+  const frame=t=>{
+    drawBag(t,S,K);drawCan(t,S,K);drawTube(t,S,K);
+    if(S.clip!==undefined){const on=t>=S.clip;if(on!==clipOn){clipOn=on;if(on)K.wrap.setAttribute('clip-path','url(#'+S.clipId+')');else K.wrap.removeAttribute('clip-path');}}
+    if(S.op)K.bag.style.opacity=q(Math.max(0,Math.min(1,S.op(t))));
+    if(S.hide!==undefined&&t>=S.hide)K.bag.style.opacity=0;
+  };
+  frame(0);
+  const step=now=>{
+    const t=Math.min((now-t0)/1000,S.dur);frame(t);
+    if(t<S.dur)bagRaf=requestAnimationFrame(step);
+    else{if(S.end==='hide')K.bag.style.opacity=0;resetExtras(K);}
+  };
+  bagRaf=requestAnimationFrame(step);
+};
+const LEAVES=[SEQ.suck,SEQ.fall,SEQ.knock,SEQ.hop];let lastLeave=-1;
+const pickLeave=()=>{let i;do{i=Math.floor(Math.random()*LEAVES.length);}while(i===lastLeave);lastLeave=i;return LEAVES[i];};
+return {SEQ,run:runBag,leave:pickLeave,stop:()=>cancelAnimationFrame(bagRaf)};
+})();
 const srCheck=on=>on?`<span class="sr-rnd">${SR_IC.check}</span>`:'';
 const srTagSub=(n,on)=>`${n} episode${n===1?'':'s'} · ${on?'counts':'not counted'}`;
 // the podcast's Settings, one framed list: what counts toward progress, refresh / mark all / clear all, ended, remove
@@ -2248,7 +2460,35 @@ async function refreshFromSettings(sh,row){
   const ic=row.querySelector('.sr-sq svg');
   if(ic&&row.isConnected&&!document.hidden)ic.addEventListener('animationiteration',done,{once:true});else done();
 }
-const SR_ASK={all:'Tap again to mark every episode played',clear:'Tap again to clear every played mark',remove:'Tap again to remove it'};
+const SR_ASK={all:'Marked · tap again to undo',clear:'Cleared · tap again to undo',remove:'Tap again to remove it'};
+const reducedMotion=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
+function srAsk(row,on){const sm=row.querySelector('small');if(on){if(row.dataset.sub==null)row.dataset.sub=sm.textContent;sm.textContent=SR_ASK[row.dataset.two]}
+  else if(row.dataset.sub!=null){sm.textContent=row.dataset.sub;delete row.dataset.sub}}
+// Mark all played / Clear all: a pair. The first tap does it and stays on; a second tap puts every mark back as it was. Turning one on undoes the other first.
+function srToggle(sh,row,quiet){
+  const sq=row.querySelector('.sr-sq'),k=row.dataset.two;if(sq._busy)return;
+  if(row.classList.contains('armed')){
+    sq._busy=1;sh.played=row._snap||{};delete row._snap;save();renderEpisodes();updateProgress();srProg(sh);
+    if(quiet){sq.classList.remove('armed');row.classList.remove('armed');srAsk(row,false);sq._busy=0;return}
+    sq.classList.add('undo');
+    setTimeout(()=>{sq.classList.remove('armed','undo');row.classList.remove('armed');srAsk(row,false);sq._busy=0},reducedMotion()?0:(k==='all'?1050:500));return}
+  const peer=$(k==='all'?'#st-clear':'#st-all');if(peer&&peer.classList.contains('armed'))srToggle(sh,peer,true);
+  row._snap={...sh.played};markAll(k==='all');
+  row.classList.add('armed');sq.classList.add('armed');srAsk(row,true);
+}
+// Remove: the first tap arms it (a bag drops in beside the can); a second tap, once the bag has landed, puts it in the can and removes the podcast.
+// Left for 3 seconds, the bag goes away some other way and the row settles back.
+function srRemove(sh,row){
+  const sq=row.querySelector('.sr-sq');if(sq._busy)return;
+  if(row.classList.contains('armed')){
+    if(Date.now()-sq._at<(reducedMotion()?0:1650))return;
+    clearTimeout(sq._t);clearTimeout(sq._t0);sq._busy=1;sq.classList.remove('armed');sq.classList.add('confirm');BAG.run(BAG.SEQ.put,sq);
+    setTimeout(()=>{if(S.shows[sh.id]){$('#st-page').hidden=true;removeShowNow(sh.id)}},reducedMotion()?0:2450);return}
+  row.classList.add('armed');sq.classList.add('armed');srAsk(row,true);sq._at=Date.now();
+  sq._t0=setTimeout(()=>BAG.run(BAG.SEQ.enter,sq),300);
+  sq._t=setTimeout(()=>{sq._busy=1;sq.classList.remove('armed');sq.classList.add('leave');const L=BAG.leave();BAG.run(L,sq);
+    setTimeout(()=>{sq.classList.remove('leave');row.classList.remove('armed');srAsk(row,false);sq._busy=0},reducedMotion()?0:L.dur*1000+80)},3000);
+}
 $('#st-page').addEventListener('click',e=>{
   const sh=S.shows[view.id];if(!sh)return;
   if(e.target.closest('#st-back')){closeSettings();return}
@@ -2259,14 +2499,8 @@ $('#st-page').addEventListener('click',e=>{
   const en=e.target.closest('#st-ended');
   if(en){if(sh.ended)delete sh.ended;else sh.ended=true;save();srSet(en,!!sh.ended,sh.ended?'No more episodes expected':'Still releasing episodes');return}
   const rf=e.target.closest('#st-refresh');if(rf){refreshFromSettings(sh,rf);return}
-  // Mark all played / Clear all / Remove: tap once to arm (the row turns red and asks), again within 3 seconds to do it
   const two=e.target.closest('[data-two]');if(!two)return;
-  if(two.classList.contains('armed')){clearTimeout(two._t);const k=two.dataset.two;
-    if(k==='remove'){$('#st-page').hidden=true;removeShowNow(sh.id);return}
-    two.classList.remove('armed');two.querySelector('small').textContent=two.dataset.sub;markAll(k==='all');return}
-  $('#st-body').querySelectorAll('.armed').forEach(x=>{clearTimeout(x._t);x.classList.remove('armed');x.querySelector('small').textContent=x.dataset.sub});
-  const sm=two.querySelector('small');two.dataset.sub=sm.textContent;sm.textContent=SR_ASK[two.dataset.two];two.classList.add('armed');
-  two._t=setTimeout(()=>{if(two.isConnected){two.classList.remove('armed');sm.textContent=two.dataset.sub}},3000);
+  if(two.dataset.two==='remove')srRemove(sh,two);else srToggle(sh,two);
 });
 /* ---------- the cover in 3D: tap the cover in a podcast's window and it lifts out as a framed photo.
    Same camera, timings and swipe feel as Stack Tracker's 3D books: swipe sideways to spin, up/down to tilt, tap to put it back.
@@ -2797,14 +3031,17 @@ $('#app').addEventListener('click',e=>{
 $('#app').addEventListener('click',e=>{
   const row=e.target.closest('.ep');if(!row||view.name!=='show')return;
   const th=e.target.closest('.thru');
-  if(th){   // two taps: the first arms it, the second (within 3 seconds) does it
-    if(th.classList.contains('armed')){th.classList.remove('armed');playedThrough(row.dataset.id);return}
-    document.querySelectorAll('#eps .thru.armed').forEach(x=>x.classList.remove('armed'));
-    th.classList.add('armed');clearTimeout(th._t);th._t=setTimeout(()=>th.classList.remove('armed'),3000);return}
+  if(th){   // two taps: the first arms it (a wave runs through the triangles), the second within 3 seconds does it, after the triangles stack
+    clearTimeout(th._t);
+    if(th.classList.contains('armed')){const id=row.dataset.id;
+      if(reducedMotion()){th.classList.remove('armed','wave');playedThrough(id);return}
+      thruRelease(th,()=>{th.classList.add('stack');setTimeout(()=>playedThrough(id),900)});return}
+    document.querySelectorAll('#eps .thru.armed').forEach(x=>{clearTimeout(x._t);thruRelease(x)});
+    thruArm(th);th._t=setTimeout(()=>thruRelease(th),3000);return}
   else toggleEp(row.dataset.id);
 });
 
-load();syncPlaceholders();render();window.__ptStarted=true;checkBackup();autoRefresh();
+load();syncPlaceholders();render();window.__ptStarted=true;(window.__splDone||Promise.resolve()).then(()=>{checkBackup();autoRefresh()});
 
 /* ---------- offline: the service worker keeps a copy of the app (only when served over http/https, e.g. GitHub Pages) ---------- */
 try{
