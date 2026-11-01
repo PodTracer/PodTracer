@@ -159,6 +159,35 @@
   .tg-add{display:flex; gap:4px; height:45px; margin-top:8px;}
   #tg-new{flex:1; min-width:0; box-sizing:border-box; border:3px solid #000; border-radius:8px; padding:0 10px; background:#fff; font:600 .9rem Arial,sans-serif; outline:none;}
   #tg-addbtn{flex:0 0 25%; margin:0; padding:0; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:var(--ink); color:#fff; font:700 .8rem Arial,sans-serif; text-transform:uppercase; letter-spacing:.5px; cursor:pointer;}
+  /* smart tags: a tag with rules; the editor swaps in for the tag list */
+  .tg-row .tg-ed{flex:0 0 45px; height:45px; margin:0; padding:0; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:#fff; color:var(--ink); font:700 1.05rem/1 Arial,sans-serif; cursor:pointer;}
+  .so-opt .sm-ic{display:inline-block; margin-right:6px; padding:1px 5px; border:2px solid currentColor; border-radius:5px; font:700 .5rem/1.2 Arial,sans-serif; letter-spacing:.5px; vertical-align:2px;}
+  .sm-lab{margin:6px 2px 0; font:700 .6rem Arial,sans-serif; letter-spacing:.8px; text-transform:uppercase; color:var(--muted);}
+  #sm-name{height:45px; box-sizing:border-box; border:3px solid #000; border-radius:8px; padding:0 10px; background:#fff; font:600 .9rem Georgia,serif; color:var(--ink); outline:none;}
+  .sm-seg{display:flex; height:45px; box-sizing:border-box; border:3px solid #000; border-radius:8px; overflow:hidden; background:#fff;}
+  .sm-seg button{flex:1; margin:0; padding:0; border:0; border-radius:0; background:var(--panel); font:700 .7rem Arial,sans-serif; letter-spacing:.4px; text-transform:uppercase; color:var(--ink); cursor:pointer;}
+  .sm-seg button + button{border-left:3px solid #000;}
+  .sm-seg button.on{background:var(--ink); color:#fff;}
+  .sm-rule{display:flex; flex-direction:column; border:3px solid #000; border-radius:8px; overflow:hidden; background:#fff;}
+  .sm-rule .r1{display:flex; height:39px;}
+  /* the rule's choices on wheels, drawn like the time wheels: drag or flick, or tap above / below the middle to step */
+  .lw{position:relative; flex:1; min-width:0; height:39px; overflow:hidden; background:#fff; cursor:grab; touch-action:none;}
+  .lw + .lw{border-left:3px solid #000;}
+  .lw::after{content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:linear-gradient(to bottom, rgba(0,0,0,.16), rgba(0,0,0,0) 34%, rgba(0,0,0,0) 66%, rgba(0,0,0,.16));}
+  .lw div{position:absolute; left:0; right:0; top:0; height:18px; padding:0 6px; text-align:center; color:var(--ink);
+    font:700 .72rem/18px Arial,Helvetica,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; user-select:none; -webkit-user-select:none; will-change:transform;}
+  .sm-rule .lw.sm-fv{flex:none; border-top:3px solid #000;}
+  .sm-rule .sm-x{flex:0 0 39px; margin:0; padding:0; border:0; border-left:3px solid #000; border-radius:0; background:#fff; color:var(--red); font:700 1.2rem/1 Arial,sans-serif; cursor:pointer;}
+  .sm-rule .sm-v{height:39px; box-sizing:border-box; margin:0; padding:0 10px; border:0; border-top:3px solid #000; border-radius:0; background:#fff; font:.85rem Arial,sans-serif; color:var(--ink); outline:none; width:100%;}
+  .sm-rule .sm-v[hidden]{display:none;}
+  .sm-add{height:39px; margin:0; box-sizing:border-box; border:3px dashed #000; border-radius:8px; background:transparent; font:700 .72rem Arial,sans-serif; text-transform:uppercase; letter-spacing:.5px; color:var(--ink); cursor:pointer;}
+  .sm-prev{padding:8px 10px; border:3px solid #000; border-radius:8px; background:var(--panel); font:.7rem/1.35 Arial,sans-serif; color:var(--muted);}
+  .sm-prev b{color:var(--ink);} .sm-prev i{display:block; font-style:normal; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sm-err{font:700 .7rem Arial,sans-serif; color:var(--red); padding:0 2px;}
+  .sm-btns{display:flex; gap:4px; height:45px; margin-top:8px;}
+  .sm-btns button{flex:1; margin:0; padding:0; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:#fff; color:var(--ink); font:700 .8rem Arial,sans-serif; text-transform:uppercase; letter-spacing:.5px; cursor:pointer;}
+  .sm-btns #sm-save{background:var(--ink); color:#fff;} .sm-btns #sm-del{flex:0 0 25%; color:var(--red);}
   .so-head{position:sticky; top:0; z-index:1; display:flex; padding-top:env(safe-area-inset-top); background:var(--bg); border-bottom:3px solid #000;}
   .so-head button{flex:0 0 25%; height:42px; margin:0; border:0; border-radius:0; background:var(--ink); color:#fff; cursor:pointer;
     font:600 .85rem Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase;}
@@ -384,6 +413,11 @@
     font-family:Arial,sans-serif; font-size:min(.74rem, 2.95vw); font-weight:700; user-select:none;}
   .tabs .tab.active{background:var(--ink); color:#fff;}
   #app.fit{height:calc(100dvh - var(--header-h,50px) - var(--footer-h,0px) - 8px);}
+  /* a podcast's window: the page itself stays put, and the episodes card fills what's left of the screen and scrolls inside */
+  #app.show-fit{height:calc(100dvh - var(--header-h,50px) - var(--footer-h,0px) - 8px); overflow:hidden;}
+  #app.show-fit .ep-wrap{flex:1 1 auto; min-height:0;}
+  #app.show-fit #eps{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;}
+  #app.show-fit #eps > *{flex-shrink:0;}   /* the cards keep their size; the card scrolls instead of squeezing them */
   .dt-card{display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; flex:none;
     height:45px; padding:0 8px; background:var(--panel); border:3px solid #000; border-radius:8px;
     font-family:Arial,sans-serif; font-size:.62rem; color:var(--muted); line-height:1.15;}
@@ -631,6 +665,73 @@
   @keyframes lidseq{0%{transform:rotate(0deg)} 14%{transform:rotate(-94deg)} 18%{transform:rotate(-90deg)} 56%{transform:rotate(-90deg)} 70%{transform:rotate(4deg)} 76%,100%{transform:rotate(0deg)}}
   @keyframes canput{0%,75%{transform:translate(-11px,0) scale(.62)} 100%{transform:none}}
   @media (prefers-reduced-motion:reduce){.gear-card.turn .gt, .tri-sec.go polygon, .ep .thru polygon, #st-body .sr-sq *, #sf-search.zoom svg, .sr-row.busy .sr-sq svg{animation:none!important;} #st-all .ckm{stroke-dashoffset:0;} #st-all .sr-sq:not(.armed) .ckm{opacity:0;} #st-clear .sr-sq.armed .cl{opacity:0;}}
+  /* the Tags window's dividers: shorter than the Library's */
+  #tg-body .list-divider{height:24px;}
+  #tg-body .list-divider span{font-size:.78rem;}
+  #tg-body .tg-add{margin-top:4px;}
+  /* one card per tag of the podcast's own: the tag, then a square section to remove it; the new-tag box with a square to add.
+     One symbol for both: a plus with rounded ends, turned 45° for remove */
+  .tg-card{display:flex; height:45px; box-sizing:border-box; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--panel);}
+  .tg-card .so-opt{flex:1; min-width:0; height:auto; border:0; border-radius:0;}
+  .tg-sq{flex:0 0 39px; display:grid; place-items:center; margin:0; padding:0; border:0; border-left:3px solid #000; border-radius:0; background:#fff; cursor:pointer;}
+  .tg-sq svg{width:26px; height:26px; display:block;}
+  .tg-card #tg-addbtn{flex:0 0 39px; height:auto; border:0; border-left:3px solid #000; border-radius:0; background:#2e4636; color:#fff;}
+  .tg-card.tg-add{gap:0;}
+  .tg-card #tg-new{flex:1; min-width:0; height:auto; border:0; border-radius:0; padding:0 10px; background:#fff; font:600 .9rem Arial,sans-serif; outline:none;}
+  /* the podcast's own tags: the new-tag box on top, its tags hanging under it like a dropdown that's always open */
+  .tg-dd{display:flex; flex-direction:column; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--unread);}
+  .tg-dd-top{display:flex; height:42px; background:#fff; border-bottom:3px solid #000;}
+  .tg-dd-top #tg-new{flex:1; min-width:0; height:auto; box-sizing:border-box; border:0; border-radius:0; padding:0 10px; background:#fff; font:600 .9rem Arial,sans-serif; outline:none;}
+  .tg-dd-top #tg-addbtn{flex:0 0 39px; height:auto; border:0; border-left:3px solid #000; border-radius:0; background:#2e4636; color:#fff;}
+  .tg-dd-list{display:flex; flex-direction:column; gap:4px; padding:4px;}
+  .tg-card.sm{height:34px;}
+  .tg-card.sm .so-opt{flex-direction:row; align-items:baseline; justify-content:flex-start; gap:8px; padding:0 10px; align-self:stretch; display:flex; align-items:center;}
+  .tg-card.sm .so-opt b{font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+  .tg-card.sm .so-opt span{flex:none; margin-left:auto;}
+  .tg-card.sm .tg-sq{flex:0 0 28px;} .tg-card.sm .tg-sq svg{width:20px; height:20px;}
+  .tg-dd-none{height:34px; display:flex; align-items:center; justify-content:center; font:.68rem Arial,sans-serif; color:var(--muted);}
+  /* the tag an episode has on its own (not picked by you): just a note on its line, no fill or outline */
+  .so-opt.auto > span::after{content:' · this episode, on its own';}
+  /* smart tags: the same dropdown card; each tag's rules open right under it */
+  .tg-sq.ex{color:var(--ink);} .tg-sq.ex svg{transition:transform .2s ease;}
+  .tg-card.open .tg-sq.ex svg{transform:rotate(180deg);}
+  .tg-card.sm .so-opt b{display:flex; align-items:center;}
+  .tg-card.sm .sm-ic{flex:none; padding:0 4px; font-size:.46rem; line-height:1.4;}
+  .sm-panel{display:flex; flex-direction:column; gap:4px; margin-top:-2px; padding:4px 6px 6px; background:#fff; border:3px solid #000; border-radius:8px;}
+  .sm-panel .sm-lab{margin:2px 2px 0;}
+  .sm-panel #sm-name{height:39px;}
+  .sm-panel .sm-seg{height:39px;}
+  .sm-panel .sm-btns{height:39px; margin-top:2px;}
+  .tg-dd-top input{flex:1; min-width:0; height:auto; box-sizing:border-box; border:0; border-radius:0; padding:0 10px; background:#fff; font:600 .9rem Arial,sans-serif; color:var(--ink); outline:none;}
+  #tg-body .tg-dd-top .tg-sq.add{flex:0 0 39px; height:auto; margin:0; border:0; border-left:3px solid #000; border-radius:0; background:#2e4636; color:#fff;}
+  .tg-card.sm .so-opt > span{min-width:0; flex:0 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tg-card.sm .so-opt b{flex:0 0 auto; max-width:62%;}   /* the name keeps its room; the count line gives way first */
+  /* the plus / × squares */
+  .tg-sq svg{overflow:visible;}
+  .pl-shd{filter:drop-shadow(0 1.3px 1px rgba(0,0,0,.45));}
+  .tg-sq path{fill:none; stroke-width:4.2; stroke-linecap:round;}
+  .tg-sq .pl-t{stroke:var(--pt);} .tg-sq .pl-e{stroke:var(--pe);}
+  #tg-body .tg-sq.add, #tg-body .tg-dd-top .tg-sq.add{background:#2e4636; --pt:#fff; --pe:#a9a59e;}
+  .tg-sq.add svg{width:24px; height:24px;}
+  .tg-sq.add:active svg{transform:scale(.88);} .tg-sq svg{transition:transform .12s ease;}
+  .tg-sq.del{--pt:#c43c3c; --pe:#7f2424;} .tg-sq.del .pl-shd{filter:drop-shadow(0 1px .8px rgba(0,0,0,.3));}
+  .tg-card.sm .tg-sq.del svg{width:20px; height:20px;}
+  /* a new smart tag opens the header up: every part a section of it, split by the same black lines, no cards inside */
+  .sm-hdx{display:flex; flex-direction:column; border-bottom:3px solid #000;}
+  .sm-hdx .sec{display:flex; flex-direction:column; gap:4px; padding:4px; background:var(--unread);}
+  .sm-hdx .sec + .sec{border-top:3px solid #000;}
+  .sm-hdx .sm-seg, .sm-hdx .sm-add, .sm-hdx .sm-btns{height:39px;}
+  .sm-hdx .sm-add{background:#fff;}
+  .sm-hdx .sm-btns{margin:0;}
+  .sm-hdx .sm-err{padding:0 2px;} .sm-hdx .sm-err:empty{display:none;}
+  .tg-dd-top.ed #sm-name{flex:1; min-width:0; height:auto; box-sizing:border-box; border:0; border-radius:0; padding:0 10px; background:#fff; font:600 .9rem Arial,sans-serif; color:var(--ink); outline:none;}
+  /* the smart tag go button: triangles to the right; open, they point down; once there's a rule to save they become the plus */
+  .tg-sq.go{position:relative; overflow:hidden;}
+  .tg-sq.go .g-tri, .tg-sq.go .g-pl{position:absolute; left:50%; top:50%;}
+  .tg-sq.go .g-tri{width:28px; height:28px; margin:-14px 0 0 -14px;}
+  .tg-sq.go .g-pl{width:24px; height:24px; margin:-12px 0 0 -12px; opacity:0;}
+  .tg-sq.go .g-pl svg{width:24px; height:24px;}
+  .tg-sq.go polygon{filter:none;}
 </style>
 </head>
 <body>
@@ -760,9 +861,10 @@ function size(){
   splash.style.setProperty('--shift',shift.toFixed(1)+'px');
 }
 let LY=null;   // the splash's measurements, read once (and again on a resize) instead of every frame, so frames never force a layout
-function measure(){const box=document.querySelector('#spl .icon').getBoundingClientRect(),nm=document.getElementById('spl-wake'),tg=document.getElementById('spl-tag');
+function measure(){const ic=document.querySelector('#spl .icon');if(!ic)return;const box=ic.getBoundingClientRect(),nm=document.getElementById('spl-wake'),tg=document.getElementById('spl-tag');
   LY={box,sc:box.width/512,nmW:nm.offsetWidth,nmH:nm.offsetHeight,tgW:tg.offsetWidth,tgH:tg.offsetHeight,tgTop:tg.offsetTop}}
-addEventListener('resize',()=>{size();if(LY)measure()});size();
+const onSize=()=>{if(!splash.isConnected){removeEventListener('resize',onSize);return}size();if(LY)measure()};   // only while the splash is up
+addEventListener('resize',onSize);size();
 const easeIn=t=>t*t*t;
 const pools=new Map();
 function poolStart(g){let P=pools.get(g);if(!P){P={g,els:[],n:0};pools.set(g,P)}P.n=0;return P}
@@ -945,8 +1047,30 @@ let S={shows:{},order:[]};
 let view={name:'lib',id:null,filter:'all',sort:'new',q:'',results:[],searching:false,lastTerm:'',libSort:'recent'};
 
 /* ---------- storage ---------- */
-function load(){try{const r=localStorage.getItem(KEY);if(r)S=JSON.parse(r)}catch(e){}if(!S.shows)S={shows:{},order:[]}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Could not save — storage full or blocked')}}
+/* saved data: every episode is written the same way, as the feed gave it. Your changes sit on the same episode under a starred key
+   right after the feed's own ("title" the feed's, "title*" yours), so the original is always kept. In the app they live in sh.edits */
+function packEdits(d){
+  const shows={};
+  for(const id in d.shows){const sh=d.shows[id];if(!sh||!sh.edits||!sh.episodes){shows[id]=sh;continue}
+    const {edits,...rest}=sh,left={...edits};
+    rest.episodes=sh.episodes.map(e=>{const x=edits[e.id];if(!x)return e;delete left[e.id];const o={};
+      for(const k in e){o[k]=e[k];if(x[k]!==undefined)o[k+'*']=x[k];if(k==='title'&&x.guests!==undefined)o['guests*']=x.guests}
+      for(const k in x)if(o[k+'*']===undefined)o[k+'*']=x[k];
+      return o});
+    if(Object.keys(left).length)rest.edits=left;   // (an edit whose episode isn't in the list: kept as it was)
+    shows[id]=rest}
+  return {...d,shows};
+}
+function unpackEdits(d){
+  if(!d||typeof d.shows!=='object')return d;
+  for(const id in d.shows){const sh=d.shows[id];if(!sh||!Array.isArray(sh.episodes))continue;
+    sh.episodes=sh.episodes.map(e=>{let o=null;
+      for(const k in e)if(k.endsWith('*')){if(!o)o={...e};const f=k.slice(0,-1);sh.edits=sh.edits||{};(sh.edits[e.id]=sh.edits[e.id]||{})[f]=e[k];delete o[k]}
+      return o||e})}
+  return d;
+}
+function load(){try{const r=localStorage.getItem(KEY);if(r)S=unpackEdits(JSON.parse(r))}catch(e){}if(!S.shows)S={shows:{},order:[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(packEdits(S)))}catch(e){toast('Could not save — storage full or blocked')}}
 
 /* ---------- utils ---------- */
 const $=s=>document.querySelector(s);
@@ -1320,6 +1444,36 @@ function tagCodes(sh){
   }
   return out;
 }
+/* smart tags: a tag of yours with rules (sh.smart: {id: {all, rules:[{f, op, v}]}}). An episode with no tag of your own
+   choosing takes the first smart tag whose rules it meets; a tag you set by hand always wins */
+const SM_FIELDS={title:['Title',[['has','contains'],['also','also contains'],['not','doesn’t contain']]],
+  guest:['Guests',[['has','include'],['also','also include'],['not','don’t include'],['some','has any guest'],['none','has no guests']]],
+  feed:['Feed type',[['is','is'],['isnt','isn’t']]],
+  len:['Length',[['gt','longer than (min)'],['lt','shorter than (min)']]],
+  date:['Released',[['after','after'],['before','before']]],
+  season:['Season',[['is','is'],['isnt','isn’t']]]};
+const SM_HINT={title:'words, comma between each (any one counts)',guest:'names, comma between each',len:'minutes',season:'season number'};
+const smTerms=v=>String(v||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
+function smTest(r,e){
+  const v=r.v==null?'':String(r.v);
+  switch(r.f){
+    case 'title':{const t=e.title.toLowerCase(),w=smTerms(v);if(!w.length)return r.op==='not';const hit=w.some(x=>t.includes(x));return r.op==='not'?!hit:hit}
+    case 'guest':{if(r.op==='some')return e.guests.length>0;if(r.op==='none')return !e.guests.length;
+      const g=e.guests.join('|').toLowerCase(),w=smTerms(v);if(!w.length)return r.op==='not';const hit=w.some(x=>g.includes(x));return r.op==='not'?!hit:hit}
+    case 'feed':{const ft=feedTag(e);return r.op==='isnt'?ft!==v:ft===v}
+    case 'len':{const m=parseFloat(v);if(!isFinite(m))return false;const d=(e.dur||0)/60;return r.op==='lt'?d<m:d>m}
+    case 'date':{if(!v)return false;const t=new Date(v+'T00:00').getTime();if(!isFinite(t))return false;return r.op==='before'?e.date<t:e.date>=t+864e5}
+    case 'season':{const n=parseInt(v,10);if(!isFinite(n))return false;return r.op==='isnt'?(+e.season||0)!==n:(+e.season||0)===n}
+  }
+  return false;
+}
+// "also" rules add to what the tag catches: an episode that meets any of them is in, on top of what the other rules find
+const smMatch=(sm,e)=>{const rs=(sm.rules||[]);if(!rs.length)return false;
+  const also=rs.filter(r=>r.op==='also'),base=rs.filter(r=>r.op!=='also');
+  if(also.some(r=>smTest(r,e)))return true;
+  if(!base.length)return false;
+  return sm.all===false?base.some(r=>smTest(r,e)):base.every(r=>smTest(r,e))};
+function smartTagOf(sh,e){if(!sh.smart)return null;for(const k in sh.smart)if(sh.tags&&sh.tags[k]&&smMatch(sh.smart[k],e))return k;return null}
 const feedTag=e=>e.type==='bonus'?'bonus':(e.type==='trailer'||e.type==='promo')?'promo':'main';
 // the episodes as you see them: your title, date and tag over the feed's. Edits live in sh.edits, so a feed refresh never undoes them
 // each episode's title split into the title and its guests (kept, so long lists don't re-parse every time)
@@ -1342,9 +1496,11 @@ function eps(sh){
   const ed=sh.edits||{};
   return sh.episodes.map(e=>{const x=ed[e.id],op=partsOf(e.title);
     const or=(v,d)=>v==null?d:v;
-    if(!x)return {...e,title:op.title,guests:op.guests,tag:feedTag(e)};
-    const tg=x.tag&&!TAGS[x.tag]&&!(sh.tags&&sh.tags[x.tag])?null:x.tag;   // a tag that no longer exists falls back to the feed's
-    return {...e,title:or(x.title,op.title),guests:x.guests!=null?guestParse(x.guests):op.guests,date:or(x.date,e.date),tag:or(tg,feedTag(e)),dur:or(x.dur,e.dur),season:or(x.season,e.season),ep:or(x.ep,e.ep),edited:true}});
+    // the tag: yours if you set one, else the first smart tag it meets, else the feed's
+    if(!x){const o={...e,title:op.title,guests:op.guests};o.tag=smartTagOf(sh,o)||feedTag(e);return o}
+    const tg=x.tag&&!TAGS[x.tag]&&!(sh.tags&&sh.tags[x.tag])?null:x.tag;   // a tag that no longer exists falls back
+    const o={...e,title:or(x.title,op.title),guests:x.guests!=null?guestParse(x.guests):op.guests,date:or(x.date,e.date),dur:or(x.dur,e.dur),season:or(x.season,e.season),ep:or(x.ep,e.ep),edited:true};
+    o.tag=tg||smartTagOf(sh,o)||feedTag(e);return o});
 }
 const nm=sh=>(sh.rename&&sh.rename.title)||sh.title;      // the show's name as you see it
 const au=sh=>(sh.rename&&sh.rename.author!=null)?sh.rename.author:(sh.author||'');
@@ -1547,7 +1703,7 @@ function markAll(val){
 /* ---------- backup ---------- */
 const DAY=86400000;
 function bk(){if(!S.backup)S.backup={every:'week',day:new Date().getDay(),last:0};return S.backup}
-function libraryJSON(){const {backup,phVer,...rest}=S;return JSON.stringify(stripPlaceholders(rest),null,1)}
+function libraryJSON(){const {backup,phVer,...rest}=S;return JSON.stringify(packEdits(stripPlaceholders(rest)),null,1)}
 function stripPlaceholders(d){
   const shows={};for(const id in d.shows)if(!isPlaceholder(d.shows[id]))shows[id]=d.shows[id];
   return{...d,shows,order:(d.order||[]).filter(id=>shows[id])};
@@ -1665,7 +1821,7 @@ function parseImport(txt){
     try{d=JSON.parse(txt.slice(a,b+1))}catch(e2){return{state:'error',msg:'Not valid JSON'}}
   }
   if(!d||typeof d.shows!=='object'||!Array.isArray(d.order))return{state:'error',msg:'Not a Pod Tracker backup'};
-  d=stripPlaceholders(d);
+  d=stripPlaceholders(unpackEdits(d));   // older backups (a separate edits list) read the same
   if(!d.order.length)return{state:'error',msg:'Only sample podcasts in this backup'};
   const shows=d.order.map(id=>d.shows[id]).filter(Boolean);
   const played=shows.reduce((n,sh)=>n+Object.keys(sh.played||{}).length,0);
@@ -1715,6 +1871,7 @@ function render(){
   $('#tabs').hidden=bar;$('#ttl-bar').hidden=!bar;
   $('#tb-edit').classList.toggle('blank',!inShow);
   $('#app').classList.toggle('fit',view.name==='data');
+  $('#app').classList.toggle('show-fit',inShow&&!view.edit);
   if(view.name==='lib')renderLib();
   else if(view.name==='search')renderSearch();
   else if(view.name==='data')renderData();
@@ -1837,9 +1994,8 @@ function goToNext(){
   if(!row){view.filter='all';view.tag='all';view.q='';const q=$('#sfq');if(q){q.value='';$('#sf-card').classList.remove('searching')}
     if($('#sf-fname'))$('#sf-fname').textContent=SF.show.filters.all[1];renderEpisodes();row=find();}
   if(!row)return;
-  const hh=$('#app-header').getBoundingClientRect().bottom,r=row.getBoundingClientRect();
-  const y=scrollY+r.top+r.height/2-(hh+(innerHeight-hh)/2);
-  scrollTo({top:Math.max(0,y),behavior:'smooth'});
+  const box=$('#eps'),b=box.getBoundingClientRect(),r=row.getBoundingClientRect();   // centered in the episodes card, which scrolls on its own
+  box.scrollTo({top:Math.max(0,box.scrollTop+r.top-b.top+r.height/2-box.clientHeight/2),behavior:'smooth'});
   row.classList.remove('flash');void row.offsetWidth;row.classList.add('flash');
 }
 // the podcast window's own simple card: name, next episode, stats, and the check (or the caught-up / completed state)
@@ -2124,11 +2280,11 @@ document.addEventListener('click',e=>{
   c.redraw();
 });
 // what Edit can change on a show (episode edits, its name and publisher, its color), kept so Cancel can put it back
-function takeEditSnapshot(sh){view.snap={id:sh.id,data:JSON.stringify({edits:sh.edits||null,rename:sh.rename||null,color:sh.color||null,colorHS:sh.colorHS||null,tags:sh.tags||null})}}
+function takeEditSnapshot(sh){view.snap={id:sh.id,data:JSON.stringify({edits:sh.edits||null,rename:sh.rename||null,color:sh.color||null,colorHS:sh.colorHS||null,tags:sh.tags||null,smart:sh.smart||null})}}
 function restoreEditSnapshot(sh){
   if(!view.snap||view.snap.id!==sh.id)return;
   const d=JSON.parse(view.snap.data);
-  for(const k of ['edits','rename','color','colorHS','tags'])if(d[k]==null)delete sh[k];else sh[k]=d[k];
+  for(const k of ['edits','rename','color','colorHS','tags','smart'])if(d[k]==null)delete sh[k];else sh[k]=d[k];
   view.snap=null;save();
 }
 function renderShow(){
@@ -2756,8 +2912,16 @@ function f3done(){
 // leaving the window (Back, browser back) while it's up: put it away at once
 function f3dismiss(){if(F3.phase==='idle')return;F3.phase='idle';$('#f3-back').classList.remove('on','quick');if(F3.card)F3.card.classList.remove('lifted');
   $('#f3-canvas').classList.remove('on');document.body.classList.remove('f3-open');F3.busy=false;if(F3.frame){F3.scene.remove(F3.frame);F3.frame=null}}
+/* the tags window's symbols, drawn like the app's other icons */
+const CHEV='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const GO_TRI='<svg class="g-tri" viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(40 0) scale(-1 1)"><g class="pl-shd">'+[['#a9a59e',18.5],['#d6d3ce',25],['#fff',31.5]].map(([c,x])=>`<polygon points="${x},7.5 ${x},32.5 ${x-12},20" fill="${c}" stroke="${c}" stroke-width="1.6" stroke-linejoin="round"/>`).join('')+'</g></g></svg>';
+// the plus (turned 45° it's the remove ×), drawn like the app's other icons: a solid face over a darker edge for its thickness, with a soft shadow
+const PLUS='<svg viewBox="0 0 24 24" aria-hidden="true"><g class="pl-shd"><path class="pl-e" d="M12 5v14M5 12h14" transform="translate(0 1.3)"/><path class="pl-t" d="M12 5v14M5 12h14"/></g></svg>';
+// the same plus turned 45° for remove; turned inside, so its edge still falls straight down like the others
+const XMARK='<svg viewBox="0 0 24 24" aria-hidden="true"><g class="pl-shd"><path class="pl-e" d="M12 5v14M5 12h14" transform="translate(0 1.1) rotate(45 12 12)"/><path class="pl-t" d="M12 5v14M5 12h14" transform="rotate(45 12 12)"/></g></svg>';
 function removeTag(sh,k){           // its episodes go back to the feed's tag
   if(!sh.tags||!sh.tags[k])return;delete sh.tags[k];if(!Object.keys(sh.tags).length)delete sh.tags;
+  if(sh.smart){delete sh.smart[k];if(!Object.keys(sh.smart).length)delete sh.smart}
   if(sh.edits)for(const id in sh.edits)if(sh.edits[id].tag===k)setEdit(sh,id,'tag',null);
   if(sh.skipTags){sh.skipTags=sh.skipTags.filter(x=>x!==k);if(!sh.skipTags.length)delete sh.skipTags}
   save();
@@ -2765,29 +2929,157 @@ function removeTag(sh,k){           // its episodes go back to the feed's tag
 /* ---------- tags window (from an episode's +): the permanent tags, this podcast's own, and a box to add one.
    Tapping a tag puts it on that episode and closes the window ---------- */
 const TAG_INFO={main:'Full episodes · from the feed',bonus:'Bonus episodes · from the feed',promo:'Trailers and promos · from the feed'};
-function openTagPage(epId){view.tagEp=epId;paintTagPage();$('#tg-page').hidden=false;$('#tg-page').scrollTop=0}
-function closeTagPage(){$('#tg-page').hidden=true;view.tagEp=null;renderEpisodes()}
+function openTagPage(epId){view.tagEp=epId;view.smEd=null;paintTagPage();$('#tg-page').hidden=false;$('#tg-page').scrollTop=0}
+function closeTagPage(){$('#tg-page').hidden=true;view.tagEp=null;view.smEd=null;$('#tg-page h2').textContent='Tags';renderEpisodes()}
 function paintTagPage(){
   const sh=S.shows[view.id];if(!sh)return;
   const cur=(eps(sh).find(e=>e.id===view.tagEp)||{}).tag;
+  // filled: the tag you picked for this episode (tap it again to take it off); outlined: the tag it has on its own (feed or smart tag)
+  const mine=((sh.edits||{})[view.tagEp]||{}).tag,picked=mine&&tagsOf(sh)[mine]?mine:null;
+  const sel=k=>picked===k?'on':!picked&&cur===k?'auto':'';
   const counts={};eps(sh).forEach(e=>counts[e.tag]=(counts[e.tag]||0)+1);
   const n=k=>counts[k]?`${counts[k]} episode${counts[k]>1?'s':''}`:'No episodes yet';
-  const own=Object.entries(sh.tags||{});
+  const sm=sh.smart||{},own=Object.entries(sh.tags||{}).filter(([k])=>!sm[k]),smart=Object.entries(sh.tags||{}).filter(([k])=>sm[k]);
+  const rl=k=>{const r=(sm[k].rules||[]).length;return `${r} rule${r===1?'':'s'}`},ed=view.smEd;
   $('#tg-body').innerHTML=`<div class="list-divider"><span>Permanent tags</span></div>
-    ${Object.entries(TAGS).map(([k,v])=>`<button type="button" class="so-opt ${cur===k?'on':''}" data-tag="${k}"><b>${v}</b><span>${TAG_INFO[k]} · ${n(k)}</span></button>`).join('')}
+    ${Object.entries(TAGS).map(([k,v])=>`<button type="button" class="so-opt ${sel(k)}" data-tag="${k}"><b>${v}</b><span>${TAG_INFO[k]} · ${n(k)}</span></button>`).join('')}
     <div class="list-divider"><span>This podcast’s tags</span></div>
-    ${own.length?own.map(([k,v])=>`<div class="tg-row"><button type="button" class="so-opt ${cur===k?'on':''}" data-tag="${esc(k)}"><b>${esc(v)}</b><span>${n(k)}</span></button><button type="button" class="tg-del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">×</button></div>`).join('')
-      :'<div class="tg-none">None yet. Add one below.</div>'}
-    <div class="tg-add"><input id="tg-new" placeholder="New tag name" maxlength="20" enterkeyhint="done" aria-label="New tag name"><button type="button" id="tg-addbtn">Add</button></div>`;
+    <div class="tg-dd"><div class="tg-dd-top"><input id="tg-new" placeholder="New tag name" maxlength="20" enterkeyhint="done" aria-label="New tag name"><button type="button" class="tg-sq add" id="tg-addbtn" aria-label="Add this tag">${PLUS}</button></div>
+      <div class="tg-dd-list">${own.length?own.map(([k,v])=>`<div class="tg-card sm"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b>${esc(v)}</b><span>${n(k)}</span></button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>`).join('')
+        :'<div class="tg-dd-none">No tags of this podcast’s own yet</div>'}</div></div>
+    <div class="list-divider"><span>Smart tags</span></div>
+    <div class="tg-dd" id="sm-dd">${ed&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="sm-newname" placeholder="New smart tag name" maxlength="20" enterkeyhint="done" aria-label="New smart tag name"><button type="button" class="tg-sq add go" id="sm-new" aria-label="Set up this smart tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}
+      <div class="tg-dd-list">${smart.map(([k,v])=>`<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b><span class="sm-ic">AUTO</span>${esc(v)}</b><span>${rl(k)} · ${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Rules for ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel():''}`).join('')}
+        ${!smart.length&&!ed?'<div class="tg-dd-none">Tags that put themselves on episodes, by your rules</div>':''}</div></div>`;
+  smPreview(sh);
+}
+/* the smart tag editor: a name, all or any, the rules, and a live count of what it catches */
+const LW_ROW=18,LW_TOP=10.5;   // row height; where the middle row sits in the 39px window
+function lwHTML(cls,i,opts,cur){const at=Math.max(0,opts.findIndex(o=>o[0]===cur));
+  return `<div class="lw ${cls}" data-i="${i}" data-at="${at}" data-vals="${esc(JSON.stringify(opts.map(o=>o[0])))}">${opts.map(([,n],j)=>`<div style="${lwRow(j,at)}">${esc(n)}</div>`).join('')}</div>`}
+const lwRow=(j,pos)=>`transform:translateY(${(LW_TOP+(j-pos)*LW_ROW).toFixed(2)}px);opacity:${Math.max(0,1-Math.abs(j-pos)*.7).toFixed(2)}`;
+function lwPaint(w,pos){const c=Math.round(pos);if(w._c!==undefined&&w._c!==c){try{navigator.vibrate&&navigator.vibrate(4)}catch(_){}}w._c=c;
+  [...w.children].forEach((d,j)=>{d.style.transform=`translateY(${(LW_TOP+(j-pos)*LW_ROW).toFixed(2)}px)`;d.style.opacity=Math.max(0,1-Math.abs(j-pos)*.7).toFixed(2)})}
+function lwSettle(w,pos,vel){
+  const n=w.children.length,cl=p=>Math.max(0,Math.min(n-1,p));cancelAnimationFrame(w._af);let last=null;
+  const glide=ts=>{if(last===null){last=ts;w._af=requestAnimationFrame(glide);return}
+    const dt=Math.min(.04,(ts-last)/1000);last=ts;const np=pos+vel*dt;vel*=Math.exp(-5*dt);
+    if(np<0||np>n-1){pos=cl(np);vel=0}else pos=np;lwPaint(w,pos);
+    if(Math.abs(vel)<2)snap();else w._af=requestAnimationFrame(glide)};
+  const snap=()=>{const from=pos,to=cl(Math.round(pos));let st=null;
+    const f=ts=>{if(st===null)st=ts;const t=Math.min(1,(ts-st)/110);pos=from+(to-from)*(1-Math.pow(1-t,3));lwPaint(w,pos);
+      if(t<1)w._af=requestAnimationFrame(f);else{w._pos=to;if(+w.dataset.at!==to){w.dataset.at=to;lwPicked(w,JSON.parse(w.dataset.vals)[to])}}};
+    w._af=requestAnimationFrame(f)};
+  if(Math.abs(vel)<2)snap();else w._af=requestAnimationFrame(glide);
+}
+// a wheel has stopped on something new: put it in the rule
+function lwPicked(w,val){const d=view.smEd,sh=S.shows[view.id];if(!d||!sh)return;const r=d.rules[+w.dataset.i];if(!r)return;
+  if(w.classList.contains('sm-f')){r.f=val;r.op=SM_FIELDS[val][1][0][0];r.v=val==='feed'?'bonus':'';
+    const card=w.closest('.sm-rule'),tmp=document.createElement('div');tmp.innerHTML=smRuleHTML(r,+w.dataset.i);card.replaceWith(tmp.firstElementChild);smPreview(sh);return}
+  if(w.classList.contains('sm-op')){r.op=val;const v=w.closest('.sm-rule').querySelector('input.sm-v');if(v)v.hidden=val==='some'||val==='none';smPreview(sh);return}
+  if(w.classList.contains('sm-fv')){r.v=val;smPreview(sh)}}
+$('#tg-page').addEventListener('pointerdown',e=>{
+  const w=e.target.closest('.lw');if(!w)return;
+  cancelAnimationFrame(w._af);e.preventDefault();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  const start=w._pos!=null?w._pos:+w.dataset.at,y0=e.clientY,n=w.children.length;let pos=start,moved=false;
+  const samples=[{t:e.timeStamp,y:e.clientY}];try{w.setPointerCapture(e.pointerId)}catch(_){}
+  const move=ev=>{if(Math.abs(ev.clientY-y0)>3)moved=true;pos=Math.max(-.4,Math.min(n-.6,start-(ev.clientY-y0)/LW_ROW));lwPaint(w,pos);
+    samples.push({t:ev.timeStamp,y:ev.clientY});while(samples.length>1&&ev.timeStamp-samples[0].t>100)samples.shift()};
+  const up=ev=>{w.removeEventListener('pointermove',move);w.removeEventListener('pointerup',up);w.removeEventListener('pointercancel',up);
+    if(!moved){const r=w.getBoundingClientRect(),off=(ev.clientY-r.top-r.height/2)/LW_ROW;   // a tap: step toward the row tapped
+      lwSettle(w,start+(Math.abs(off)<.5?0:Math.sign(off)),0);return}
+    const a=samples[0],b=samples[samples.length-1],held=ev.timeStamp-b.t>80;   // held still before letting go: no flick
+    lwSettle(w,pos,!held&&b.t>a.t?-((b.y-a.y)/(b.t-a.t))*1000/LW_ROW:0)};
+  w.addEventListener('pointermove',move);w.addEventListener('pointerup',up);w.addEventListener('pointercancel',up);
+});
+$('#tg-page').addEventListener('wheel',e=>{const w=e.target.closest('.lw');if(!w)return;e.preventDefault();
+  lwSettle(w,(w._pos!=null?w._pos:+w.dataset.at)+(e.deltaY>0?1:-1),0)},{passive:false});
+function smNewRule(){return {f:'title',op:'has',v:''}}
+function smRuleHTML(r,i){
+  const ops=SM_FIELDS[r.f][1],noV=r.op==='some'||r.op==='none';
+  const val=r.f==='feed'?lwHTML('sm-fv',i,Object.entries(TAGS),r.v)
+    :`<input class="sm-v" data-i="${i}" ${r.f==='date'?'type="date"':r.f==='len'||r.f==='season'?'inputmode="numeric"':''} value="${esc(r.v)}" placeholder="${esc(SM_HINT[r.f]||'')}" enterkeyhint="done" ${noV?'hidden':''}>`;
+  return `<div class="sm-rule" data-i="${i}"><div class="r1">${lwHTML('sm-f',i,Object.entries(SM_FIELDS).map(([k,[n]])=>[k,n]),r.f)}${lwHTML('sm-op',i,ops,r.op)}
+    <button type="button" class="sm-x" data-i="${i}" aria-label="Remove this rule">×</button></div>${val}</div>`;
+}
+// the editor, opened inside the dropdown under its tag (or at the top for a new one): name, all or any, the rules, what they catch
+function smPanel(){const d=view.smEd;
+  return `<div class="sm-panel"><div class="sm-lab">Name</div><input id="sm-name" maxlength="20" value="${esc(d.name)}" placeholder="Tag name" enterkeyhint="done" aria-label="Smart tag name">
+    <div class="sm-lab">Rules</div>${d.rules.map(smRuleHTML).join('')}<button type="button" class="sm-add" id="sm-addrule">+ Add a rule</button>
+    <div class="sm-prev" id="sm-prev"></div><div class="sm-err" id="sm-err"></div>
+    <div class="sm-btns"><button type="button" id="sm-cancel">Cancel</button><button type="button" id="sm-save">Save</button></div></div>`}
+const paintSmartEd=()=>paintTagPage();
+// a new smart tag: the header itself opens up, one section under another — its name stays in the header box, the plus turns into ×
+function smHeadEd(){const d=view.smEd;
+  return `<div class="tg-dd-top ed"><input id="sm-name" maxlength="20" value="${esc(d.name)}" placeholder="New smart tag name" enterkeyhint="done" aria-label="Smart tag name"><button type="button" class="tg-sq add go" id="sm-go" aria-label="Add this smart tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>
+    <div class="sm-hdx"><div class="sec">${d.rules.map(smRuleHTML).join('')}<button type="button" class="sm-add" id="sm-addrule">+ Add a rule</button></div>
+      <div class="sec"><div class="sm-prev" id="sm-prev"></div><div class="sm-err" id="sm-err"></div></div>
+      <div class="sec"><div class="sm-btns"><button type="button" id="sm-cancel2">Cancel</button></div></div></div>`}
+// what the rules catch right now (episodes you've tagged by hand keep their own tag)
+const smReady=d=>!!(d&&d.name.trim()&&d.rules.some(r=>r.op==='some'||r.op==='none'||String(r.v).trim()!==''));
+/* drop & bounce, as the header opens: the triangles tip and fall out the bottom one after another; the plus drops in from the top
+   and bounces to a stop. A redraw (adding a rule) keeps it as the plus */
+const dbSeg=(t,a,b)=>Math.max(0,Math.min(1,(t-a)/(b-a))),dbIn=t=>t*t*t;
+const dbBounce=t=>{const n=7.5625,d=2.75;if(t<1/d)return n*t*t;if(t<2/d)return n*(t-=1.5/d)*t+.75;if(t<2.5/d)return n*(t-=2.25/d)*t+.9375;return n*(t-=2.625/d)*t+.984375};
+function goDraw(g,t){
+  g.querySelectorAll('.g-tri polygon').forEach((p,i)=>{const k=dbIn(dbSeg(t,i*.06,.4+i*.06));p.setAttribute('transform',`translate(0 ${(k*66).toFixed(2)}) rotate(${(k*(30+i*14)).toFixed(1)} 20 20)`)});
+  const pl=g.querySelector('.g-pl'),b=dbBounce(dbSeg(t,.38,1));pl.style.opacity=t>.38?1:0;pl.style.transform=`translateY(${((1-b)*-34).toFixed(2)}px)`;
+}
+function smGo(play){const g=$('#sm-go'),d=view.smEd;if(!g||!d)return;const want=play||d._go?1:0;
+  if(g._t===undefined){g._t=d._go||0;goDraw(g,g._t)}
+  d._go=want;if(g._to===want)return;g._to=want;cancelAnimationFrame(g._raf);
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){g._t=want;goDraw(g,want);return}
+  const from=g._t,t0=performance.now(),dur=700*Math.abs(want-from)||1;
+  const step=now=>{const k=Math.min(1,(now-t0)/dur);g._t=from+(want-from)*k;goDraw(g,g._t);if(k<1)g._raf=requestAnimationFrame(step)};g._raf=requestAnimationFrame(step)}
+function smPreview(sh){smGo();
+  const box=$('#sm-prev');if(!box)return;const d=view.smEd,ed=sh.edits||{};
+  const all=eps(sh),hits=all.filter(e=>smMatch(d,e)),hand=hits.filter(e=>ed[e.id]&&ed[e.id].tag&&ed[e.id].tag!==d.id).length;
+  // an earlier smart tag catches them first
+  const earlier=d.id?Object.keys(sh.smart||{}).slice(0,Object.keys(sh.smart||{}).indexOf(d.id)):Object.keys(sh.smart||{});
+  const first=hits.filter(e=>!(ed[e.id]&&ed[e.id].tag&&ed[e.id].tag!==d.id)&&earlier.some(k=>sh.tags&&sh.tags[k]&&smMatch(sh.smart[k],e))).length;
+  box.innerHTML=!d.rules.length?'Add a rule to start.':`Matches <b>${hits.length}</b> of ${all.length} episode${all.length===1?'':'s'}${hand?` · ${hand} tagged by hand keep${hand===1?'s':''} ${hand===1?'its':'their'} tag`:''}${first?` · ${first} taken by an earlier smart tag`:''}
+    ${hits.slice(0,4).map(e=>`<i>${esc(e.title)}</i>`).join('')}${hits.length>4?`<i>+${hits.length-4} more</i>`:''}`;
+}
+function smOpen(sh,id,name){const x=id&&sh.smart&&sh.smart[id];
+  view.smEd=x?{id,name:sh.tags[id],all:x.all!==false,rules:JSON.parse(JSON.stringify(x.rules||[]))}:{id:null,name:name||'',all:true,rules:[smNewRule()]};
+  paintTagPage();const g=$('#sm-go');if(g)requestAnimationFrame(()=>requestAnimationFrame(()=>smGo(true)));const pn=$('.sm-panel')||$('.sm-hdx');if(pn)pn.scrollIntoView({block:'nearest',behavior:'smooth'})}
+function smSave(sh){
+  const d=view.smEd,err=$('#sm-err'),name=d.name.trim().replace(/\s+/g,' ').slice(0,20);
+  if(!name){err.textContent='Give it a name';$('#sm-name').focus();return}
+  const T=tagsOf(sh);for(const k in T)if(k!==d.id&&T[k].toLowerCase()===name.toLowerCase()){err.textContent='You already have a tag called that';return}
+  const rules=d.rules.filter(r=>r.op==='some'||r.op==='none'||String(r.v).trim()!=='');
+  if(!rules.length){err.textContent='Add at least one rule with something in it';return}
+  let id=d.id;if(!id)id=addTag(sh,name);else sh.tags[id]=name;
+  sh.smart=sh.smart||{};sh.smart[id]={all:true,rules};save();view.smEd=null;paintTagPage();
 }
 $('#tg-page').addEventListener('click',e=>{
   const sh=S.shows[view.id];if(!sh)return;
   if(e.target.closest('#tg-back')){closeTagPage();return}
-  const del=e.target.closest('[data-del]');if(del){removeTag(sh,del.dataset.del);paintTagPage();return}
+  if(e.target.closest('#sm-new')){const inp=$('#sm-newname'),nm=inp.value.trim();if(!nm){inp.focus();return}smOpen(sh,null,nm);return}
+  const se=e.target.closest('[data-smed]');if(se){if(view.smEd&&view.smEd.id===se.dataset.smed){view.smEd=null;paintTagPage()}else smOpen(sh,se.dataset.smed);return}   // the arrow opens or closes its rules
+  if(view.smEd&&e.target.closest('.sm-panel,.sm-hdx,.tg-dd-top.ed')){const d=view.smEd;
+    const al=e.target.closest('#sm-all [data-all]');if(al){d.all=al.dataset.all==='1';$('#sm-all').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===al));smPreview(sh);return}
+    if(e.target.closest('#sm-addrule')){d.rules.push(smNewRule());paintSmartEd(sh);return}   // no jumping into its text box: pick what it checks first
+    const x=e.target.closest('.sm-x');if(x){d.rules.splice(+x.dataset.i,1);paintSmartEd(sh);return}
+    if(e.target.closest('#sm-cancel,#sm-cancel2')){view.smEd=null;paintTagPage();return}
+    if(e.target.closest('#sm-save')){smSave(sh);return}
+    if(e.target.closest('#sm-go')){if(smReady(d))smSave(sh);else{const er=$('#sm-err');er.textContent=d.name.trim()?'Pick a rule and fill it in, then tap the plus':'Give it a name';
+      const v=d.name.trim()?[...document.querySelectorAll('.sm-hdx input.sm-v')].find(x=>!x.hidden&&!x.value.trim()):$('#sm-name');if(v)v.focus()}return}
+    return}
+  const del=e.target.closest('[data-del]');if(del){if(view.smEd&&view.smEd.id===del.dataset.del)view.smEd=null;removeTag(sh,del.dataset.del);paintTagPage();return}
   if(e.target.closest('#tg-addbtn')){const inp=$('#tg-new');if(addTag(sh,inp.value))paintTagPage();else inp.focus();return}
-  const t=e.target.closest('.so-opt[data-tag]');if(t){if(view.tagEp)setEdit(sh,view.tagEp,'tag',t.dataset.tag);closeTagPage()}
+  const t=e.target.closest('.so-opt[data-tag]');if(t){if(view.tagEp){const k=t.dataset.tag,x=(sh.edits||{})[view.tagEp];   // your pick tapped again: off, back to the tag it gets on its own
+    setEdit(sh,view.tagEp,'tag',x&&x.tag===k?null:k)}closeTagPage()}
 });
-$('#tg-page').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='tg-new'){e.preventDefault();$('#tg-addbtn').click()}});
+$('#tg-page').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='tg-new'){e.preventDefault();$('#tg-addbtn').click()}
+  else if(e.key==='Enter'&&e.target.id==='sm-newname'){e.preventDefault();$('#sm-new').click()}
+  else if(e.key==='Enter'&&view.smEd&&e.target.matches('input')){e.preventDefault();e.target.blur()}});
+// the editor's boxes: typing updates the rule and the count; changing what a rule looks at redraws it
+$('#tg-page').addEventListener('input',e=>{const d=view.smEd,sh=S.shows[view.id];if(!d||!sh)return;
+  if(e.target.id==='sm-name'){d.name=e.target.value;$('#sm-err').textContent='';smGo();return}
+  if(e.target.classList.contains('sm-v')&&e.target.tagName==='INPUT'){d.rules[+e.target.dataset.i].v=e.target.value;$('#sm-err').textContent='';smPreview(sh)}});
+$('#tg-page').addEventListener('change',e=>{const d=view.smEd,sh=S.shows[view.id];if(!d||!sh)return;const t=e.target,i=+t.dataset.i,r=d.rules[i];if(!r)return;
+  if(t.classList.contains('sm-v')&&t.type==='date'){r.v=t.value;smPreview(sh)}});
 function addTag(sh,name){             // returns the tag's id; a name you already have reuses that tag
   name=name.trim().replace(/\s+/g,' ').slice(0,20);if(!name)return null;
   const all=tagsOf(sh);for(const k in all)if(all[k].toLowerCase()===name.toLowerCase())return k;
