@@ -241,8 +241,6 @@
   .ee-tagcol{flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;}   /* the type on top, your own tags as a card under it */
   .ep-ed .ee-own button{flex:1 1 var(--tw2,0px);}
   #eps.half2 .ee-own button{height:12.5px; font-size:.58rem; line-height:1;}
-  .ep-ed .ee-own button.na{opacity:.35; cursor:default;}   /* goes under a different type than this episode's */
-  .so-opt.na{opacity:.45; cursor:default;} .so-opt.na > span::after{content:' · not for this episode’s type';}
   .sm-par{height:36px;} .sm-par button{font-size:.66rem;}
   .sm-hdx .sec .sm-lab{margin:0 2px;}
   .sm-hdx .sm-errsec:has(.sm-err:empty){display:none;}
@@ -1487,10 +1485,9 @@ const smMatch=(sm,e)=>{const rs=(sm.rules||[]);if(!rs.length)return false;
 /* tags: every episode has one type (Main, Bonus or Promo: the feed's, unless you pick one) and any number of your own tags on top.
    Your own come from you (edits.tags) and from every smart tag it meets, less any smart tag you took off it by hand (edits.xtags) */
 const hasTag=(e,k)=>TAGS[k]?e.tag===k:e.tags.includes(k);
-const parentOf=(sh,k)=>(sh.tagParent||{})[k]||'';   // '' = goes under any of the three
-const fitsTag=(sh,k,e)=>{const p=parentOf(sh,k);return !p||e.tag===p};
+const parentOf=(sh,k)=>(sh.tagParent||{})[k]||'';   // which of the three it's shown under in the podcast window ('' = older tags: under each)
 function tagsOfEp(sh,e,x){const T=sh.tags||{},hand=(x&&x.tags)||[],off=(x&&x.xtags)||[];
-  return Object.keys(T).filter(k=>fitsTag(sh,k,e)).filter(k=>hand.includes(k)||(sh.smart&&sh.smart[k]&&!off.includes(k)&&smMatch(sh.smart[k],e)))}
+  return Object.keys(T).filter(k=>hand.includes(k)||(sh.smart&&sh.smart[k]&&!off.includes(k)&&smMatch(sh.smart[k],e)))}
 function tagCounts(sh,all){const c={};all.forEach(e=>{c[e.tag]=(c[e.tag]||0)+1;e.tags.forEach(t=>c[t]=(c[t]||0)+1)});return c}
 // older data kept one tag per episode, which could be one of yours: that one moves to its own tags, and the type goes back to the feed's
 function migrateTags(sh){if(sh.tv)return;sh.tv=1;
@@ -1533,7 +1530,7 @@ function setShowName(sh,field,val){
   save();
 }
 function toggleTag(sh,id,k){
-  const o=eps(sh).find(e=>e.id===id);if(!o||!fitsTag(sh,k,o))return;const x=(sh.edits||{})[id]||{};
+  const o=eps(sh).find(e=>e.id===id);if(!o)return;const x=(sh.edits||{})[id]||{};
   let hand=[...(x.tags||[])],off=[...(x.xtags||[])];const sm=!!(sh.smart&&sh.smart[k]&&smMatch(sh.smart[k],o));
   if(o.tags.includes(k)){hand=hand.filter(t=>t!==k);if(sm&&!off.includes(k))off.push(k)}   // off: a smart tag stays off this one
   else{off=off.filter(t=>t!==k);if(!sm)hand.push(k)}
@@ -2952,9 +2949,12 @@ function removeTag(sh,k){           // it comes off every episode
   if(!sh.tags||!sh.tags[k])return;delete sh.tags[k];if(!Object.keys(sh.tags).length)delete sh.tags;
   if(sh.smart){delete sh.smart[k];if(!Object.keys(sh.smart).length)delete sh.smart}
   if(sh.tagParent){delete sh.tagParent[k];if(!Object.keys(sh.tagParent).length)delete sh.tagParent}
-  if(sh.edits)for(const id in Object.assign({},sh.edits)){const x=sh.edits[id];if(!x)continue;
-    if(x.tags&&x.tags.includes(k))setEdit(sh,id,'tags',x.tags.filter(t=>t!==k));
-    const y=sh.edits&&sh.edits[id];if(y&&y.xtags&&y.xtags.includes(k))setEdit(sh,id,'xtags',y.xtags.filter(t=>t!==k))}
+  // one pass over the edits and one save at the end (a podcast with thousands of tagged episodes would otherwise save thousands of times)
+  if(sh.edits){for(const id in sh.edits){const x=sh.edits[id];
+      for(const f of ['tags','xtags'])if(x[f]&&x[f].includes(k)){x[f]=x[f].filter(t=>t!==k);if(!x[f].length)delete x[f]}
+      if(x.tag===k)delete x.tag;
+      if(!Object.keys(x).length)delete sh.edits[id]}
+    if(!Object.keys(sh.edits).length)delete sh.edits}
   if(sh.skipTags){sh.skipTags=sh.skipTags.filter(x=>x!==k);if(!sh.skipTags.length)delete sh.skipTags}
   save();
 }
@@ -2968,7 +2968,7 @@ function paintTagPage(){
   const cur=(eps(sh).find(e=>e.id===view.tagEp)||{}).tag;
   // filled: the tag you picked for this episode (tap it again to take it off); outlined: the tag it has on its own (feed or smart tag)
   const epx=eps(sh).find(e=>e.id===view.tagEp)||{tags:[]},mine=((sh.edits||{})[view.tagEp]||{}).tag,picked=mine&&TAGS[mine]?mine:null;
-  const sel=k=>TAGS[k]?(picked===k?'on':!picked&&cur===k?'auto':''):(epx.tags.includes(k)?'on':epx.id&&!fitsTag(sh,k,epx)?'na':'');
+  const sel=k=>TAGS[k]?(picked===k?'on':!picked&&cur===k?'auto':''):(epx.tags.includes(k)?'on':'');
   const counts=tagCounts(sh,eps(sh));
   const n=k=>counts[k]?`${counts[k]} episode${counts[k]>1?'s':''}`:'No episodes yet';
   const sm=sh.smart||{},own=Object.entries(sh.tags||{}).filter(([k])=>!sm[k]),smart=Object.entries(sh.tags||{}).filter(([k])=>sm[k]);
@@ -3069,7 +3069,7 @@ function smGo(play){const g=$('#sm-go'),d=view.smEd;if(!g||!d)return;const want=
   const step=now=>{const k=Math.min(1,(now-t0)/dur);g._t=from+(want-from)*k;goDraw(g,g._t);if(k<1)g._raf=requestAnimationFrame(step)};g._raf=requestAnimationFrame(step)}
 function smPreview(sh){smGo();
   const box=$('#sm-prev');if(!box)return;const d=view.smEd,ed=sh.edits||{};
-  const all=eps(sh).filter(e=>!d.par||e.tag===d.par),hits=all.filter(e=>smMatch(d,e)),off=d.id?hits.filter(e=>((ed[e.id]||{}).xtags||[]).includes(d.id)).length:0;
+  const all=eps(sh),hits=all.filter(e=>smMatch(d,e)),off=d.id?hits.filter(e=>((ed[e.id]||{}).xtags||[]).includes(d.id)).length:0;
   box.innerHTML=!d.rules.length?'Add a rule to start.':`Matches <b>${hits.length}</b> of ${all.length} episode${all.length===1?'':'s'}${off?` · ${off} you took it off by hand`:''}
     ${hits.slice(0,4).map(e=>`<i>${esc(e.title)}</i>`).join('')}${hits.length>4?`<i>+${hits.length-4} more</i>`:''}`;
 }
@@ -3107,7 +3107,7 @@ $('#tg-page').addEventListener('click',e=>{
   const del=e.target.closest('[data-del]');if(del){if(view.smEd&&view.smEd.id===del.dataset.del)view.smEd=null;removeTag(sh,del.dataset.del);paintTagPage();return}
   if(e.target.closest('#tg-addbtn')){const inp=$('#tg-new'),nm=inp.value.trim();if(!nm){inp.focus();return}smOpen(sh,null,nm,'tag');return}
   // the window stays open: pick its type (your pick tapped again goes back to the feed's), and put any of your tags on or off
-  const t=e.target.closest('.so-opt[data-tag]');if(t&&view.tagEp&&!t.classList.contains('na')){const k=t.dataset.tag;
+  const t=e.target.closest('.so-opt[data-tag]');if(t&&view.tagEp){const k=t.dataset.tag;
     if(TAGS[k]){const x=(sh.edits||{})[view.tagEp];setEdit(sh,view.tagEp,'tag',x&&x.tag===k?null:k)}else toggleTag(sh,view.tagEp,k);
     paintTagPage()}
 });
@@ -3151,21 +3151,20 @@ function fitTags(){
 let fitW=innerWidth;   // only a change in width refits: the phone keyboard opening only changes the height
 window.addEventListener('resize',()=>{if(innerWidth!==fitW){fitW=innerWidth;fitTags()}});
 // what the tabs show: a type (Main…) on its own, or one of your tags within the type picked above it (or within All)
-function inView(e){const t=view.tag||'all',p=view.ptag||'all';if(t==='all')return true;if(TAGS[t])return e.tag===t;return hasTag(e,t)&&(p==='all'||e.tag===p)}
+function inView(e){const t=view.tag||'all';if(t==='all')return true;if(TAGS[t])return e.tag===t;return hasTag(e,t)}
 function renderTagTabs(all){
   const wrap=$('#tagtabs-wrap');if(!wrap)return;
   const sh=S.shows[view.id],T=tagsOf(sh);if(!view.ptag)view.ptag='all';
   const counts=tagCounts(sh,all),types=Object.keys(TAGS).filter(k=>counts[k]);
-  const pool=view.ptag==='all'?all:all.filter(e=>e.tag===view.ptag),sub=tagCounts(sh,pool);
-  // your tags only show once a parent is picked: the ones that go under it
-  const own=view.ptag==='all'?[]:Object.keys(sh.tags||{}).filter(k=>sub[k]&&(!parentOf(sh,k)||parentOf(sh,k)===view.ptag));
+  // your tags only show once a parent is picked: the ones you put under it (each one finds its episodes among all of them)
+  const own=view.ptag==='all'?[]:Object.keys(sh.tags||{}).filter(k=>counts[k]&&(!parentOf(sh,k)||parentOf(sh,k)===view.ptag));
   // the strip appears once anything is other than Main, or has one of your tags
   if(!types.some(k=>k!=='main')&&!Object.keys(sh.tags||{}).some(k=>counts[k])){wrap.innerHTML='';view.tag=view.ptag='all';return}
   if(view.ptag!=='all'&&!counts[view.ptag])view.ptag='all';
   if(view.tag!=='all'&&!TAGS[view.tag]&&!own.includes(view.tag))view.tag=view.ptag;
   const tab=(k,n,on)=>`<div class="tab ${on?'active':''}" data-tag="${esc(k)}">${esc(k==='all'?'All':T[k])}<b>${n}</b></div>`;
   wrap.innerHTML=`<div class="tabs tagtabs" id="tagtabs">${tab('all',all.length,view.ptag==='all')}${types.map(k=>tab(k,counts[k],view.ptag===k)).join('')}</div>`+
-    (own.length?`<div class="subtags"><div class="tabs tagtabs own" id="tagtabs2">${own.map(k=>tab(k,sub[k],view.tag===k)).join('')}</div></div>`:'');
+    (own.length?`<div class="subtags"><div class="tabs tagtabs own" id="tagtabs2">${own.map(k=>tab(k,counts[k],view.tag===k)).join('')}</div></div>`:'');
   fitTags();
   $('#tagtabs').onclick=e=>{const t=e.target.closest('[data-tag]');if(!t)return;view.ptag=view.tag=t.dataset.tag;renderEpisodes()};
   const t2=$('#tagtabs2');if(t2)t2.onclick=e=>{const t=e.target.closest('[data-tag]');if(!t)return;   // tapped again: back to the whole type
@@ -3207,7 +3206,7 @@ function renderEpisodes(){
       <div class="ee-bot"><input type="date" class="ee-date" value="${toDay(e.date)}" aria-label="Release date">
         <div class="ee-len" aria-label="Length">${twHTML(e.dur||0)}<button type="button" class="ee-fog">Tap to change time</button></div></div>
       <div class="ee-tagrow"><div class="ee-tagcol"><div class="seg ee-tag">${Object.entries(TAGS).map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tag===k?'on':''}">${esc(v)}</button>`).join('')}</div>${
-        own.length?`<div class="seg ee-tag ee-own">${own.map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tags.includes(k)?'on':''} ${fitsTag(sh,k,e)?'':'na'}" ${fitsTag(sh,k,e)?'':'disabled'}>${esc(v)}</button>`).join('')}</div>`:''}</div>
+        own.length?`<div class="seg ee-tag ee-own">${own.map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tags.includes(k)?'on':''}">${esc(v)}</button>`).join('')}</div>`:''}</div>
         <button type="button" class="ee-addtag" title="Add a new tag" aria-label="Add a new tag">+</button></div>
       <div class="ee-se"><label class="ee-guest"><span>season:</span><input class="ee-num" data-f="season" inputmode="numeric" enterkeyhint="done" value="${e.season||''}" placeholder="none" aria-label="Season number"></label>
         <label class="ee-guest"><span>episode:</span><input class="ee-num" data-f="ep" inputmode="numeric" enterkeyhint="done" value="${e.ep||''}" placeholder="none" aria-label="Episode number"></label></div></div></div>`;
