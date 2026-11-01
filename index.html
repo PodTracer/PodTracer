@@ -741,6 +741,51 @@
   .tg-sq.go .g-pl{width:24px; height:24px; margin:-12px 0 0 -12px; opacity:0;}
   .tg-sq.go .g-pl svg{width:24px; height:24px;}
   .tg-sq.go polygon{filter:none;}
+  /* the smart tag's matches: every one as a simple title card, scrolling inside the count card */
+  .sm-prev .sm-list{display:flex; flex-direction:column; gap:4px; max-height:230px; margin:4px 0 0; padding:4px 4px 0; overflow-y:auto; overscroll-behavior:contain;
+    background:var(--unread); border:3px solid #000; border-radius:8px;}
+  .sm-prev .sm-ep{flex:none; min-height:40px; display:flex; align-items:stretch; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:#fff; overflow:hidden;}
+  .sm-prev .sm-ep .t{flex:1; min-width:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; align-self:center; margin:5px 8px; padding:0; overflow:hidden;
+    font:600 .7rem/1.25 Arial,Helvetica,sans-serif; color:var(--ink); white-space:normal; overflow-wrap:anywhere;}   /* wraps to two lines at most */
+  .sm-prev .sm-ep .t{align-self:stretch; display:flex; align-items:center; margin:0; padding:5px 8px; background:rgba(46,70,54,.3);}   /* tinted by whichever is chosen */
+  .sm-prev .sm-ep .t > span{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;}
+  .sm-prev .sm-ep.ex .t{background:rgba(168,50,50,.3); color:var(--muted); text-decoration:line-through;}
+  .sm-prev .sm-ep button{flex:0 0 30px; align-self:stretch; display:grid; place-items:center; margin:0; padding:0; border:0; border-left:3px solid #000; border-radius:0; background:#fff; cursor:pointer;}
+  .sm-prev .sm-ep button svg{width:18px; height:18px;}
+  .sm-prev .sm-ep .sm-exb{border-left:0; border-right:3px solid #000;}   /* the × on the left */
+  .sm-prev .sm-exb{color:rgba(0,0,0,.3);} .sm-prev .sm-ep.ex .sm-exb{background:#a83232; color:#fff;}
+  .sm-prev .sm-ck{background:#2e4636 !important; color:#fff;} .sm-prev .sm-ep.ex .sm-ck{background:#fff !important; color:rgba(0,0,0,.3);}   /* off: white, the symbol faint */
+  /* the match card: 4px all round, the count line on top, the list 4px under it — every gap set by the layout, not by the text */
+  .sm-prev{padding:4px;} .sm-prev .sm-cnt{padding:4px 6px 0; line-height:1.3;}
+  /* some phone browsers drop a scrolling list's bottom padding: an empty last item makes the 4px under the last card instead */
+  .sm-prev .sm-list::after{content:''; flex:none; height:0;}
+  /* the add box is its own card; each tag is its own card under it (34px, as before) */
+  #tg-body .tg-dd{border:0; border-radius:0; overflow:visible; background:transparent; gap:4px;}
+  .tg-head{display:flex; flex-direction:column; border:3px solid #000; border-radius:8px; overflow:hidden; background:#fff;}
+  .tg-head .tg-dd-top{height:39px; border-bottom:0;}
+  .tg-head .sm-hdx{border-top:3px solid #000; border-bottom:0;}
+  #tg-body .tg-dd-list{padding:0;}
+  .tg-dd-list:empty{display:none;}
+  /* a smart tag already set up: name card, its episodes, an Edit card */
+  .sm-view{display:flex; flex-direction:column; gap:4px;}
+  .sm-vname{height:39px; display:flex; align-items:center; justify-content:center; padding:0 10px; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:#fff;
+    font:600 .9rem Georgia,serif; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sm-vedit{height:39px; margin:0; box-sizing:border-box; border:3px solid #000; border-radius:8px; background:var(--ink); color:#fff; font:700 .75rem Arial,sans-serif; text-transform:uppercase; letter-spacing:.5px; cursor:pointer;}
+  /* an open tag: its card and the dropdown under it are one piece */
+  .tg-open{display:flex; flex-direction:column; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--unread);}
+  .tg-open > .tg-card{height:31px; border:0; border-radius:0; border-bottom:3px solid #000;}
+  .tg-open .sm-panel, .tg-open .sm-view{margin:0; padding:4px; border:0; border-radius:0; background:var(--unread);}
+  .tg-open .sm-vname{height:28px; font-size:.8rem;}   /* the name: a short card */
+  .tg-open .sm-prev.flat{padding:0; border:0; background:transparent;}
+  .tg-open .sm-prev.flat .sm-list{margin:0;}
+  .sm-div{height:22px; padding:0 2px;} .sm-div span{font:700 .62rem Arial,sans-serif; letter-spacing:.4px; text-transform:uppercase; color:var(--ink);}
+  .sm-div span b{font-weight:700;}
+  /* a regular tag's list: no check, just × to take it off */
+  .sm-list.reg .sm-ck{display:none;}
+  /* armed for the second tap: red with a white × */
+  #tg-body .tg-sq.del.armed{background:#a83232; --pt:#fff; --pe:#7f2424;}
+  .sm-prev .sm-ep .sm-exb.armed, .sm-rule .sm-x.armed{background:#a83232 !important; color:#fff !important;}
+  .armed{animation:armpulse .9s ease-in-out infinite;} @keyframes armpulse{50%{filter:brightness(1.18)}}
 </style>
 </head>
 <body>
@@ -2961,7 +3006,7 @@ function removeTag(sh,k){           // it comes off every episode
 /* ---------- tags window (from an episode's +): the permanent tags, this podcast's own, and a box to add one.
    Tapping a tag puts it on that episode and closes the window ---------- */
 const TAG_INFO={main:'Full episodes · from the feed',bonus:'Bonus episodes · from the feed',promo:'Trailers and promos · from the feed'};
-function openTagPage(epId){view.tagEp=epId;view.smEd=null;paintTagPage();$('#tg-page').hidden=false;$('#tg-page').scrollTop=0}
+function openTagPage(epId){view.tagEp=epId;view.smEd=null;smDy=0;paintTagPage();$('#tg-page').hidden=false;$('#tg-page').scrollTop=0}
 function closeTagPage(){$('#tg-page').hidden=true;view.tagEp=null;view.smEd=null;$('#tg-page h2').textContent='Tags';renderEpisodes()}
 function paintTagPage(){
   const sh=S.shows[view.id];if(!sh)return;
@@ -2976,12 +3021,12 @@ function paintTagPage(){
   $('#tg-body').innerHTML=`<div class="list-divider"><span>Permanent tags</span></div>
     ${Object.entries(TAGS).map(([k,v])=>`<button type="button" class="so-opt ${sel(k)}" data-tag="${k}"><b>${v}</b><span>${TAG_INFO[k]} · ${n(k)}</span></button>`).join('')}
     <div class="list-divider"><span>This podcast’s tags</span></div>
-    <div class="tg-dd" id="tg-dd">${ed&&ed.kind==='tag'&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="tg-new" placeholder="New tag name" maxlength="20" enterkeyhint="done" aria-label="New tag name"><button type="button" class="tg-sq add go" id="tg-addbtn" aria-label="Set up this tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}
-      <div class="tg-dd-list">${own.map(([k,v])=>`<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b>${esc(v)}</b><span>${under(k)}${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Change ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel():''}`).join('')}
+    <div class="tg-dd" id="tg-dd"><div class="tg-head">${ed&&ed.kind==='tag'&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="tg-new" placeholder="New tag name" maxlength="20" enterkeyhint="done" aria-label="New tag name"><button type="button" class="tg-sq add go" id="tg-addbtn" aria-label="Set up this tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}</div>
+      <div class="tg-dd-list">${own.map(([k,v])=>`${ed&&ed.id===k?'<div class="tg-open">':''}<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b>${esc(v)}</b><span>${under(k)}${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Change ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel()+'</div>':''}`).join('')}
         ${!own.length&&!(ed&&ed.kind==='tag')?'<div class="tg-dd-none">No tags of this podcast’s own yet</div>':''}</div></div>
     <div class="list-divider"><span>Smart tags</span></div>
-    <div class="tg-dd" id="sm-dd">${ed&&ed.kind==='smart'&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="sm-newname" placeholder="New smart tag name" maxlength="20" enterkeyhint="done" aria-label="New smart tag name"><button type="button" class="tg-sq add go" id="sm-new" aria-label="Set up this smart tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}
-      <div class="tg-dd-list">${smart.map(([k,v])=>`<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b><span class="sm-ic">AUTO</span>${esc(v)}</b><span>${under(k)}${rl(k)} · ${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Rules for ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel():''}`).join('')}
+    <div class="tg-dd" id="sm-dd"><div class="tg-head">${ed&&ed.kind==='smart'&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="sm-newname" placeholder="New smart tag name" maxlength="20" enterkeyhint="done" aria-label="New smart tag name"><button type="button" class="tg-sq add go" id="sm-new" aria-label="Set up this smart tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}</div>
+      <div class="tg-dd-list">${smart.map(([k,v])=>`${ed&&ed.id===k?'<div class="tg-open">':''}<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b><span class="sm-ic">AUTO</span>${esc(v)}</b><span>${under(k)}${rl(k)} · ${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Rules for ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel()+'</div>':''}`).join('')}
         ${!smart.length&&!ed?'<div class="tg-dd-none">Tags that put themselves on episodes, by your rules</div>':''}</div></div>`;
   smPreview(sh);
 }
@@ -3038,6 +3083,9 @@ function smRuleHTML(r,i){
 // where a tag goes: under one of the three
 const smParHTML=d=>`<div class="sm-seg sm-par" id="sm-par">${[...Object.entries(TAGS)].map(([k,v])=>`<button type="button" data-par="${k}" class="${(d.par||'')===k?'on':''}">${v}</button>`).join('')}</div>`;
 function smPanel(){const d=view.smEd,smart=d.kind==='smart';
+  // a smart tag already set up opens simply: its name, what it catches, and a card to edit it
+  if(d.view)return `<div class="sm-view"><div class="sm-vname">${esc(d.name)}</div><div class="sm-prev flat" id="sm-prev"></div>
+    <button type="button" class="sm-vedit" id="sm-vedit">Edit ${smart?'smart ':''}tag</button></div>`;
   return `<div class="sm-panel"><div class="sm-lab">Name</div><input id="sm-name" maxlength="20" value="${esc(d.name)}" placeholder="Tag name" enterkeyhint="done" aria-label="Tag name">
     <div class="sm-lab">Goes under</div>${smParHTML(d)}
     ${smart?`<div class="sm-lab">Rules</div>${d.rules.map(smRuleHTML).join('')}<button type="button" class="sm-add" id="sm-addrule">+ Add a rule</button>
@@ -3067,16 +3115,57 @@ function smGo(play){const g=$('#sm-go'),d=view.smEd;if(!g||!d)return;const want=
   if(matchMedia('(prefers-reduced-motion:reduce)').matches){g._t=want;goDraw(g,want);return}
   const from=g._t,t0=performance.now(),dur=700*Math.abs(want-from)||1;
   const step=now=>{const k=Math.min(1,(now-t0)/dur);g._t=from+(want-from)*k;goDraw(g,g._t);if(k<1)g._raf=requestAnimationFrame(step)};g._raf=requestAnimationFrame(step)}
+const CK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.3 4.3L18.5 7.8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const XS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
+// every match as a simple title card: a square on the left to leave it out (red ×, and the check comes off), a check on the right (it gets the tag)
 function smPreview(sh){smGo();
-  const box=$('#sm-prev');if(!box)return;const d=view.smEd,ed=sh.edits||{};
-  const all=eps(sh),hits=all.filter(e=>smMatch(d,e)),off=d.id?hits.filter(e=>((ed[e.id]||{}).xtags||[]).includes(d.id)).length:0;
-  box.innerHTML=!d.rules.length?'Add a rule to start.':`Matches <b>${hits.length}</b> of ${all.length} episode${all.length===1?'':'s'}${off?` · ${off} you took it off by hand`:''}
-    ${hits.slice(0,4).map(e=>`<i>${esc(e.title)}</i>`).join('')}${hits.length>4?`<i>+${hits.length-4} more</i>`:''}`;
+  const box=$('#sm-prev');if(!box)return;const d=view.smEd,ex=d.ex||new Set(),old=box.querySelector('.sm-list'),top=old?old.scrollTop:0;
+  const all=eps(sh),reg=d.kind==='tag',hits=reg?all.filter(e=>(d.list||[]).includes(e.id)):all.filter(e=>smMatch(d,e)),out=hits.filter(e=>ex.has(e.id)).length;
+  const cnt=reg?`<b>${hits.length}</b> episode${hits.length===1?'':'s'}`:`${d.view?'':'Matches '}<b>${hits.length}</b> of ${all.length} episode${all.length===1?'':'s'}${out?` · <b>${out}</b> left out`:''}`;
+  box.innerHTML=reg&&!hits.length?'<div class="list-divider sm-div"><span>On no episodes yet</span></div>':!reg&&!d.rules.length?'<div class="sm-cnt">Add a rule to start.</div>':`${d.view?`<div class="list-divider sm-div"><span>${cnt}</span></div>`:`<div class="sm-cnt">${cnt}</div>`}
+    ${hits.length?`<div class="sm-list${reg?' reg':''}">${hits.map(e=>{const o=ex.has(e.id);return `<div class="sm-ep ${o?'ex':''}"><button type="button" class="sm-exb" data-ex="${esc(e.id)}" aria-label="${o?'Put it back':'Leave this one out'}">${XS}</button><span class="t"><span>${esc(e.title)}</span></span><button type="button" class="sm-ck" data-ck="${esc(e.id)}" aria-label="${o?'Put it back':'Gets the tag'}">${CK}</button></div>`}).join('')}</div>`:''}`;
+  const nl=box.querySelector('.sm-list');if(nl)nl.scrollTop=top;
+}
+/* opening: scroll just enough that the bottom of what opened sits 4px above the bottom of the screen
+   (never so far that its top goes under the header bar) */
+function smReveal(){requestAnimationFrame(()=>{
+  const el=$('.tg-open')||($('.sm-hdx')&&$('.sm-hdx').closest('.tg-head'));if(!el)return;
+  const pg=$('#tg-page'),own=pg.scrollHeight>pg.clientHeight+1&&getComputedStyle(pg).overflowY!=='visible';
+  const r=el.getBoundingClientRect(),bottom=own?pg.getBoundingClientRect().bottom:innerHeight,top=$('#tg-page .so-head').getBoundingClientRect().bottom;
+  let dy=r.bottom-(bottom-4);if(dy<=0)return;dy=Math.min(dy,r.top-top-4);if(dy<=0)return;
+  smDy+=dy;(own?pg:window).scrollBy({top:dy,behavior:'smooth'})})}
+// closing: the dropdown folds up while the window scrolls back by what opening scrolled, then it's redrawn closed
+let smDy=0;
+function smClose(fn){
+  const o=$('.tg-open')||($('.sm-hdx')&&$('.sm-hdx').closest('.tg-head')),pnl=o&&o.querySelector('.sm-panel,.sm-view,.sm-hdx');
+  const pg=$('#tg-page'),own=pg.scrollHeight>pg.clientHeight+1&&getComputedStyle(pg).overflowY!=='visible',sc=own?pg:document.scrollingElement;
+  const back=smDy;smDy=0;
+  if(!pnl||matchMedia('(prefers-reduced-motion:reduce)').matches){fn();sc.scrollTop-=back;return}
+  // one animation drives both: the fold and the scroll move together, frame by frame, on the same easing
+  const card=o.classList.contains('tg-open')?o.querySelector(':scope > .tg-card'):null;
+  const pad=parseFloat(getComputedStyle(pnl).paddingTop)||0,h=pnl.offsetHeight,y0=sc.scrollTop,t0=performance.now(),D=320,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  Object.assign(pnl.style,{boxSizing:'border-box',height:h+'px',overflow:'hidden',willChange:'height'});
+  const step=now=>{const k=Math.min(1,(now-t0)/D),e=ease(k);
+    pnl.style.height=(h*(1-e)).toFixed(2)+'px';pnl.style.opacity=(1-e).toFixed(3);sc.scrollTop=y0-back*e;
+    pnl.style.paddingTop=pnl.style.paddingBottom=(pad*(1-e)).toFixed(2)+'px';   // its padding folds away too (a box can't be shorter than its padding)
+    if(card){card.style.borderBottomWidth=(3*(1-e)).toFixed(2)+'px';card.style.height=(28+3*(1-e)).toFixed(2)+'px'}   // the line under the tag goes too, so it lands exactly as a closed card
+    if(k<1)requestAnimationFrame(step);else fn()};
+  requestAnimationFrame(step);
+}
+function smUnreveal(){if(!smDy)return;const pg=$('#tg-page'),own=pg.scrollHeight>pg.clientHeight+1&&getComputedStyle(pg).overflowY!=='visible',dy=smDy;smDy=0;
+  (own?pg:window).scrollBy({top:-dy,behavior:'smooth'})}
+// every delete takes two taps: the first turns the × red (3 seconds), the second does it
+function arm2(btn,fn){
+  if(btn.classList.contains('armed')){clearTimeout(btn._t);btn.classList.remove('armed');fn();return}
+  document.querySelectorAll('#tg-body .armed').forEach(b=>{clearTimeout(b._t);b.classList.remove('armed')});
+  btn.classList.add('armed');btn._t=setTimeout(()=>btn.classList.remove('armed'),3000);
 }
 function smOpen(sh,id,name,kind){const x=id&&sh.smart&&sh.smart[id];
-  view.smEd=id?{id,kind:x?'smart':'tag',name:sh.tags[id],par:parentOf(sh,id),all:true,rules:x?JSON.parse(JSON.stringify(x.rules||[])):[]}
+  view.smEd=id?{id,view:true,kind:x?'smart':'tag',name:sh.tags[id],par:parentOf(sh,id),all:true,rules:x?JSON.parse(JSON.stringify(x.rules||[])):[]}
     :{id:null,kind:kind||'smart',name:name||'',par:'main',all:true,rules:kind==='tag'?[]:[smNewRule()]};
-  paintTagPage();const g=$('#sm-go');if(g)requestAnimationFrame(()=>requestAnimationFrame(()=>smGo(true)));const pn=$('.sm-panel')||$('.sm-hdx');if(pn)pn.scrollIntoView({block:'nearest',behavior:'smooth'})}
+  view.smEd.ex=new Set(id&&x?Object.keys(sh.edits||{}).filter(k=>((sh.edits[k]||{}).xtags||[]).includes(id)):[]);
+  if(id&&!x)view.smEd.list=eps(sh).filter(e=>e.tags.includes(id)).map(e=>e.id);   // a regular tag: the episodes it was on as it opened (taking one off keeps it listed, to put back)
+  paintTagPage();const g=$('#sm-go');if(g)requestAnimationFrame(()=>requestAnimationFrame(()=>smGo(true)));smReveal()}
 function smSave(sh){
   const d=view.smEd,err=$('#sm-err'),name=d.name.trim().replace(/\s+/g,' ').slice(0,20);
   if(!name){err.textContent='Give it a name';$('#sm-name').focus();return}
@@ -3086,25 +3175,39 @@ function smSave(sh){
   if(d.kind==='smart'&&!rules.length){err.textContent='Add at least one rule with something in it';return}
   let id=d.id;if(!id)id=addTag(sh,name);else sh.tags[id]=name;
   if(d.kind==='smart'){sh.smart=sh.smart||{};sh.smart[id]={all:true,rules}}
+  if(d.kind==='smart'){   // the left-out ones: written straight into the edits in one pass (one save below)
+    sh.edits=sh.edits||{};for(const e of sh.episodes){const x=sh.edits[e.id]||{},has=(x.xtags||[]).includes(id),want=d.ex.has(e.id);
+      if(has===want)continue;const xs=(x.xtags||[]).filter(t=>t!==id);if(want)xs.push(id);
+      if(xs.length)x.xtags=xs;else delete x.xtags;if(Object.keys(x).length)sh.edits[e.id]=x;else delete sh.edits[e.id]}
+    if(!Object.keys(sh.edits).length)delete sh.edits}
   if(d.par){sh.tagParent=sh.tagParent||{};sh.tagParent[id]=d.par}else if(sh.tagParent){delete sh.tagParent[id];if(!Object.keys(sh.tagParent).length)delete sh.tagParent}
-  save();view.smEd=null;paintTagPage();
+  save();smClose(()=>{view.smEd=null;paintTagPage()});
 }
 $('#tg-page').addEventListener('click',e=>{
   const sh=S.shows[view.id];if(!sh)return;
   if(e.target.closest('#tg-back')){closeTagPage();return}
   if(e.target.closest('#sm-new')){const inp=$('#sm-newname'),nm=inp.value.trim();if(!nm){inp.focus();return}smOpen(sh,null,nm);return}
-  const se=e.target.closest('[data-smed]');if(se){if(view.smEd&&view.smEd.id===se.dataset.smed){view.smEd=null;paintTagPage()}else smOpen(sh,se.dataset.smed);return}   // the arrow opens or closes its rules
-  if(view.smEd&&e.target.closest('.sm-panel,.sm-hdx,.tg-dd-top.ed')){const d=view.smEd;
+  const se=e.target.closest('[data-smed]');if(se){if(view.smEd&&view.smEd.id===se.dataset.smed)smClose(()=>{view.smEd=null;paintTagPage()});else if(view.smEd)smClose(()=>smOpen(sh,se.dataset.smed));else smOpen(sh,se.dataset.smed);return}   // the arrow opens or closes its rules
+  if(view.smEd&&e.target.closest('.sm-panel,.sm-view,.sm-hdx,.tg-dd-top.ed')){const d=view.smEd;
+    const xb=e.target.closest('[data-ex]'),cb=e.target.closest('[data-ck]');
+    if(xb&&d.kind==='tag'){const id=xb.dataset.ex;arm2(xb,()=>{const o=eps(sh).find(e=>e.id===id);if(o&&o.tags.includes(d.id))toggleTag(sh,id,d.id);
+      d.list=(d.list||[]).filter(x=>x!==id);save();smPreview(sh)});return}
+    if(xb||cb){const id=(xb||cb).dataset[xb?'ex':'ck'],was=d.ex.has(id);if(xb)was?d.ex.delete(id):d.ex.add(id);else d.ex.delete(id);
+      if(d.view&&d.kind==='tag'){if(was!==d.ex.has(id)){toggleTag(sh,id,d.id);save()}}
+      else if(d.view){sh.edits=sh.edits||{};const x=sh.edits[id]||{},xs=(x.xtags||[]).filter(t=>t!==d.id);if(d.ex.has(id))xs.push(d.id);   // the simple view: saved straight away
+        if(xs.length)x.xtags=xs;else delete x.xtags;if(Object.keys(x).length)sh.edits[id]=x;else delete sh.edits[id];if(!Object.keys(sh.edits).length)delete sh.edits;save()}
+      smPreview(sh);return}
+    if(e.target.closest('#sm-vedit')){d.view=false;paintTagPage();smReveal();return}   // × leaves it out (tap again: back in); the check puts it back
     const pa=e.target.closest('#sm-par [data-par]');if(pa){d.par=pa.dataset.par;$('#sm-par').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===pa));smPreview(sh);return}
     const al=e.target.closest('#sm-all [data-all]');if(al){d.all=al.dataset.all==='1';$('#sm-all').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===al));smPreview(sh);return}
     if(e.target.closest('#sm-addrule')){d.rules.push(smNewRule());paintSmartEd(sh);return}   // no jumping into its text box: pick what it checks first
-    const x=e.target.closest('.sm-x');if(x){d.rules.splice(+x.dataset.i,1);paintSmartEd(sh);return}
-    if(e.target.closest('#sm-cancel,#sm-cancel2')){view.smEd=null;paintTagPage();return}
+    const x=e.target.closest('.sm-x');if(x){arm2(x,()=>{d.rules.splice(+x.dataset.i,1);paintSmartEd(sh)});return}
+    if(e.target.closest('#sm-cancel,#sm-cancel2')){smClose(()=>{view.smEd=null;paintTagPage()});return}
     if(e.target.closest('#sm-save')){smSave(sh);return}
     if(e.target.closest('#sm-go')){if(smReady(d))smSave(sh);else{const er=$('#sm-err');er.textContent=!d.name.trim()?'Give it a name':!d.par?'Pick what it goes under':'Pick a rule and fill it in, then tap the plus';
       const v=d.name.trim()?[...document.querySelectorAll('.sm-hdx input.sm-v')].find(x=>!x.hidden&&!x.value.trim()):$('#sm-name');if(v)v.focus()}return}
     return}
-  const del=e.target.closest('[data-del]');if(del){if(view.smEd&&view.smEd.id===del.dataset.del)view.smEd=null;removeTag(sh,del.dataset.del);paintTagPage();return}
+  const del=e.target.closest('[data-del]');if(del){const k=del.dataset.del;arm2(del,()=>{if(view.smEd&&view.smEd.id===k)smClose(()=>{view.smEd=null;removeTag(sh,k);paintTagPage()});else{removeTag(sh,k);paintTagPage()}});return}
   if(e.target.closest('#tg-addbtn')){const inp=$('#tg-new'),nm=inp.value.trim();if(!nm){inp.focus();return}smOpen(sh,null,nm,'tag');return}
   // the window stays open: pick its type (your pick tapped again goes back to the feed's), and put any of your tags on or off
   const t=e.target.closest('.so-opt[data-tag]');if(t&&view.tagEp){const k=t.dataset.tag;
