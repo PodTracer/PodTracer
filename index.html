@@ -200,7 +200,10 @@
   .so-opt.on{background:var(--ink);} .so-opt.on b{color:#fff;} .so-opt.on span{color:#cfc8ba;}
   /* the show window's episodes sit in one wrapper card; tag tabs, when there are any, are its top strip */
   .ep-wrap{display:flex; flex-direction:column; flex:none; border:3px solid #000; border-radius:8px; overflow:hidden; background:var(--unread);}
-  .ep-wrap .tabs.tagtabs{height:24px; border:0; border-bottom:3px solid #000; border-radius:0;}   /* a thin strip: half the old height */
+  .ep-wrap .tabs.tagtabs{height:24px; border:0; border-bottom:3px solid #000; border-radius:0;}
+  /* your own tags: a section under the types, set off from the episodes, holding one divided card */
+  .ep-wrap .subtags{padding:4px; border-bottom:3px solid #000;}
+  .ep-wrap .subtags .tabs.tagtabs{border:3px solid #000; border-radius:6px;}   /* a thin strip: half the old height */
   .ep-wrap .tagtabs .tab{font-size:min(.66rem,2.7vw); line-height:1;}
   /* tags that don't fit start a new row; every tab in a row is the same width (sized to the longest tag) */
   .ep-wrap .tabs.tagtabs{height:auto; flex-wrap:wrap;}
@@ -235,6 +238,14 @@
   .ee-title.two{padding:1px 8px; font-size:.7rem; line-height:1.12;}   /* a long title: two lines in the same height */
   .ee-date{flex:1 1 0; box-sizing:border-box; min-width:0; width:100%; cursor:pointer; border:3px solid #000; border-radius:6px; padding:0 6px; background:#fff; font:.78rem Arial,sans-serif; outline:none;}
   .ee-tagrow{display:flex; gap:4px; align-items:stretch;}   /* the + grows with the tag rows */
+  .ee-tagcol{flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;}   /* the type on top, your own tags as a card under it */
+  .ep-ed .ee-own button{flex:1 1 var(--tw2,0px);}
+  #eps.half2 .ee-own button{height:12.5px; font-size:.58rem; line-height:1;}
+  .ep-ed .ee-own button.na{opacity:.35; cursor:default;}   /* goes under a different type than this episode's */
+  .so-opt.na{opacity:.45; cursor:default;} .so-opt.na > span::after{content:' · not for this episode’s type';}
+  .sm-par{height:36px;} .sm-par button{font-size:.66rem;}
+  .sm-hdx .sec .sm-lab{margin:0 2px;}
+  .sm-hdx .sm-errsec:has(.sm-err:empty){display:none;}
   .ep-ed .ee-tag{flex:1; min-width:0; height:auto; box-sizing:border-box; flex-wrap:wrap; gap:3px; background:#000; border-width:3px; border-radius:6px;}
   .ep-ed .ee-tag::-webkit-scrollbar{display:none;}
   .ep-ed .ee-tag button{flex:1 1 var(--tw,0px); height:28px; box-sizing:border-box; font-size:.72rem; padding:0 8px; white-space:nowrap;}   /* too many for one row: a new row, all the same width */
@@ -1174,7 +1185,7 @@ function artSec(src,id,title){
 // progress fill for an art card: starts after the art section, so 0% shows no fill
 function artFill(f){return f?`calc(45px + (100% - 45px) * ${f})`:'0'}   // under the art, then across the rest of the card
 // progress only counts episodes whose tag counts (Settings › Counts toward progress; every tag counts until you turn one off)
-function countedEps(sh){const a=eps(sh),sk=sh.skipTags;return sk&&sk.length?a.filter(e=>!sk.includes(e.tag)):a}
+function countedEps(sh){const a=eps(sh),sk=sh.skipTags;return sk&&sk.length?a.filter(e=>!sk.includes(e.tag)&&!e.tags.some(t=>sk.includes(t))):a}
 function playedCount(sh){return countedEps(sh).reduce((n,e)=>n+(sh.played[e.id]?1:0),0)}
 function totalCount(sh){return countedEps(sh).length}
 async function fetchTimeout(url,ms=12000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{return await fetch(url,{signal:c.signal})}finally{clearTimeout(t)}}
@@ -1473,7 +1484,17 @@ const smMatch=(sm,e)=>{const rs=(sm.rules||[]);if(!rs.length)return false;
   if(also.some(r=>smTest(r,e)))return true;
   if(!base.length)return false;
   return sm.all===false?base.some(r=>smTest(r,e)):base.every(r=>smTest(r,e))};
-function smartTagOf(sh,e){if(!sh.smart)return null;for(const k in sh.smart)if(sh.tags&&sh.tags[k]&&smMatch(sh.smart[k],e))return k;return null}
+/* tags: every episode has one type (Main, Bonus or Promo: the feed's, unless you pick one) and any number of your own tags on top.
+   Your own come from you (edits.tags) and from every smart tag it meets, less any smart tag you took off it by hand (edits.xtags) */
+const hasTag=(e,k)=>TAGS[k]?e.tag===k:e.tags.includes(k);
+const parentOf=(sh,k)=>(sh.tagParent||{})[k]||'';   // '' = goes under any of the three
+const fitsTag=(sh,k,e)=>{const p=parentOf(sh,k);return !p||e.tag===p};
+function tagsOfEp(sh,e,x){const T=sh.tags||{},hand=(x&&x.tags)||[],off=(x&&x.xtags)||[];
+  return Object.keys(T).filter(k=>fitsTag(sh,k,e)).filter(k=>hand.includes(k)||(sh.smart&&sh.smart[k]&&!off.includes(k)&&smMatch(sh.smart[k],e)))}
+function tagCounts(sh,all){const c={};all.forEach(e=>{c[e.tag]=(c[e.tag]||0)+1;e.tags.forEach(t=>c[t]=(c[t]||0)+1)});return c}
+// older data kept one tag per episode, which could be one of yours: that one moves to its own tags, and the type goes back to the feed's
+function migrateTags(sh){if(sh.tv)return;sh.tv=1;
+  for(const id in sh.edits||{}){const x=sh.edits[id];if(x.tag&&!TAGS[x.tag]){x.tags=[...new Set([...(x.tags||[]),x.tag])];delete x.tag}}}
 const feedTag=e=>e.type==='bonus'?'bonus':(e.type==='trailer'||e.type==='promo')?'promo':'main';
 // the episodes as you see them: your title, date and tag over the feed's. Edits live in sh.edits, so a feed refresh never undoes them
 // each episode's title split into the title and its guests (kept, so long lists don't re-parse every time)
@@ -1492,15 +1513,15 @@ function migrateGuests(sh){
 }
 // .title is the title without guests, .guests the guest names (yours if you've edited them, else read from the feed's title)
 function eps(sh){
-  migrateGuests(sh);
+  migrateGuests(sh);migrateTags(sh);
   const ed=sh.edits||{};
   return sh.episodes.map(e=>{const x=ed[e.id],op=partsOf(e.title);
     const or=(v,d)=>v==null?d:v;
     // the tag: yours if you set one, else the first smart tag it meets, else the feed's
-    if(!x){const o={...e,title:op.title,guests:op.guests};o.tag=smartTagOf(sh,o)||feedTag(e);return o}
-    const tg=x.tag&&!TAGS[x.tag]&&!(sh.tags&&sh.tags[x.tag])?null:x.tag;   // a tag that no longer exists falls back
+    if(!x){const o={...e,title:op.title,guests:op.guests,tag:feedTag(e)};o.tags=tagsOfEp(sh,o,null);return o}
+    const tg=x.tag&&TAGS[x.tag]?x.tag:null;
     const o={...e,title:or(x.title,op.title),guests:x.guests!=null?guestParse(x.guests):op.guests,date:or(x.date,e.date),dur:or(x.dur,e.dur),season:or(x.season,e.season),ep:or(x.ep,e.ep),edited:true};
-    o.tag=tg||smartTagOf(sh,o)||feedTag(e);return o});
+    o.tag=tg||feedTag(e);o.tags=tagsOfEp(sh,o,x);return o});
 }
 const nm=sh=>(sh.rename&&sh.rename.title)||sh.title;      // the show's name as you see it
 const au=sh=>(sh.rename&&sh.rename.author!=null)?sh.rename.author:(sh.author||'');
@@ -1511,11 +1532,19 @@ function setShowName(sh,field,val){
   if(Object.keys(r).length)sh.rename=r;else delete sh.rename;
   save();
 }
+function toggleTag(sh,id,k){
+  const o=eps(sh).find(e=>e.id===id);if(!o||!fitsTag(sh,k,o))return;const x=(sh.edits||{})[id]||{};
+  let hand=[...(x.tags||[])],off=[...(x.xtags||[])];const sm=!!(sh.smart&&sh.smart[k]&&smMatch(sh.smart[k],o));
+  if(o.tags.includes(k)){hand=hand.filter(t=>t!==k);if(sm&&!off.includes(k))off.push(k)}   // off: a smart tag stays off this one
+  else{off=off.filter(t=>t!==k);if(!sm)hand.push(k)}
+  setEdit(sh,id,'tags',hand);setEdit(sh,id,'xtags',off);
+}
 function setEdit(sh,id,field,val){
   const orig=sh.episodes.find(e=>e.id===id);if(!orig)return;
   const op=partsOf(orig.title);
   const base={title:op.title,guests:guestJoin(op.guests),date:orig.date,tag:feedTag(orig),dur:orig.dur||0,season:orig.season||0,ep:orig.ep||0}[field];
   sh.edits=sh.edits||{};const x={...(sh.edits[id]||{})};
+  if(Array.isArray(val)){if(val.length)x[field]=val;else delete x[field];val=undefined;field='\u0000'}   // tags / xtags: a list, gone when empty
   if(val===base||val==null||(val===''&&field!=='guests'))delete x[field];else x[field]=val;   // guests can be cleared on purpose
   if(Object.keys(x).length)sh.edits[id]=x;else delete sh.edits[id];
   if(!Object.keys(sh.edits).length)delete sh.edits;
@@ -1686,7 +1715,7 @@ function thruRelease(el,then){
 }
 function playedThrough(epId){
   const sh=S.shows[view.id];let all=eps(sh);const target=all.find(e=>e.id===epId);if(!target)return;
-  if(view.tag&&view.tag!=='all')all=all.filter(e=>e.tag===view.tag);
+  all=all.filter(inView);
   let n=0;
   if(!sh.played[epId]){all.forEach(e=>{if(e.date<=target.date&&!sh.played[e.id]){sh.played[e.id]=Date.now();n++}});
     toast(`Marked ${n} episode${n===1?'':'s'} played`)}
@@ -1861,7 +1890,7 @@ new ResizeObserver(syncBars).observe($('#app-footer'));
 
 /* ---------- rendering ---------- */
 function go(name,id=null){f3dismiss();view.name=name;view.id=id;render();window.scrollTo(0,0)}
-function openShow(id){view.filter='all';view.q='';view.tag='all';view.edit=false;go('show',id)}
+function openShow(id){view.filter='all';view.q='';view.tag='all';view.ptag='all';view.edit=false;go('show',id)}
 
 $('#tabs').onclick=e=>{const t=e.target.closest('.tab');if(t)go(t.dataset.v)};
 function render(){
@@ -1991,7 +2020,7 @@ function goToNext(){
   const sh=S.shows[view.id];const nx=sh&&upNext(sh);if(!nx)return;
   const find=()=>document.querySelector(`#eps .ep[data-id="${CSS.escape(nx.id)}"]`);
   let row=find();
-  if(!row){view.filter='all';view.tag='all';view.q='';const q=$('#sfq');if(q){q.value='';$('#sf-card').classList.remove('searching')}
+  if(!row){view.filter='all';view.tag='all';view.ptag='all';view.q='';const q=$('#sfq');if(q){q.value='';$('#sf-card').classList.remove('searching')}
     if($('#sf-fname'))$('#sf-fname').textContent=SF.show.filters.all[1];renderEpisodes();row=find();}
   if(!row)return;
   const box=$('#eps'),b=box.getBoundingClientRect(),r=row.getBoundingClientRect();   // centered in the episodes card, which scrolls on its own
@@ -2280,11 +2309,11 @@ document.addEventListener('click',e=>{
   c.redraw();
 });
 // what Edit can change on a show (episode edits, its name and publisher, its color), kept so Cancel can put it back
-function takeEditSnapshot(sh){view.snap={id:sh.id,data:JSON.stringify({edits:sh.edits||null,rename:sh.rename||null,color:sh.color||null,colorHS:sh.colorHS||null,tags:sh.tags||null,smart:sh.smart||null})}}
+function takeEditSnapshot(sh){view.snap={id:sh.id,data:JSON.stringify({edits:sh.edits||null,rename:sh.rename||null,color:sh.color||null,colorHS:sh.colorHS||null,tags:sh.tags||null,smart:sh.smart||null,tagParent:sh.tagParent||null})}}
 function restoreEditSnapshot(sh){
   if(!view.snap||view.snap.id!==sh.id)return;
   const d=JSON.parse(view.snap.data);
-  for(const k of ['edits','rename','color','colorHS','tags','smart'])if(d[k]==null)delete sh[k];else sh[k]=d[k];
+  for(const k of ['edits','rename','color','colorHS','tags','smart','tagParent'])if(d[k]==null)delete sh[k];else sh[k]=d[k];
   view.snap=null;save();
 }
 function renderShow(){
@@ -2579,7 +2608,7 @@ const srTagSub=(n,on)=>`${n} episode${n===1?'':'s'} · ${on?'counts':'not counte
 // the podcast's Settings, one framed list: what counts toward progress, refresh / mark all / clear all, ended, remove
 function paintSettings(){
   const sh=S.shows[view.id];if(!sh)return;
-  const all=eps(sh),counts={};all.forEach(e=>counts[e.tag]=(counts[e.tag]||0)+1);
+  const all=eps(sh),counts=tagCounts(sh,all);
   const sk=sh.skipTags||[];
   $('#st-body').setAttribute('style',colorVars(sh.id));
   $('#st-body').innerHTML=`
@@ -2651,7 +2680,7 @@ $('#st-page').addEventListener('click',e=>{
   const tg=e.target.closest('[data-count]');
   if(tg){const k=tg.dataset.count,sk=new Set(sh.skipTags||[]),on=sk.has(k);if(on)sk.delete(k);else sk.add(k);
     if(sk.size)sh.skipTags=[...sk];else delete sh.skipTags;save();
-    srSet(tg,on,srTagSub(eps(sh).filter(x=>x.tag===k).length,on));srProg(sh);return}
+    srSet(tg,on,srTagSub(eps(sh).filter(x=>hasTag(x,k)).length,on));srProg(sh);return}
   const en=e.target.closest('#st-ended');
   if(en){if(sh.ended)delete sh.ended;else sh.ended=true;save();srSet(en,!!sh.ended,sh.ended?'No more episodes expected':'Still releasing episodes');return}
   const rf=e.target.closest('#st-refresh');if(rf){refreshFromSettings(sh,rf);return}
@@ -2919,10 +2948,13 @@ const GO_TRI='<svg class="g-tri" viewBox="0 0 40 40" aria-hidden="true"><g trans
 const PLUS='<svg viewBox="0 0 24 24" aria-hidden="true"><g class="pl-shd"><path class="pl-e" d="M12 5v14M5 12h14" transform="translate(0 1.3)"/><path class="pl-t" d="M12 5v14M5 12h14"/></g></svg>';
 // the same plus turned 45° for remove; turned inside, so its edge still falls straight down like the others
 const XMARK='<svg viewBox="0 0 24 24" aria-hidden="true"><g class="pl-shd"><path class="pl-e" d="M12 5v14M5 12h14" transform="translate(0 1.1) rotate(45 12 12)"/><path class="pl-t" d="M12 5v14M5 12h14" transform="rotate(45 12 12)"/></g></svg>';
-function removeTag(sh,k){           // its episodes go back to the feed's tag
+function removeTag(sh,k){           // it comes off every episode
   if(!sh.tags||!sh.tags[k])return;delete sh.tags[k];if(!Object.keys(sh.tags).length)delete sh.tags;
   if(sh.smart){delete sh.smart[k];if(!Object.keys(sh.smart).length)delete sh.smart}
-  if(sh.edits)for(const id in sh.edits)if(sh.edits[id].tag===k)setEdit(sh,id,'tag',null);
+  if(sh.tagParent){delete sh.tagParent[k];if(!Object.keys(sh.tagParent).length)delete sh.tagParent}
+  if(sh.edits)for(const id in Object.assign({},sh.edits)){const x=sh.edits[id];if(!x)continue;
+    if(x.tags&&x.tags.includes(k))setEdit(sh,id,'tags',x.tags.filter(t=>t!==k));
+    const y=sh.edits&&sh.edits[id];if(y&&y.xtags&&y.xtags.includes(k))setEdit(sh,id,'xtags',y.xtags.filter(t=>t!==k))}
   if(sh.skipTags){sh.skipTags=sh.skipTags.filter(x=>x!==k);if(!sh.skipTags.length)delete sh.skipTags}
   save();
 }
@@ -2935,21 +2967,21 @@ function paintTagPage(){
   const sh=S.shows[view.id];if(!sh)return;
   const cur=(eps(sh).find(e=>e.id===view.tagEp)||{}).tag;
   // filled: the tag you picked for this episode (tap it again to take it off); outlined: the tag it has on its own (feed or smart tag)
-  const mine=((sh.edits||{})[view.tagEp]||{}).tag,picked=mine&&tagsOf(sh)[mine]?mine:null;
-  const sel=k=>picked===k?'on':!picked&&cur===k?'auto':'';
-  const counts={};eps(sh).forEach(e=>counts[e.tag]=(counts[e.tag]||0)+1);
+  const epx=eps(sh).find(e=>e.id===view.tagEp)||{tags:[]},mine=((sh.edits||{})[view.tagEp]||{}).tag,picked=mine&&TAGS[mine]?mine:null;
+  const sel=k=>TAGS[k]?(picked===k?'on':!picked&&cur===k?'auto':''):(epx.tags.includes(k)?'on':epx.id&&!fitsTag(sh,k,epx)?'na':'');
+  const counts=tagCounts(sh,eps(sh));
   const n=k=>counts[k]?`${counts[k]} episode${counts[k]>1?'s':''}`:'No episodes yet';
   const sm=sh.smart||{},own=Object.entries(sh.tags||{}).filter(([k])=>!sm[k]),smart=Object.entries(sh.tags||{}).filter(([k])=>sm[k]);
-  const rl=k=>{const r=(sm[k].rules||[]).length;return `${r} rule${r===1?'':'s'}`},ed=view.smEd;
+  const rl=k=>{const r=(sm[k].rules||[]).length;return `${r} rule${r===1?'':'s'}`},ed=view.smEd,under=k=>parentOf(sh,k)?TAGS[parentOf(sh,k)]+' · ':'';
   $('#tg-body').innerHTML=`<div class="list-divider"><span>Permanent tags</span></div>
     ${Object.entries(TAGS).map(([k,v])=>`<button type="button" class="so-opt ${sel(k)}" data-tag="${k}"><b>${v}</b><span>${TAG_INFO[k]} · ${n(k)}</span></button>`).join('')}
     <div class="list-divider"><span>This podcast’s tags</span></div>
-    <div class="tg-dd"><div class="tg-dd-top"><input id="tg-new" placeholder="New tag name" maxlength="20" enterkeyhint="done" aria-label="New tag name"><button type="button" class="tg-sq add" id="tg-addbtn" aria-label="Add this tag">${PLUS}</button></div>
-      <div class="tg-dd-list">${own.length?own.map(([k,v])=>`<div class="tg-card sm"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b>${esc(v)}</b><span>${n(k)}</span></button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>`).join('')
-        :'<div class="tg-dd-none">No tags of this podcast’s own yet</div>'}</div></div>
+    <div class="tg-dd" id="tg-dd">${ed&&ed.kind==='tag'&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="tg-new" placeholder="New tag name" maxlength="20" enterkeyhint="done" aria-label="New tag name"><button type="button" class="tg-sq add go" id="tg-addbtn" aria-label="Set up this tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}
+      <div class="tg-dd-list">${own.map(([k,v])=>`<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b>${esc(v)}</b><span>${under(k)}${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Change ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel():''}`).join('')}
+        ${!own.length&&!(ed&&ed.kind==='tag')?'<div class="tg-dd-none">No tags of this podcast’s own yet</div>':''}</div></div>
     <div class="list-divider"><span>Smart tags</span></div>
-    <div class="tg-dd" id="sm-dd">${ed&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="sm-newname" placeholder="New smart tag name" maxlength="20" enterkeyhint="done" aria-label="New smart tag name"><button type="button" class="tg-sq add go" id="sm-new" aria-label="Set up this smart tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}
-      <div class="tg-dd-list">${smart.map(([k,v])=>`<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b><span class="sm-ic">AUTO</span>${esc(v)}</b><span>${rl(k)} · ${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Rules for ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel():''}`).join('')}
+    <div class="tg-dd" id="sm-dd">${ed&&ed.kind==='smart'&&!ed.id?smHeadEd():`<div class="tg-dd-top"><input id="sm-newname" placeholder="New smart tag name" maxlength="20" enterkeyhint="done" aria-label="New smart tag name"><button type="button" class="tg-sq add go" id="sm-new" aria-label="Set up this smart tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>`}
+      <div class="tg-dd-list">${smart.map(([k,v])=>`<div class="tg-card sm ${ed&&ed.id===k?'open':''}"><button type="button" class="so-opt ${sel(k)}" data-tag="${esc(k)}"><b><span class="sm-ic">AUTO</span>${esc(v)}</b><span>${under(k)}${rl(k)} · ${n(k)}</span></button><button type="button" class="tg-sq ex" data-smed="${esc(k)}" aria-label="Rules for ${esc(v)}">${CHEV}</button><button type="button" class="tg-sq del" data-del="${esc(k)}" aria-label="Remove ${esc(v)}">${XMARK}</button></div>${ed&&ed.id===k?smPanel():''}`).join('')}
         ${!smart.length&&!ed?'<div class="tg-dd-none">Tags that put themselves on episodes, by your rules</div>':''}</div></div>`;
   smPreview(sh);
 }
@@ -3003,20 +3035,24 @@ function smRuleHTML(r,i){
     <button type="button" class="sm-x" data-i="${i}" aria-label="Remove this rule">×</button></div>${val}</div>`;
 }
 // the editor, opened inside the dropdown under its tag (or at the top for a new one): name, all or any, the rules, what they catch
-function smPanel(){const d=view.smEd;
-  return `<div class="sm-panel"><div class="sm-lab">Name</div><input id="sm-name" maxlength="20" value="${esc(d.name)}" placeholder="Tag name" enterkeyhint="done" aria-label="Smart tag name">
-    <div class="sm-lab">Rules</div>${d.rules.map(smRuleHTML).join('')}<button type="button" class="sm-add" id="sm-addrule">+ Add a rule</button>
-    <div class="sm-prev" id="sm-prev"></div><div class="sm-err" id="sm-err"></div>
+// where a tag goes: under one of the three
+const smParHTML=d=>`<div class="sm-seg sm-par" id="sm-par">${[...Object.entries(TAGS)].map(([k,v])=>`<button type="button" data-par="${k}" class="${(d.par||'')===k?'on':''}">${v}</button>`).join('')}</div>`;
+function smPanel(){const d=view.smEd,smart=d.kind==='smart';
+  return `<div class="sm-panel"><div class="sm-lab">Name</div><input id="sm-name" maxlength="20" value="${esc(d.name)}" placeholder="Tag name" enterkeyhint="done" aria-label="Tag name">
+    <div class="sm-lab">Goes under</div>${smParHTML(d)}
+    ${smart?`<div class="sm-lab">Rules</div>${d.rules.map(smRuleHTML).join('')}<button type="button" class="sm-add" id="sm-addrule">+ Add a rule</button>
+    <div class="sm-prev" id="sm-prev"></div>`:''}<div class="sm-err" id="sm-err"></div>
     <div class="sm-btns"><button type="button" id="sm-cancel">Cancel</button><button type="button" id="sm-save">Save</button></div></div>`}
 const paintSmartEd=()=>paintTagPage();
 // a new smart tag: the header itself opens up, one section under another — its name stays in the header box, the plus turns into ×
-function smHeadEd(){const d=view.smEd;
-  return `<div class="tg-dd-top ed"><input id="sm-name" maxlength="20" value="${esc(d.name)}" placeholder="New smart tag name" enterkeyhint="done" aria-label="Smart tag name"><button type="button" class="tg-sq add go" id="sm-go" aria-label="Add this smart tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>
-    <div class="sm-hdx"><div class="sec">${d.rules.map(smRuleHTML).join('')}<button type="button" class="sm-add" id="sm-addrule">+ Add a rule</button></div>
-      <div class="sec"><div class="sm-prev" id="sm-prev"></div><div class="sm-err" id="sm-err"></div></div>
+function smHeadEd(){const d=view.smEd,smart=d.kind==='smart';
+  return `<div class="tg-dd-top ed"><input id="sm-name" maxlength="20" value="${esc(d.name)}" placeholder="New ${smart?'smart ':''}tag name" enterkeyhint="done" aria-label="Tag name"><button type="button" class="tg-sq add go" id="sm-go" aria-label="Add this tag">${GO_TRI}<span class="g-pl">${PLUS}</span></button></div>
+    <div class="sm-hdx"><div class="sec"><div class="sm-lab">Goes under</div>${smParHTML(d)}</div>
+      ${smart?`<div class="sec">${d.rules.map(smRuleHTML).join('')}<button type="button" class="sm-add" id="sm-addrule">+ Add a rule</button></div>
+      <div class="sec"><div class="sm-prev" id="sm-prev"></div><div class="sm-err" id="sm-err"></div></div>`:'<div class="sec sm-errsec"><div class="sm-err" id="sm-err"></div></div>'}
       <div class="sec"><div class="sm-btns"><button type="button" id="sm-cancel2">Cancel</button></div></div></div>`}
 // what the rules catch right now (episodes you've tagged by hand keep their own tag)
-const smReady=d=>!!(d&&d.name.trim()&&d.rules.some(r=>r.op==='some'||r.op==='none'||String(r.v).trim()!==''));
+const smReady=d=>!!(d&&d.name.trim()&&d.par&&(d.kind==='tag'||d.rules.some(r=>r.op==='some'||r.op==='none'||String(r.v).trim()!=='')));
 /* drop & bounce, as the header opens: the triangles tip and fall out the bottom one after another; the plus drops in from the top
    and bounces to a stop. A redraw (adding a rule) keeps it as the plus */
 const dbSeg=(t,a,b)=>Math.max(0,Math.min(1,(t-a)/(b-a))),dbIn=t=>t*t*t;
@@ -3033,24 +3069,25 @@ function smGo(play){const g=$('#sm-go'),d=view.smEd;if(!g||!d)return;const want=
   const step=now=>{const k=Math.min(1,(now-t0)/dur);g._t=from+(want-from)*k;goDraw(g,g._t);if(k<1)g._raf=requestAnimationFrame(step)};g._raf=requestAnimationFrame(step)}
 function smPreview(sh){smGo();
   const box=$('#sm-prev');if(!box)return;const d=view.smEd,ed=sh.edits||{};
-  const all=eps(sh),hits=all.filter(e=>smMatch(d,e)),hand=hits.filter(e=>ed[e.id]&&ed[e.id].tag&&ed[e.id].tag!==d.id).length;
-  // an earlier smart tag catches them first
-  const earlier=d.id?Object.keys(sh.smart||{}).slice(0,Object.keys(sh.smart||{}).indexOf(d.id)):Object.keys(sh.smart||{});
-  const first=hits.filter(e=>!(ed[e.id]&&ed[e.id].tag&&ed[e.id].tag!==d.id)&&earlier.some(k=>sh.tags&&sh.tags[k]&&smMatch(sh.smart[k],e))).length;
-  box.innerHTML=!d.rules.length?'Add a rule to start.':`Matches <b>${hits.length}</b> of ${all.length} episode${all.length===1?'':'s'}${hand?` · ${hand} tagged by hand keep${hand===1?'s':''} ${hand===1?'its':'their'} tag`:''}${first?` · ${first} taken by an earlier smart tag`:''}
+  const all=eps(sh).filter(e=>!d.par||e.tag===d.par),hits=all.filter(e=>smMatch(d,e)),off=d.id?hits.filter(e=>((ed[e.id]||{}).xtags||[]).includes(d.id)).length:0;
+  box.innerHTML=!d.rules.length?'Add a rule to start.':`Matches <b>${hits.length}</b> of ${all.length} episode${all.length===1?'':'s'}${off?` · ${off} you took it off by hand`:''}
     ${hits.slice(0,4).map(e=>`<i>${esc(e.title)}</i>`).join('')}${hits.length>4?`<i>+${hits.length-4} more</i>`:''}`;
 }
-function smOpen(sh,id,name){const x=id&&sh.smart&&sh.smart[id];
-  view.smEd=x?{id,name:sh.tags[id],all:x.all!==false,rules:JSON.parse(JSON.stringify(x.rules||[]))}:{id:null,name:name||'',all:true,rules:[smNewRule()]};
+function smOpen(sh,id,name,kind){const x=id&&sh.smart&&sh.smart[id];
+  view.smEd=id?{id,kind:x?'smart':'tag',name:sh.tags[id],par:parentOf(sh,id),all:true,rules:x?JSON.parse(JSON.stringify(x.rules||[])):[]}
+    :{id:null,kind:kind||'smart',name:name||'',par:'main',all:true,rules:kind==='tag'?[]:[smNewRule()]};
   paintTagPage();const g=$('#sm-go');if(g)requestAnimationFrame(()=>requestAnimationFrame(()=>smGo(true)));const pn=$('.sm-panel')||$('.sm-hdx');if(pn)pn.scrollIntoView({block:'nearest',behavior:'smooth'})}
 function smSave(sh){
   const d=view.smEd,err=$('#sm-err'),name=d.name.trim().replace(/\s+/g,' ').slice(0,20);
   if(!name){err.textContent='Give it a name';$('#sm-name').focus();return}
+  if(!d.par){err.textContent='Pick what it goes under';return}
   const T=tagsOf(sh);for(const k in T)if(k!==d.id&&T[k].toLowerCase()===name.toLowerCase()){err.textContent='You already have a tag called that';return}
   const rules=d.rules.filter(r=>r.op==='some'||r.op==='none'||String(r.v).trim()!=='');
-  if(!rules.length){err.textContent='Add at least one rule with something in it';return}
+  if(d.kind==='smart'&&!rules.length){err.textContent='Add at least one rule with something in it';return}
   let id=d.id;if(!id)id=addTag(sh,name);else sh.tags[id]=name;
-  sh.smart=sh.smart||{};sh.smart[id]={all:true,rules};save();view.smEd=null;paintTagPage();
+  if(d.kind==='smart'){sh.smart=sh.smart||{};sh.smart[id]={all:true,rules}}
+  if(d.par){sh.tagParent=sh.tagParent||{};sh.tagParent[id]=d.par}else if(sh.tagParent){delete sh.tagParent[id];if(!Object.keys(sh.tagParent).length)delete sh.tagParent}
+  save();view.smEd=null;paintTagPage();
 }
 $('#tg-page').addEventListener('click',e=>{
   const sh=S.shows[view.id];if(!sh)return;
@@ -3058,18 +3095,21 @@ $('#tg-page').addEventListener('click',e=>{
   if(e.target.closest('#sm-new')){const inp=$('#sm-newname'),nm=inp.value.trim();if(!nm){inp.focus();return}smOpen(sh,null,nm);return}
   const se=e.target.closest('[data-smed]');if(se){if(view.smEd&&view.smEd.id===se.dataset.smed){view.smEd=null;paintTagPage()}else smOpen(sh,se.dataset.smed);return}   // the arrow opens or closes its rules
   if(view.smEd&&e.target.closest('.sm-panel,.sm-hdx,.tg-dd-top.ed')){const d=view.smEd;
+    const pa=e.target.closest('#sm-par [data-par]');if(pa){d.par=pa.dataset.par;$('#sm-par').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===pa));smPreview(sh);return}
     const al=e.target.closest('#sm-all [data-all]');if(al){d.all=al.dataset.all==='1';$('#sm-all').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===al));smPreview(sh);return}
     if(e.target.closest('#sm-addrule')){d.rules.push(smNewRule());paintSmartEd(sh);return}   // no jumping into its text box: pick what it checks first
     const x=e.target.closest('.sm-x');if(x){d.rules.splice(+x.dataset.i,1);paintSmartEd(sh);return}
     if(e.target.closest('#sm-cancel,#sm-cancel2')){view.smEd=null;paintTagPage();return}
     if(e.target.closest('#sm-save')){smSave(sh);return}
-    if(e.target.closest('#sm-go')){if(smReady(d))smSave(sh);else{const er=$('#sm-err');er.textContent=d.name.trim()?'Pick a rule and fill it in, then tap the plus':'Give it a name';
+    if(e.target.closest('#sm-go')){if(smReady(d))smSave(sh);else{const er=$('#sm-err');er.textContent=!d.name.trim()?'Give it a name':!d.par?'Pick what it goes under':'Pick a rule and fill it in, then tap the plus';
       const v=d.name.trim()?[...document.querySelectorAll('.sm-hdx input.sm-v')].find(x=>!x.hidden&&!x.value.trim()):$('#sm-name');if(v)v.focus()}return}
     return}
   const del=e.target.closest('[data-del]');if(del){if(view.smEd&&view.smEd.id===del.dataset.del)view.smEd=null;removeTag(sh,del.dataset.del);paintTagPage();return}
-  if(e.target.closest('#tg-addbtn')){const inp=$('#tg-new');if(addTag(sh,inp.value))paintTagPage();else inp.focus();return}
-  const t=e.target.closest('.so-opt[data-tag]');if(t){if(view.tagEp){const k=t.dataset.tag,x=(sh.edits||{})[view.tagEp];   // your pick tapped again: off, back to the tag it gets on its own
-    setEdit(sh,view.tagEp,'tag',x&&x.tag===k?null:k)}closeTagPage()}
+  if(e.target.closest('#tg-addbtn')){const inp=$('#tg-new'),nm=inp.value.trim();if(!nm){inp.focus();return}smOpen(sh,null,nm,'tag');return}
+  // the window stays open: pick its type (your pick tapped again goes back to the feed's), and put any of your tags on or off
+  const t=e.target.closest('.so-opt[data-tag]');if(t&&view.tagEp&&!t.classList.contains('na')){const k=t.dataset.tag;
+    if(TAGS[k]){const x=(sh.edits||{})[view.tagEp];setEdit(sh,view.tagEp,'tag',x&&x.tag===k?null:k)}else toggleTag(sh,view.tagEp,k);
+    paintTagPage()}
 });
 $('#tg-page').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='tg-new'){e.preventDefault();$('#tg-addbtn').click()}
   else if(e.key==='Enter'&&e.target.id==='sm-newname'){e.preventDefault();$('#sm-new').click()}
@@ -3102,26 +3142,34 @@ function fitTitles(el){
 }
 document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('ee-title')){e.target.value=e.target.value.replace(/\n/g,' ');fitTitles(e.target)}});
 function fitTags(){
-  const tt=$('#tagtabs');if(tt)tt.style.setProperty('--tw',tagWidth(tt)+'px');
-  const eg=$('#eps .ee-tag');
-  if(eg){const E=$('#eps');E.classList.remove('half');   // measure at full size every time (measured half-size, the answer flipped on each tap)
-    const tw=tagWidth(eg),W=eg.clientWidth,per=Math.max(1,Math.floor((W+3)/(tw+3)));
-    $('#eps').style.setProperty('--tw',tw+'px');
-    $('#eps').classList.toggle('half',eg.children.length>per)}
+  ['#tagtabs','#tagtabs2'].forEach(q=>{const tt=$(q);if(tt)tt.style.setProperty('--tw',tagWidth(tt)+'px')});
+  const eg=$('#eps .ee-tag:not(.ee-own)'),eo=$('#eps .ee-own');
+  if(eg){const E=$('#eps');E.classList.remove('half','half2');   // measure at full size every time (measured half-size, the answer flipped on each tap)
+    const tw=tagWidth(eg);E.style.setProperty('--tw',tw+'px');
+    if(eo){const t2=tagWidth(eo),W=eo.clientWidth,per=Math.max(1,Math.floor((W+3)/(t2+3)));E.style.setProperty('--tw2',t2+'px');E.classList.toggle('half2',eo.children.length>per)}}
 }
 let fitW=innerWidth;   // only a change in width refits: the phone keyboard opening only changes the height
 window.addEventListener('resize',()=>{if(innerWidth!==fitW){fitW=innerWidth;fitTags()}});
+// what the tabs show: a type (Main…) on its own, or one of your tags within the type picked above it (or within All)
+function inView(e){const t=view.tag||'all',p=view.ptag||'all';if(t==='all')return true;if(TAGS[t])return e.tag===t;return hasTag(e,t)&&(p==='all'||e.tag===p)}
 function renderTagTabs(all){
   const wrap=$('#tagtabs-wrap');if(!wrap)return;
-  const counts={};all.forEach(e=>counts[e.tag]=(counts[e.tag]||0)+1);
-  const T=tagsOf(S.shows[view.id]);const used=Object.keys(T).filter(k=>counts[k]);
-  // tabs appear once anything is tagged other than Main
-  if(!used.some(k=>k!=='main')){wrap.innerHTML='';view.tag='all';return}
-  if(view.tag!=='all'&&!counts[view.tag])view.tag='all';
-  wrap.innerHTML=`<div class="tabs tagtabs" id="tagtabs"><div class="tab ${view.tag==='all'?'active':''}" data-tag="all">All<b>${all.length}</b></div>${
-    used.map(k=>`<div class="tab ${view.tag===k?'active':''}" data-tag="${k}">${esc(T[k])}<b>${counts[k]}</b></div>`).join('')}</div>`;
+  const sh=S.shows[view.id],T=tagsOf(sh);if(!view.ptag)view.ptag='all';
+  const counts=tagCounts(sh,all),types=Object.keys(TAGS).filter(k=>counts[k]);
+  const pool=view.ptag==='all'?all:all.filter(e=>e.tag===view.ptag),sub=tagCounts(sh,pool);
+  // your tags only show once a parent is picked: the ones that go under it
+  const own=view.ptag==='all'?[]:Object.keys(sh.tags||{}).filter(k=>sub[k]&&(!parentOf(sh,k)||parentOf(sh,k)===view.ptag));
+  // the strip appears once anything is other than Main, or has one of your tags
+  if(!types.some(k=>k!=='main')&&!Object.keys(sh.tags||{}).some(k=>counts[k])){wrap.innerHTML='';view.tag=view.ptag='all';return}
+  if(view.ptag!=='all'&&!counts[view.ptag])view.ptag='all';
+  if(view.tag!=='all'&&!TAGS[view.tag]&&!own.includes(view.tag))view.tag=view.ptag;
+  const tab=(k,n,on)=>`<div class="tab ${on?'active':''}" data-tag="${esc(k)}">${esc(k==='all'?'All':T[k])}<b>${n}</b></div>`;
+  wrap.innerHTML=`<div class="tabs tagtabs" id="tagtabs">${tab('all',all.length,view.ptag==='all')}${types.map(k=>tab(k,counts[k],view.ptag===k)).join('')}</div>`+
+    (own.length?`<div class="subtags"><div class="tabs tagtabs own" id="tagtabs2">${own.map(k=>tab(k,sub[k],view.tag===k)).join('')}</div></div>`:'');
   fitTags();
-  $('#tagtabs').onclick=e=>{const t=e.target.closest('[data-tag]');if(!t)return;view.tag=t.dataset.tag;renderEpisodes()};
+  $('#tagtabs').onclick=e=>{const t=e.target.closest('[data-tag]');if(!t)return;view.ptag=view.tag=t.dataset.tag;renderEpisodes()};
+  const t2=$('#tagtabs2');if(t2)t2.onclick=e=>{const t=e.target.closest('[data-tag]');if(!t)return;   // tapped again: back to the whole type
+    view.tag=view.tag===t.dataset.tag?view.ptag:t.dataset.tag;renderEpisodes()};
 }
 // each card's number, by release date (oldest first), whatever numbering the feed uses:
 // Main episodes count 1, 2, 3 …; anything else after Main 4 (Bonus, Promo, or a tag you've added) is 4.a, 4.b, 4.c … in order (before Main 1: 0.a)
@@ -3151,13 +3199,15 @@ function renderEpisodes(){
   const sh=S.shows[view.id];const el=$('#eps');if(!sh||!el)return;
   const all=eps(sh);
   if(view.edit){   // editing: every episode, newest or oldest first as last sorted, no filters
+    const own=Object.entries(sh.tags||{});
     const pos=epPositions(all),list=all.sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
     const card=e=>`<div class="ep-ed ${e.edited?'edited':''}" data-id="${esc(e.id)}"><div class="ee-no"><span>${pos[e.id]}</span></div><div class="ee-body">
       <div class="ee-top"><textarea class="ee-title" rows="1" aria-label="Episode title" enterkeyhint="done">${esc(e.title)}</textarea></div>
       <label class="ee-guest"><span>with:</span><input class="ee-guests" value="${esc(guestJoin(e.guests))}" placeholder="no guests" aria-label="Guests" enterkeyhint="done"></label>
       <div class="ee-bot"><input type="date" class="ee-date" value="${toDay(e.date)}" aria-label="Release date">
         <div class="ee-len" aria-label="Length">${twHTML(e.dur||0)}<button type="button" class="ee-fog">Tap to change time</button></div></div>
-      <div class="ee-tagrow"><div class="seg ee-tag">${Object.entries(tagsOf(sh)).map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tag===k?'on':''}">${esc(v)}</button>`).join('')}</div>
+      <div class="ee-tagrow"><div class="ee-tagcol"><div class="seg ee-tag">${Object.entries(TAGS).map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tag===k?'on':''}">${esc(v)}</button>`).join('')}</div>${
+        own.length?`<div class="seg ee-tag ee-own">${own.map(([k,v])=>`<button type="button" data-tag="${esc(k)}" class="${e.tags.includes(k)?'on':''} ${fitsTag(sh,k,e)?'':'na'}" ${fitsTag(sh,k,e)?'':'disabled'}>${esc(v)}</button>`).join('')}</div>`:''}</div>
         <button type="button" class="ee-addtag" title="Add a new tag" aria-label="Add a new tag">+</button></div>
       <div class="ee-se"><label class="ee-guest"><span>season:</span><input class="ee-num" data-f="season" inputmode="numeric" enterkeyhint="done" value="${e.season||''}" placeholder="none" aria-label="Season number"></label>
         <label class="ee-guest"><span>episode:</span><input class="ee-num" data-f="ep" inputmode="numeric" enterkeyhint="done" value="${e.ep||''}" placeholder="none" aria-label="Episode number"></label></div></div></div>`;
@@ -3200,17 +3250,17 @@ function renderEpisodes(){
     const d=!!sh.played[e.id];
     if(view.filter==='played'&&!d)return false;
     if(view.filter==='unplayed'&&d)return false;
-    if(view.tag&&view.tag!=='all'&&e.tag!==view.tag)return false;
+    if(!inView(e))return false;
     return !q||(e.title+' '+e.guests.join(' ')).toLowerCase().includes(q);
   }).sort((a,b)=>view.sort==='new'?b.date-a.date:a.date-b.date);
   if(!list.length){el.innerHTML='<div class="empty">Nothing here.</div>';return}
   let pos=epPositions(all);
   // in a tag's own tab, each episode is numbered within that tag (oldest first), with the tag's code: B•1, B•2 …
   if(view.tag&&view.tag!=='all'){const code=tagCodes(sh)[view.tag]||'?';pos={...pos};
-    all.filter(e=>e.tag===view.tag).sort((a,b)=>a.date-b.date).forEach((e,i)=>pos[e.id]=`${code}•${i+1}`)}
+    all.filter(inView).sort((a,b)=>a.date-b.date).forEach((e,i)=>pos[e.id]=`${code}•${i+1}`)}
   el.innerHTML=list.map(e=>`<div class="row ep ${sh.played[e.id]?'done':''} ${e.guests.length?'has-g':''}" data-id="${esc(e.id)}">
     <div class="ep-num ${e.season?'se':''}">${e.season?`<b>${pos[e.id]}</b><i></i><small>S${pad2(e.season)} E${pad2(e.ep||0)}</small>`:pos[e.id]}</div>
-    ${(()=>{const sg=e;return `<div class="main"><span class="t">${esc(sg.title)}</span>${sg.guests.length?`<span class="a">${esc(guestText(sg.guests))}</span>`:''}<span class="a">${e.tag!=='main'?`<span class="tagpill">${esc(tagsOf(sh)[e.tag]||'')}</span>`:''}${fmtDate(e.date)}${e.dur?' · '+fmtDur(e.dur):''}</span></div>`})()}
+    ${(()=>{const sg=e;return `<div class="main"><span class="t">${esc(sg.title)}</span>${sg.guests.length?`<span class="a">${esc(guestText(sg.guests))}</span>`:''}<span class="a">${e.tag!=='main'?`<span class="tagpill">${esc(TAGS[e.tag])}</span>`:''}${e.tags.map(k=>`<span class="tagpill">${esc((sh.tags||{})[k]||'')}</span>`).join('')}${fmtDate(e.date)}${e.dur?' · '+fmtDur(e.dur):''}</span></div>`})()}
     <button class="thru" title="${sh.played[e.id]?'Unmark this and every newer episode':'Mark this and every older episode played'} (tap twice)" aria-label="${sh.played[e.id]?'Unmark this and every newer episode':'Mark this and every older episode played'}">${THRU_ICON}</button></div>`).join('');
 }
 /* ---------- length wheels: hours (0–99, stops at the ends), minutes and seconds (0–59, wrap round) ---------- */
@@ -3315,7 +3365,7 @@ $('#app').addEventListener('click',e=>{
   const dt=e.target.closest('.ee-date');if(dt){try{dt.showPicker&&dt.showPicker()}catch(_){}return}   // anywhere on the date opens the calendar
   const sh=S.shows[view.id],id=box.dataset.id;
   const t=e.target.closest('.ee-tag [data-tag]');
-  if(t){setEdit(sh,id,'tag',t.dataset.tag);renderEpisodes();return}
+  if(t){const k=t.dataset.tag;if(TAGS[k])setEdit(sh,id,'tag',k);else toggleTag(sh,id,k);renderEpisodes();return}   // the type: one of the three; your tags: on or off
   if(e.target.closest('.ee-addtag')){openTagPage(id);return}
   const fog=e.target.closest('.ee-fog');
   if(fog){fogWheels();fog.parentElement.classList.add('active');wheelIdle();return}   // + : the tags window
