@@ -1931,7 +1931,9 @@ new ResizeObserver(syncBars).observe($('#app-header'));
 new ResizeObserver(syncBars).observe($('#app-footer'));
 
 /* ---------- rendering ---------- */
-function go(name,id=null){f3dismiss();view.name=name;view.id=id;render();window.scrollTo(0,0)}
+// the Library keeps its place: leaving it remembers how far down you were, coming back puts you there again
+function go(name,id=null){f3dismiss();if(view.name==='lib'&&name!=='lib')view.libY=scrollY;view.name=name;view.id=id;render();
+  const y=name==='lib'&&view.libY?view.libY:0;window.scrollTo(0,y);if(y)requestAnimationFrame(()=>window.scrollTo(0,y))}
 function openShow(id){view.filter='all';view.q='';view.tag='all';view.ptag='all';view.edit=false;go('show',id)}
 
 $('#tabs').onclick=e=>{const t=e.target.closest('.tab');if(t)go(t.dataset.v)};
